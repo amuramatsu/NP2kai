@@ -2972,6 +2972,7 @@ I286 _sahf(void) {								// 9E: sahf
 				I286CLOCK_X(a, 2, 3)
 				mov		al, I286_AH
 				and		ax, 0fffh	// 286
+				or		ax, 0002h	// 286
 				mov		I286_FLAGL, al
 				ret
 		}
@@ -2984,6 +2985,7 @@ I286 _lahf(void) {								// 9F: lahf
 				I286CLOCK(2)
 				mov		al, I286_FLAGL
 				and		ax, 0fffh	// 286
+				or		ax, 0002h	// 286
 				mov		I286_AH, al
 				ret
 		}
