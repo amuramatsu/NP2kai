@@ -206,6 +206,13 @@ static const char str_ldbss2[] = "Load debug ss 2";
 static const char str_ldbss3[] = "Load debug ss 3";
 #endif
 
+static const char str_sendkey[] = "Sendkey";
+static const char str_key_Xfer[] = "Send XFER";
+static const char str_key_CXfer[] = "Send Ctrl+XFER";
+static const char str_key_Nfer[] = "Send NFER";
+static const char str_key_Caps[] = "Send Caps";
+static const char str_key_Stop[] = "Send STOP";
+
 static const MSYSITEM s_emu[] = {
 		{str_reset,			NULL,		MID_RESET,			0},
 		{NULL,				NULL,		MID_STATIC,			MENU_SEPARATOR},
@@ -562,6 +569,25 @@ static const MSYSITEM s_dbss[] = {
 		{str_ldbss3,			NULL,		MID_LOADDBSS3,			MENU_DELETED}};
 #endif
 
+static const MSYSITEM s_sendkey[] = {
+		{str_key_Xfer,		NULL,		MID_KEY_XFER,			0},
+		{str_key_CXfer,		NULL,		MID_KEY_CXFER,			0},
+		{str_key_Nfer,		NULL,		MID_KEY_NFER,			0},
+		{str_key_Stop,		NULL,		MID_KEY_STOP,			0},
+		{str_key_Copy,		NULL,		MID_KEY_COPY,			0},
+		{str_key_Caps,		NULL,		MID_KEY_CAPS,			0},
+		{str_key_Kana,		NULL,		MID_KEY_KANA,			0},
+		{str_key_Yen,		NULL,		MID_KEY_YEN,			0},
+		{str_key_SYen,		NULL,		MID_KEY_SYEN,			0},
+		{str_key_At,		NULL,		MID_KEY_AT,			0},
+		{str_key_SAt,		NULL,		MID_KEY_SAT,			0},
+		{str_key_UB,		NULL,		MID_KEY_UB,			0},
+		{str_key_SUB,		NULL,		MID_KEY_SUB,			0},
+		{str_key_KPEquals,	NULL,		MID_KEY_KPEQUALS,		0},
+		{str_key_KPComma,	NULL,		MID_KEY_KPCOMMA,		0},
+		{NULL,				NULL,		MID_STATIC,			MENU_SEPARATOR},
+		{str_sndcad,		NULL,		MID_SNDCAD,			MENU_DELETED}};
+
 static MSYSITEM s_main[10] = {
 #if !defined(__LIBRETRO__)
 		{str_emulate,		s_emu,		MID_STATIC,			0},
@@ -575,6 +601,7 @@ static MSYSITEM s_main[10] = {
 		{str_screen,		s_screen,	MID_STATIC,			0},
 #endif
 		{str_device,		s_device,	MID_STATIC,			0},
+		{str_sendkey,		s_sendkey,	MID_STATIC,			0},
 #if defined(SUPPORT_DEBUGSS)
 		{str_other,		s_other,	MID_STATIC,			0},
 		{str_dbss,			s_dbss,	MID_DBSS,			MENU_DELETED}};

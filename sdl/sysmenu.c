@@ -516,6 +516,33 @@ static void sys_cmd(MENUID id) {
 			keystat_senddata(0x4f | 0x80);
 			break;
 
+		case MID_KEY_XFER:
+			keystat_senddata(0x35);
+			keystat_senddata(0x35 | 0x80);
+			break;
+
+		case MID_KEY_CXFER:
+			keystat_senddata(0x74);
+			keystat_senddata(0x35);
+			keystat_senddata(0x35 | 0x80);
+			keystat_senddata(0x74 | 0x80);
+			break;
+
+		case MID_KEY_NFER:
+			keystat_senddata(0x51);
+			keystat_senddata(0x51 | 0x80);
+			break;
+
+		case MID_KEY_CAPS:
+			keystat_senddata(0x71);
+			keystat_senddata(0x71 | 0x80);
+			break;
+
+		case MID_KEY_STOP:
+			keystat_senddata(0x60);
+			keystat_senddata(0x60 | 0x80);
+			break;
+
 		case MID_SNDCAD:
 			keystat_senddata(0x73);
 			keystat_senddata(0x74);
