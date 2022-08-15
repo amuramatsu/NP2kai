@@ -460,6 +460,11 @@ static void sys_cmd(MENUID id) {
 			update |= SYS_UPDATEOSCFG;
 			break;
 
+		case MID_KEYBOARD_US_MAC:
+			np2oscfg.KEYBOARD = KEY_US_MAC;
+			update |= SYS_UPDATEOSCFG;
+			break;
+
 		case MID_KEY_COPY:
 			keystat_senddata(0x61);
 			keystat_senddata(0x61 | 0x80);
@@ -1050,6 +1055,7 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	b = np2oscfg.KEYBOARD;
 	menusys_setcheck(MID_KEYBOARD_106, (b == KEY_KEY106));
 	menusys_setcheck(MID_KEYBOARD_101, (b == KEY_KEY101));
+	menusys_setcheck(MID_KEYBOARD_US_MAC, (b == KEY_US_MAC));
 	b = np2cfg.KEY_MODE;
 	menusys_setcheck(MID_KEY, (b == 0));
 	menusys_setcheck(MID_JOY1, (b == 1));

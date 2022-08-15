@@ -786,7 +786,32 @@ static UINT8 getKey(SDL_Scancode key) {
 #endif
   }
 
-  if(np2oscfg.KEYBOARD == KEY_KEY101) {
+  if(np2oscfg.KEYBOARD == KEY_US_MAC) {
+    // RCTRL    -> None
+    // CAPSLOCK -> Ctrl
+    // LALT     -> GRPH
+#if SDL_MAJOR_VERSION == 1
+    if(key == SDLK_RCTRL) {
+      return NC;
+    }
+    if(key == SDLK_CAPSLOCK) {
+      key = SDLK_LCTRL;
+    } else if (key == SDLK_LALT) {
+      key = SDL_SCANCODE_RCTRL;
+    }
+#else
+    if(key == SDL_SCANCODE_RCTRL) {
+      return NC;
+    }
+    if(key == SDL_SCANCODE_CAPSLOCK) {
+      key = SDL_SCANCODE_LCTRL;
+    } else if (key == SDL_SCANCODE_LALT) {
+      key = SDL_SCANCODE_RCTRL;
+    }
+#endif
+  }
+
+  if(np2oscfg.KEYBOARD == KEY_KEY101 || np2oscfg.KEYBOARD == KEY_US_MAC) {
     sdlcnv = (SDLKCNV*)sdlcnv101;
     imax = SDL_arraysize(sdlcnv101);
   } else {

@@ -80,6 +80,7 @@ static const char str_xroll[] = "Swap PageUp/PageDown";
 static const char str_keyrepeat[] = "Key-repeat";
 static const char str_keyboard_106[] = "JP Keyboard 106";
 static const char str_keyboard_101[] = "US Keyboard 101";
+static const char str_keyboard_us_mac[] = "US Keyboard (mac)";
 static const char str_key_Copy[] = "Send COPY";
 static const char str_key_Kana[] = "Send Kana";
 static const char str_key_Yen[] = "Send Yen";
@@ -415,6 +416,7 @@ static const MSYSITEM s_keybd[] = {
 		{NULL,			NULL,		MID_STATIC,			MENU_SEPARATOR},
 		{str_keyboard_106,	NULL,		MID_KEYBOARD_106,		0},
 		{str_keyboard_101,	NULL,		MID_KEYBOARD_101,		0},
+		{str_keyboard_us_mac,	NULL,		MID_KEYBOARD_US_MAC,		0},
 		{NULL,			NULL,		MID_STATIC,			MENU_SEPARATOR},
 		{str_keyboard,		NULL,		MID_KEY,			0},
 		{str_joykey1,		NULL,		MID_JOY1,			0},

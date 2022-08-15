@@ -222,6 +222,11 @@ inirdkb(const OEMCHAR *src, INITBL *ini)
 	        || (!milstr_cmp(src, "US"))
 	        || (!milstr_cmp(src, "101"))) {
 		*(UINT8 *)ini->value = KEY_KEY101;
+	} else if ((!milstr_extendcmp(src, "US-MAC"))
+	        || (!milstr_cmp(src, "US_MAC"))
+	        || (!milstr_cmp(src, "MAC-US"))
+		|| (!milstr_cmp(src, "MAC_US"))) {
+		*(UINT8 *)ini->value = KEY_US_MAC;
 	}
 }
 
@@ -532,6 +537,8 @@ ini_write(const OEMCHAR *path, const OEMCHAR *title, const INITBL *tbl, UINT cou
 			case INITYPE_KB:
 				if (*(UINT8 *)p->value == KEY_KEY101)
 					milstr_ncpy(work, OEMTEXT("101"), sizeof(work));
+				else if (*(UINT8 *)p->value == KEY_US_MAC)
+					milstr_ncpy(work, OEMTEXT("us_mac"), sizeof(work));
 				else
 					milstr_ncpy(work, OEMTEXT("106"), sizeof(work));
 				break;
