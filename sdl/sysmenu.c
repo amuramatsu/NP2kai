@@ -296,6 +296,18 @@ static void sys_cmd(MENUID id) {
 			diskdrv_setsxsi(0x23, NULL);
 			break;
 #endif
+		case MID_SIZEx1:
+			changescreen((scrnmode & ~SCRNMODE_SIZEMASK) | SCRNMODE_SIZEx1);
+			break;
+
+		case MID_SIZEx1_5:
+			changescreen((scrnmode & ~SCRNMODE_SIZEMASK) | SCRNMODE_SIZEx1_5);
+			break;
+
+		case MID_SIZEx2:
+			changescreen((scrnmode & ~SCRNMODE_SIZEMASK) | SCRNMODE_SIZEx2);
+			break;
+
 		case MID_ROLNORMAL:
 			changescreen((scrnmode & ~SCRNMODE_ROTATEMASK) | 0);
 			break;
@@ -1042,6 +1054,9 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 #if defined(SUPPORT_ASYNC_CPU)
 	menusys_setcheck(MID_ASYNCCPU, (np2cfg.asynccpu & 1));
 #endif
+	menusys_setcheck(MID_SIZEx1,    ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1));
+	menusys_setcheck(MID_SIZEx1_5,  ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1_5));
+	menusys_setcheck(MID_SIZEx2,    ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx2));
 	menusys_setcheck(MID_ROLNORMAL, ((scrnmode & SCRNMODE_ROTATEMASK) == 0));
 	menusys_setcheck(MID_ROLLEFT,   ((scrnmode & SCRNMODE_ROTATEMASK) == SCRNMODE_ROTATELEFT));
 	menusys_setcheck(MID_ROLRIGHT,  ((scrnmode & SCRNMODE_ROTATEMASK) == SCRNMODE_ROTATERIGHT));
@@ -1150,4 +1165,3 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_setcheck(MID_HF_ENABLE, (hf_enable == 1));
 	return(menusys_open(x, y));
 }
-

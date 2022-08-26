@@ -22,6 +22,7 @@ typedef struct {
 	int		width;
 	int		height;
 	int		bpp;
+	double	scale;
 #if defined(__LIBRETRO__)
 	void*	pc98surf;
 	void*	dispsurf;
@@ -92,6 +93,7 @@ static BRESULT calcdrawrect(DRAWRECT *dr, const RECT_T *rt) {
 void scrnmng_initialize(void) {
 	scrnmng.width = 640;
 	scrnmng.height = 400;
+	scrnmng.scale = 1.0;
 }
 
 void scrnmng_getsize(int* pw, int* ph) {
@@ -100,6 +102,19 @@ void scrnmng_getsize(int* pw, int* ph) {
 }
 
 BRESULT scrnmng_create(UINT8 mode) {
+   switch (mode & SCRNMODE_SIZEMASK) {
+   case SCRNMODE_SIZEx1_5:
+	   scrnmng.scale = 1.5;
+	   break;
+   case SCRNMODE_SIZEx2:
+	   scrnmng.scale = 2.0;
+	   break;
+   default:
+   case SCRNMODE_SIZEx1:
+	   scrnmng.scale = 1.0;
+	   break;
+   }
+		   
    if(draw32bit) {
       scrnmng.bpp = 32;
    } else {
@@ -121,14 +136,15 @@ BRESULT scrnmng_create(UINT8 mode) {
 
 #if SDL_MAJOR_VERSION == 1
 	s1_videoinfo = SDL_GetVideoInfo();
-	scrnmng.dispsurf = SDL_SetVideoMode(scrnmng.width, scrnmng.height, scrnmng.bpp, SDL_HWSURFACE);
+	scrnmng.dispsurf = SDL_SetVideoMode(scrnmng.width, scrnmng.height, scrnmng.bpp, SDL_HWSURFACE | SDL_RESIZABLE);
 	scrnmng.pc98surf = SDL_CreateRGBSurface(SDL_SWSURFACE, scrnmng.width, scrnmng.height, scrnmng.bpp, 0xf800, 0x07e0, 0x001f, 0);
 #else
 	if(mode & SCRNMODE_ROTATEMASK) {
-		s_window = SDL_CreateWindow(app_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scrnmng.height, scrnmng.width, 0);
+		s_window = SDL_CreateWindow(app_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scrnmng.height*scrnmng.scale, scrnmng.width*scrnmng.scale, SDL_WINDOW_ALLOW_HIGHDPI);
 	} else {
-		s_window = SDL_CreateWindow(app_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scrnmng.width, scrnmng.height, 0);
+		s_window = SDL_CreateWindow(app_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scrnmng.width*scrnmng.scale, scrnmng.height*scrnmng.scale, SDL_WINDOW_ALLOW_HIGHDPI);
 	}
+	SDL_SetWindowResizable(s_window, SDL_TRUE);
 	s_renderer = SDL_CreateRenderer(s_window, -1, 0);
 #endif
 #if SDL_MAJOR_VERSION != 1
@@ -233,9 +249,9 @@ void scrnmng_setwidth(int posx, int width) {
 	SDL_DestroyTexture(s_texture);
 
 	if(scrnmode & SCRNMODE_ROTATEMASK) {
-		SDL_SetWindowSize(s_window, scrnmng.height, width);
+		SDL_SetWindowSize(s_window, scrnmng.height*scrnmng.scale, width*scrnmng.scale);
 	} else {
-		SDL_SetWindowSize(s_window, width, scrnmng.height);
+		SDL_SetWindowSize(s_window, width*scrnmng.scale, scrnmng.height*scrnmng.scale);
 	}
 	if(scrnmode & SCRNMODE_ROTATEMASK) {
 		SDL_RenderSetLogicalSize(s_renderer, scrnmng.height, width);
@@ -298,9 +314,9 @@ void scrnmng_setheight(int posy, int height) {
 	SDL_DestroyTexture(s_texture);
 
 	if(scrnmode & SCRNMODE_ROTATEMASK) {
-		SDL_SetWindowSize(s_window, height, scrnmng.width);
+		SDL_SetWindowSize(s_window, height*scrnmng.scale, scrnmng.width*scrnmng.scale);
 	} else {
-		SDL_SetWindowSize(s_window, scrnmng.width, height);
+		SDL_SetWindowSize(s_window, scrnmng.width*scrnmng.scale, height*scrnmng.scale);
 	}
 	if(scrnmode & SCRNMODE_ROTATEMASK) {
 		SDL_RenderSetLogicalSize(s_renderer, height, scrnmng.width);
@@ -309,6 +325,8 @@ void scrnmng_setheight(int posy, int height) {
 	}
 #if defined(__OPENDINGUX__) && !defined(OPENDINGUX_VGA)
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+#else
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 #endif
 	switch(scrnmng.bpp) {
 	case 16:

@@ -215,11 +215,13 @@ changescreen(UINT8 newmode)
 		renewal |= (change & SCRNMODE_HIGHCOLOR);
 	} else {
 		renewal |= (change & SCRNMODE_ROTATEMASK);
+		renewal |= (change & SCRNMODE_SIZEMASK);
 	}
 	if (renewal) {
 		if(menuvram) {
 			menubase_close();
 		}
+		mousemng_showcursor();
 		changescreeninit = 1;
 		soundmng_stop();
 		scrnmng_destroy();
@@ -233,6 +235,7 @@ changescreen(UINT8 newmode)
 			}
 		}
 		sysmenu_create();
+		mousemng_hidecursor();
 		changescreeninit = 0;
 		scrndraw_redraw();
 		soundmng_play();
