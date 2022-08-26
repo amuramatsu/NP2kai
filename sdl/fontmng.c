@@ -234,6 +234,7 @@ void *fontmng_create(int size, UINT type, const char *fontface)
 	ret->fonttype = type;
 
 #if defined(SUPPORT_SDL_TTF)
+	ret->fontsize = TTF_FontLineSkip(ttf_font);
 	ret->ttf_font = ttf_font;
 	ret->ptsize = ptsize;
 	ret->fontalign = fontalign;
@@ -362,7 +363,7 @@ static void TTFSetFontHeader(FNTMNG _this, FNTDAT fdat, const SDL_Surface *s)
 	if (s)
 	{
 		width = MIN(s->w, _this->ptsize);
-		height = MIN(s->h, _this->ptsize);
+		height = MIN(s->h, TTF_FontLineSkip(_this->ttf_font));
 	}
 	else
 	{
@@ -473,41 +474,24 @@ static void TTFGetFont1(FNTMNG _this, FNTDAT fdat, UINT16 c)
 		dst = (UINT8 *)(fdat + 1);
 		if (_this->fonttype & FDAT_ALIAS)
 		{
-#if !defined(_WINDOWS)
-			TTF_GlyphMetrics(_this->ttf_font,s,&minx,NULL,NULL,&maxy,&advance);
-#endif
 			for (y = 0; y < fdat->height; y++)
 			{
 				for (x = 0; x < fdat->width; x++)
 				{
-#if !defined(_WINDOWS)
-					depth = TTFGetPixelDepth(s, (x-minx)*2+0, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+0);
-					depth += TTFGetPixelDepth(s, (x-minx)*2+1, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+0);
-					depth += TTFGetPixelDepth(s, (x-minx)*2+0, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+1);
-					depth += TTFGetPixelDepth(s, (x-minx)*2+1, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+1);
-#else
 					depth = TTFGetPixelDepth(s, x*2+0, y*2+0);
 					depth += TTFGetPixelDepth(s, x*2+1, y*2+0);
 					depth += TTFGetPixelDepth(s, x*2+0, y*2+1);
 					depth += TTFGetPixelDepth(s, x*2+1, y*2+1);
-#endif
 				}
 			}
 		}
 		else
 		{
-#if !defined(_WINDOWS)
-			TTF_GlyphMetrics(_this->ttf_font,s,&minx,NULL,NULL,&maxy,&advance);
-#endif
 			for (y = 0; y < fdat->height; y++)
 			{
 				for (x = 0; x < fdat->width; x++)
 				{
-#if !defined(_WINDOWS)
-					*dst++ = TTFGetPixelDepth(s, x-minx, (y+(TTF_FontAscent(_this->ttf_font)-maxy)));
-#else
 					*dst++ = TTFGetPixelDepth(s, x, y);
-#endif
 				}
 			}
 		}
