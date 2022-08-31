@@ -19,7 +19,7 @@
 #if defined(SUPPORT_VSTi)
 #include "cmmidioutvst.h"
 #endif	// defined(SUPPORT_VSTi)
-#include "keydisp.h"
+#include "generic/keydisp.h"
 
 #define MIDIOUTS(a, b, c)	(((c) << 16) + (b << 8) + (a))
 #define MIDIOUTS2(a)		(*(UINT16 *)(a))

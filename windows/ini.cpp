@@ -4,8 +4,8 @@
  */
 
 #include "compiler.h"
-#include "strres.h"
-#include "profile.h"
+#include "common/strres.h"
+#include "common/profile.h"
 #include "np2.h"
 #include "np2arg.h"
 #include "dosio.h"
