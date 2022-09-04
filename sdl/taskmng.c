@@ -289,8 +289,10 @@ BOOL taskmng_sleep(UINT32 tick) {
 #if defined(EMSCRIPTEN) && !defined(__LIBRETRO__)
 //		emscripten_sleep_with_yield(1);
 		emscripten_sleep(1);
-#else
+#elif defined(SUPPORT_NP2_THREAD)
 		NP2_Sleep_ms(1);
+#else
+		SDL_Delay(1);
 #endif
 	}
 	return(task_avail);
