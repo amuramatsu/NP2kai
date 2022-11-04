@@ -137,13 +137,14 @@ void scrnres_writeini()
 void scrnmng_setwindowsize(HWND hWnd, int width, int height)
 {
 	RECT workrc;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &workrc, 0);
 	const int scx = GetSystemMetrics(SM_CXSCREEN);
 	const int scy = GetSystemMetrics(SM_CYSCREEN);
 	
-	// マルチモニタ暫定対応 ver0.86 rev30
-	workrc.right = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-	workrc.bottom = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	// マルチモニタ対応
+	workrc.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	workrc.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	workrc.right = GetSystemMetrics(SM_CXVIRTUALSCREEN) + workrc.left;
+	workrc.bottom = GetSystemMetrics(SM_CYVIRTUALSCREEN) + workrc.top;
 
 	UINT cnt = 2;
 	do
