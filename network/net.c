@@ -109,8 +109,8 @@ static HANDLE	np2net_hThreadW = NULL; // Write用スレッド
 // for Linux
 static int	np2net_hTap = -1; // TAPデバイスの読み書きハンドル
 static int			np2net_hThreadE = 0; // Thread Running Flag
-static pthread_t	np2net_hThreadR = NULL; // Read用スレッド
-static pthread_t	np2net_hThreadW = NULL; // Write用スレッド
+static pthread_t	np2net_hThreadR = 0; // Read用スレッド
+static pthread_t	np2net_hThreadW = 0; // Write用スレッド
 #endif // defined(_WINDOWS)
 
 static UINT8	np2net_membuf[NET_ARYLEN][NET_BUFLEN]; // 送信用バッファ
@@ -481,8 +481,8 @@ static void np2net_closeTAP(){
 			pthread_join(np2net_hThreadW , NULL);
 			np2net_membuf_readpos = np2net_membuf_writepos;
 			np2net_hThreadexit = 0;
-			np2net_hThreadR = NULL;
-			np2net_hThreadW = NULL;
+			np2net_hThreadR = 0;
+			np2net_hThreadW = 0;
 			np2net_hThreadE = 0;
 		}
         close(np2net_hTap);
