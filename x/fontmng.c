@@ -458,33 +458,6 @@ static void TTFGetFont1(FNTMNG _this, FNTDAT fdat, UINT16 c)
 	if (s)
 	{
 		TTFSetFontHeader(_this, fdat, s);
-		dst = (UINT8 *)(fdat + 1);
-		if (_this->fonttype & FDAT_ALIAS)
-		{
-			TTF_GlyphMetrics(_this->ttf_font,s,&minx,NULL,NULL,&maxy,&advance);
-			for (y = 0; y < fdat->height; y++)
-			{
-				for (x = 0; x < fdat->width; x++)
-				{
-					depth = TTFGetPixelDepth(s, (x-minx)*2+0, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+0);
-					depth += TTFGetPixelDepth(s, (x-minx)*2+1, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+0);
-					depth += TTFGetPixelDepth(s, (x-minx)*2+0, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+1);
-					depth += TTFGetPixelDepth(s, (x-minx)*2+1, (y+(TTF_FontAscent(_this->ttf_font)-maxy))*2+1);
-					*dst++ = (UINT8)((depth + 2) / 4);
-				}
-			}
-		}
-		else
-		{
-			TTF_GlyphMetrics(_this->ttf_font,s,&minx,NULL,NULL,&maxy,&advance);
-			for (y = 0; y < fdat->height; y++)
-			{
-				for (x = 0; x < fdat->width; x++)
-				{
-					*dst++ = TTFGetPixelDepth(s, x-minx, (y+(TTF_FontAscent(_this->ttf_font)-maxy)));
-				}
-			}
-		}
 		SDL_FreeSurface(s);
 	}
 	else
