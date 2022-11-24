@@ -14,6 +14,9 @@
 BOOL nvl_check();
 #endif
 
+extern char fddfolder[MAX_PATH];
+extern char hddfolder[MAX_PATH];
+
 enum {
 	DID_FOLDER	= DID_USER,
 	DID_PARENT,
@@ -409,10 +412,10 @@ static int dlgcmd(int msg, MENUID id, long param) {
 
 #if defined(__LIBRETRO__) || defined(EMSCRIPTEN)
 static BOOL selectfile(const FSELPRM *prm, OEMCHAR *path, int size, 
-														const OEMCHAR *def,int drv) {
+					   const OEMCHAR *defpath, const OEMCHAR *def,int drv) {
 #else
 static BOOL selectfile(const FSELPRM *prm, OEMCHAR *path, int size, 
-														const OEMCHAR *def) {
+					   const OEMCHAR *defpath, const OEMCHAR *def) {
 #endif
 
 const OEMCHAR	*title;
@@ -421,6 +424,9 @@ const OEMCHAR	*title;
 	ZeroMemory(&filesel, sizeof(filesel));
 	if ((def) && (def[0])) {
 		file_cpyname(filesel.path, def, NELEMENTS(filesel.path));
+	}
+	else if ((defpath) && (defpath[0])) {
+		file_cpyname(filesel.path, defpath,	NELEMENTS(filesel.path));
 	}
 	else {
 		file_cpyname(filesel.path, file_getcd(str_null),
@@ -481,10 +487,12 @@ void filesel_fdd(REG8 drv) {
 
 	if (drv < 4) {
 #if defined(__LIBRETRO__) || defined(EMSCRIPTEN)
-		if (selectfile(&fddprm, path, NELEMENTS(path), fdd_diskname(drv),drv)) {
+		if (selectfile(&fddprm, path, NELEMENTS(path), fddfolder, fdd_diskname(drv),drv)) {
 #else
-		if (selectfile(&fddprm, path, NELEMENTS(path), fdd_diskname(drv))) {
+		if (selectfile(&fddprm, path, NELEMENTS(path), fddfolder, fdd_diskname(drv))) {
 #endif
+			file_cpyname(fddfolder, path, NELEMENTS(fddfolder));
+			file_cutname(fddfolder);
 			diskdrv_setfdd(drv, path, 0);
 		}
 	}
@@ -527,10 +535,12 @@ const FSELPRM	*prm;
 	}
 #endif
 #if defined(__LIBRETRO__) || defined(EMSCRIPTEN)
-	if ((prm) && (selectfile(prm, path, NELEMENTS(path), p,drv+0xff))) {
+	if ((prm) && (selectfile(prm, path, NELEMENTS(path), hddfolder, p,drv+0xff))) {
 #else
-	if ((prm) && (selectfile(prm, path, NELEMENTS(path), p))) {
+	if ((prm) && (selectfile(prm, path, NELEMENTS(path), hddfolder, p))) {
 #endif
+		file_cpyname(hddfolder, path, NELEMENTS(hddfolder));
+		file_cutname(hddfolder);
 		diskdrv_setsxsi(drv, path);
 	}
 }

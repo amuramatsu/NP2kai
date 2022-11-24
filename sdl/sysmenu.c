@@ -192,6 +192,7 @@ static void sys_cmd(MENUID id) {
 
 		case MID_FDD1OPEN:
 			filesel_fdd(0);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_FDD1EJECT:
@@ -200,6 +201,7 @@ static void sys_cmd(MENUID id) {
 
 		case MID_FDD2OPEN:
 			filesel_fdd(1);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_FDD2EJECT:
@@ -208,6 +210,7 @@ static void sys_cmd(MENUID id) {
 
 		case MID_FDD3OPEN:
 			filesel_fdd(2);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_FDD3EJECT:
@@ -216,6 +219,7 @@ static void sys_cmd(MENUID id) {
 
 		case MID_FDD4OPEN:
 			filesel_fdd(3);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_FDD4EJECT:
@@ -225,75 +229,93 @@ static void sys_cmd(MENUID id) {
 #if defined(SUPPORT_IDEIO)
 		case MID_IDE1OPEN:
 			filesel_hdd(0x00);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_IDE1EJECT:
 			diskdrv_setsxsi(0x00, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_IDE2OPEN:
 			filesel_hdd(0x01);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_IDE2EJECT:
 			diskdrv_setsxsi(0x01, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_IDECDOPEN:
 			filesel_hdd(0x02);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_IDECDEJECT:
 			diskdrv_setsxsi(0x02, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 #else
 		case MID_SASI1OPEN:
 			filesel_hdd(0x00);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SASI1EJECT:
 			diskdrv_setsxsi(0x00, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SASI2OPEN:
 			filesel_hdd(0x01);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SASI2EJECT:
 			diskdrv_setsxsi(0x01, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 #endif
 #if defined(SUPPORT_SCSI)
 		case MID_SCSI0OPEN:
 			filesel_hdd(0x20);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI0EJECT:
 			diskdrv_setsxsi(0x20, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI1OPEN:
 			filesel_hdd(0x21);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI1EJECT:
 			diskdrv_setsxsi(0x21, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI2OPEN:
 			filesel_hdd(0x22);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI2EJECT:
 			diskdrv_setsxsi(0x22, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI3OPEN:
 			filesel_hdd(0x23);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case MID_SCSI3EJECT:
 			diskdrv_setsxsi(0x23, NULL);
+			update |= SYS_UPDATECFG;
 			break;
 #endif
 		case MID_SIZEx1:
