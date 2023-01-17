@@ -787,25 +787,25 @@ static UINT8 getKey(SDL_Scancode key) {
   }
 
   if(np2oscfg.KEYBOARD == KEY_US_MAC) {
-    // RCTRL    -> None
-    // CAPSLOCK -> Ctrl
+    // RCTRL    -> Ctrl
+    // CAPSLOCK -> None
     // LALT     -> GRPH
 #if SDL_MAJOR_VERSION == 1
-    if(key == SDLK_RCTRL) {
+    if(key == SDLK_CAPSLOCK) {
       return NC;
     }
-    if(key == SDLK_CAPSLOCK) {
+    if(key == SDLK_RCTRL) {
       key = SDLK_LCTRL;
-    } else if (key == SDLK_LALT) {
+    } else if(key == SDLK_LALT) {
       key = SDL_SCANCODE_RCTRL;
     }
 #else
-    if(key == SDL_SCANCODE_RCTRL) {
+    if(key == SDL_SCANCODE_CAPSLOCK) {
       return NC;
     }
-    if(key == SDL_SCANCODE_CAPSLOCK) {
+    if(key == SDL_SCANCODE_RCTRL) {
       key = SDL_SCANCODE_LCTRL;
-    } else if (key == SDL_SCANCODE_LALT) {
+    } else if(key == SDL_SCANCODE_LALT) {
       key = SDL_SCANCODE_RCTRL;
     }
 #endif
