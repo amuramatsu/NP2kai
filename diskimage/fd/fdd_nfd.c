@@ -378,6 +378,10 @@ BRESULT fdd_read_nfd(FDDFILE fdd) {
 		}
 		file_close(hdl);
 	}
+	else {
+		fddlasterror = 0xc0;
+		return(FAILURE);
+	}
 
 	fdc.bufcnt = secsize;
 //	変更(kaiD)
@@ -807,6 +811,11 @@ BRESULT fdd_read_nfd1(FDDFILE fdd) {
 			return(FAILURE);
 		}
 	}
+	else {
+		fddlasterror = 0xc0;
+		file_close(hdl);
+		return(FAILURE);
+	}
 	file_close(hdl);
 
 	//	イメージ内情報のREAD DATA RESULTを反映
@@ -885,6 +894,11 @@ BRESULT fdd_write_nfd1(FDDFILE fdd) {
 			fddlasterror = 0xc0;
 			return(FAILURE);
 		}
+	}
+	else {
+		fddlasterror = 0xc0;
+		file_close(hdl);
+		return(FAILURE);
 	}
 
 	file_close(hdl);

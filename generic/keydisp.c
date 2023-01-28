@@ -428,6 +428,9 @@ void keydisp_opnakeyon(const UINT8 *pcRegister, REG8 cData)
 			{
 				nChannelNum--;
 			}
+			if (nChannelNum >= NELEMENTS(k->ch)) {
+				continue;
+			}
 			if ((nChannelNum < k->cFMChannels) && (k->ch[nChannelNum].cKeyOn != cData))
 			{
 				if (cData)
@@ -943,9 +946,9 @@ void keydisp_midi(const UINT8 *cmd)
 			}
 			break;
 
-		case 0xfe:
-			keyalloff(&s_keydisp);
-			break;
+	}
+	if (cmd[0] == 0xfe) {
+		keyalloff(&s_keydisp);
 	}
 }
 
