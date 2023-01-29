@@ -260,6 +260,14 @@ typedef enum {
 	ROUND_Chop    = 3
 } FP_RND;
 
+#ifdef SUPPORT_FPU_SOFTFLOAT
+typedef enum {
+	PRECISION_24 = 0,
+	PRECISION_53 = 2,
+	PRECISION_64 = 3
+} FP_PC;
+#endif
+
 typedef union {
 #ifdef SUPPORT_FPU_SOFTFLOAT
     sw_extFloat80_t d;
@@ -320,6 +328,9 @@ typedef struct {
 	FP_REG		reg[FPU_REG_NUM+1]; // R0 to R7 + α
 	FP_TAG		tag[FPU_REG_NUM+1]; // R0 to R7 + α
 	FP_RND		round;
+#ifdef SUPPORT_FPU_SOFTFLOAT
+	FP_PC       precision;
+#endif
 #ifdef SUPPORT_FPU_DOSBOX2 // XXX: 整数間だけ正確にするため用
 	FP_INT_REG	int_reg[FPU_REG_NUM+1];
 	UINT8		int_regvalid[FPU_REG_NUM+1];
