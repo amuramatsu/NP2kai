@@ -42,7 +42,7 @@ static const UINT clk20_128[] = {
 
 
 	PCM86CFG	pcm86cfg;
-
+	
 static UINT32 bufundercounter = 0;
 
 void pcm86gen_initialize(UINT rate)
@@ -69,7 +69,7 @@ void pcm86_reset(void)
 	pcm86->stepclock /= 44100;
 	pcm86->stepclock *= pccore.multiple;
 	pcm86->rescue = (PCM86_RESCUE * 32) << 2;
-	pcm86->irq = 0xff;
+	pcm86->irq = 0xff;	
 	pcm86_setpcmrate(pcm86->fifo); // デフォルト値をセット
 }
 

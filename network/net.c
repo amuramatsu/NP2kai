@@ -425,7 +425,7 @@ static void* np2net_ThreadFuncR(void *thdata) {
 	UINT8 np2net_Buf[NET_BUFLEN];
 
 	while (!np2net_hThreadexit) {
-		if ((dwLen = read(np2net_hTap, np2net_Buf, sizeof(np2net_Buf))) < 0) {
+		if ((dwLen = read(np2net_hTap, np2net_Buf, NET_BUFLEN)) < 0) {
 			// 読み取りエラー
 			printf("TAP-Win32: ReadFile err");
 			sched_yield();

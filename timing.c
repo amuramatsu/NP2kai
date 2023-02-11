@@ -100,4 +100,3 @@ double timing_getcount_raw(void) {
 	ret = timing.cnt + ((double)fraction / (1 << MSSHIFT));
 	return(ret);
 }
-

@@ -764,7 +764,7 @@ void MMX_PCMPEQW(void)
 		srcregbuf.d[0] = cpu_vmemoryread_d(CPU_INST_SEGREG_INDEX, maddr);
 		srcregbuf.d[1] = cpu_vmemoryread_d(CPU_INST_SEGREG_INDEX, maddr + 4);
 		srcreg = srcregbuf.w;
-	}
+}
 	dstreg = (UINT16*)(&(FPU_STAT.reg[idx]));
 	
 	for(i=0;i<4;i++){

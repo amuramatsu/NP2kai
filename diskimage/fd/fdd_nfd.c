@@ -463,6 +463,10 @@ BRESULT fdd_write_nfd(FDDFILE fdd) {
 		}
 		file_close(hdl);
 	}
+	else {
+		fddlasterror = 0xc0;
+		return(FAILURE);
+	}
 
 	fdc.bufcnt = secsize;
 	fddlasterror = 0x00;

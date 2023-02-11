@@ -945,7 +945,6 @@ void keydisp_midi(const UINT8 *cmd)
 				chkeyoff(&s_keydisp, cmd[0] & 0x0f);
 			}
 			break;
-
 	}
 	if (cmd[0] == 0xfe) {
 		keyalloff(&s_keydisp);
