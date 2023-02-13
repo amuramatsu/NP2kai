@@ -322,7 +322,7 @@ static REG8 fdd_operate(REG8 type, REG8 rpm, BOOL ndensity) {
 		fdc.crcn = 0;
 	}
 	if ((CPU_AH & 0x0f) != 0x03) {
-		if (type & 2) {
+		if (type & 1) {
 			if (pic.pi[1].imr & PIC_INT42) {
 				return(0x40);
 			}
@@ -766,7 +766,7 @@ static UINT16 boot_fd1(REG8 type, REG8 rpm) {
 	return(bootseg);
 }
 
-static UINT16 boot_fd(REG8 drv, REG8 type) {
+static UINT16 boot_fd(REG8 drv, REG8 boot_2hd, REG8 boot_2dd) {
 
 	UINT16	bootseg;
 
@@ -779,7 +779,7 @@ static UINT16 boot_fd(REG8 drv, REG8 type) {
 	}
 
 	// 2HD
-	if (type & 1) {
+	if (boot_2hd) {
 		fdc.chgreg |= 0x01;
 		// 1.25MB
 		bootseg = boot_fd1(3, 0);
@@ -796,7 +796,7 @@ static UINT16 boot_fd(REG8 drv, REG8 type) {
 			return(bootseg);
 		}
 	}
-	if (type & 2) {
+	if (boot_2dd) {
 		fdc.chgreg &= ~0x01;
 		// 2DD
 		bootseg = boot_fd1(0, 0);
@@ -840,7 +840,7 @@ REG16 bootstrapload(void) {
 		case 0x20:					// 640KB FDD
 			for (i=0; (i<4) && (!bootseg); i++) {
 				if (fdd_diskready(i)) {
-					bootseg = boot_fd(i, 2);
+					bootseg = boot_fd(i, 0, 1);
 				}
 			}
 			break;
@@ -848,7 +848,7 @@ REG16 bootstrapload(void) {
 		case 0x40:					// 1.2MB FDD
 			for (i=0; (i<4) && (!bootseg); i++) {
 				if (fdd_diskready(i)) {
-					bootseg = boot_fd(i, 1);
+					bootseg = boot_fd(i, 1, 0);
 				}
 			}
 			break;
@@ -875,7 +875,7 @@ REG16 bootstrapload(void) {
 	}
 	for (i=0; (i<4) && (!bootseg); i++) {
 		if (fdd_diskready(i)) {
-			bootseg = boot_fd(i, 3);
+			bootseg = boot_fd(i, 1, 1);
 		}
 	}
 	if(pccore.hddif & PCHDD_IDE){
@@ -952,36 +952,40 @@ void bios0x1b(void) {
 #endif
 
 	switch(CPU_AL & 0xf0) {
-		case 0x90:
+		case 0x90: // 2HD FD on 2HD I/F
 			ret_ah = fdd_operate(3, 0, FALSE);
 			break;
 
-		case 0x30:
-		case 0xb0:
+		case 0x30: // 1.44MB FD on 2HD I/F
+		case 0xb0: // 1.44MB FD on 2HD I/F
 			ret_ah = fdd_operate(3, 1, FALSE);
 			break;
 
-		case 0x10:
+		case 0x10: // 2DD FD on 2HD I/F
 			ret_ah = fdd_operate(1, 0, FALSE);
 			break;
 
-		case 0x70:
-		case 0xf0:
+		case 0x70: // 2DD FD on 2DD I/F
 			ret_ah = fdd_operate(0, 0, FALSE);
 			break;
 
-		case 0x50:
-			ret_ah = fdd_operate(0, 0, TRUE);
+		case 0xf0: // 2HD FD on 2DD I/F
+			ret_ah = fdd_operate(2, 0, FALSE);
 			break;
 
-		case 0x00:
-		case 0x80:
+		case 0x50: // 2D FDD
+			//ret_ah = fdd_operate(0, 0, TRUE);
+			ret_ah = 0x40;
+			break;
+
+		case 0x00: // SASI/IDE LBA
+		case 0x80: // SASI/IDE CHS
 			ret_ah = sasibios_operate();
 			break;
 
 #if defined(SUPPORT_SCSI)
-		case 0x20:
-		case 0xa0:
+		case 0x20: // SCSI LBA
+		case 0xa0: // SCSI CHS
 			ret_ah = scsibios_operate();
 			break;
 #endif
