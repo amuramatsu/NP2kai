@@ -6,8 +6,6 @@
 
 #include	"diskimage/cddfile.h"
 
-#define	LOADINTELQWORD(a)		(*((UINT64 *)(a)))
-
 static const OEMCHAR str_mdf[] = OEMTEXT(".mdf");
 
 static const UINT8 mds_sig[16] =
@@ -222,6 +220,7 @@ BRESULT openmds(SXSIDEV sxsi, const OEMCHAR *fname) {
 		//	MDS_TRACKMODE_MODE1
 		//	のみ、認識対象
 		if (MDS_TB.mode == MDS_TRACKMODE_AUDIO || MDS_TB.mode == MDS_TRACKMODE_MODE1) {
+			unsigned char *hptr;    
 			trk[index].adr_ctl		= MDS_TB.adr_ctl;
 			trk[index].point		= MDS_TB.point;
 			trk[index].pos			= ((MDS_TB.min * 60) + MDS_TB.sec) * 75 + MDS_TB.frame;
@@ -230,7 +229,9 @@ BRESULT openmds(SXSIDEV sxsi, const OEMCHAR *fname) {
 			trk[index].sector_size	= LOADINTELWORD(&MDS_TB.sector_size);
 
 			trk[index].start_sector	= LOADINTELDWORD(&MDS_TB.start_sector);
-			trk[index].start_offset	= LOADINTELQWORD(&MDS_TB.start_offset);
+			trk[index].start_offset	= LOADINTELDWORD(&MDS_TB.start_offset);
+			hptr = (unsigned char *)(&MDS_TB.start_offset) + 4;
+			trk[index].start_offset	+= ((UINT64)LOADINTELDWORD(hptr)) << 32;
 
 			ex_offset[index] = LOADINTELDWORD(&MDS_TB.extra_offset);
 

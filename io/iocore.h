@@ -3,8 +3,8 @@
 
 typedef void (*FNIORESET)(const NP2CFG *pConfig);
 typedef void (*FNIOBIND)(void);
-typedef	void (IOOUTCALL *IOOUT)(UINT port, UINT val);
-typedef	UINT (IOINPCALL *IOINP)(UINT port);
+typedef	void (IOOUTCALL *IOOUT)(UINT port, REG8 val);
+typedef	REG8 (IOINPCALL *IOINP)(UINT port);
 
 #include	"lsidef.h"
 
