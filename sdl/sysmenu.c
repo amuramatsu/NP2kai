@@ -318,6 +318,15 @@ static void sys_cmd(MENUID id) {
 			update |= SYS_UPDATECFG;
 			break;
 #endif
+#if SDL_MAJOR_VERSION != 1
+		case MID_FULLSCREEN:
+			changescreen(scrnmode | SCRNMODE_FULLSCREEN);
+			break;
+
+		case MID_WINDOW:
+			changescreen(scrnmode & ~SCRNMODE_FULLSCREEN);
+			break;
+#endif
 		case MID_SIZEx1:
 			changescreen((scrnmode & ~SCRNMODE_SIZEMASK) | SCRNMODE_SIZEx1);
 			break;
@@ -329,7 +338,6 @@ static void sys_cmd(MENUID id) {
 		case MID_SIZEx2:
 			changescreen((scrnmode & ~SCRNMODE_SIZEMASK) | SCRNMODE_SIZEx2);
 			break;
-
 		case MID_ROLNORMAL:
 			changescreen((scrnmode & ~SCRNMODE_ROTATEMASK) | 0);
 			break;
@@ -1079,6 +1087,8 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_setcheck(MID_SIZEx1,    ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1));
 	menusys_setcheck(MID_SIZEx1_5,  ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1_5));
 	menusys_setcheck(MID_SIZEx2,    ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx2));
+	menusys_setcheck(MID_FULLSCREEN, ((scrnmode & SCRNMODE_FULLSCREEN) == 1));
+	menusys_setcheck(MID_WINDOW, ((scrnmode & SCRNMODE_FULLSCREEN) == 0));
 	menusys_setcheck(MID_ROLNORMAL, ((scrnmode & SCRNMODE_ROTATEMASK) == 0));
 	menusys_setcheck(MID_ROLLEFT,   ((scrnmode & SCRNMODE_ROTATEMASK) == SCRNMODE_ROTATELEFT));
 	menusys_setcheck(MID_ROLRIGHT,  ((scrnmode & SCRNMODE_ROTATEMASK) == SCRNMODE_ROTATERIGHT));

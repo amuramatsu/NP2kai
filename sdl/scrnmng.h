@@ -20,6 +20,23 @@ typedef struct {
 	int	extend;
 } SCRNSURF;
 
+typedef struct {
+	BOOL	enable;
+	int		width;
+	int		height;
+	int		bpp;
+	double	scale;
+	int		flag;
+#if defined(__LIBRETRO__)
+	void*	pc98surf;
+	void*	dispsurf;
+#else	/* __LIBRETRO__ */
+	SDL_Surface* pc98surf;
+	SDL_Surface* dispsurf;
+#endif	/* __LIBRETRO__ */
+	VRAMHDL vram;
+} SCRNMNG;
+
 enum {
 	SCRNMODE_FULLSCREEN	= 0x01,
 	SCRNMODE_HIGHCOLOR	= 0x02,
@@ -44,6 +61,8 @@ enum {
 extern "C" {
 #endif
 
+extern	SCRNMNG		scrnmng;
+
 void scrnmng_getsize(int* pw, int* ph);
 void scrnmng_setwidth(int posx, int width);
 #define scrnmng_setextend(e)
@@ -51,7 +70,7 @@ void scrnmng_setheight(int posy, int height);
 const SCRNSURF *scrnmng_surflock(void);
 void scrnmng_surfunlock(const SCRNSURF *surf);
 
-#define	scrnmng_isfullscreen()	(0)
+#define	scrnmng_isfullscreen()	(scrnmng.flag & SCRNFLAG_FULLSCREEN)
 #define	scrnmng_haveextend()	(0)
 #define	scrnmng_getbpp()		(16)
 #define	scrnmng_allflash()		
