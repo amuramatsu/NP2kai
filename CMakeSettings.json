@@ -13,16 +13,17 @@
       "variables": [
         {
           "name": "CMAKE_TOOLCHAIN_FILE",
-          "value": "C:\\dev\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+          "value": "C:\\usr\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+          "type": "STRING"
         },
         {
           "name": "BUILD_I286",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
           "name": "USE_SDL2",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         }
       ]
@@ -40,16 +41,17 @@
       "variables": [
         {
           "name": "CMAKE_TOOLCHAIN_FILE",
-          "value": "C:\\dev\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+          "value": "C:\\usr\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+          "type": "STRING"
         },
         {
           "name": "BUILD_I286",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
           "name": "USE_SDL2",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         }
       ]
