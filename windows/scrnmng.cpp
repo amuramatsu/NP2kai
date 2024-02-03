@@ -139,8 +139,6 @@ void scrnres_writeini()
 void scrnmng_setwindowsize(HWND hWnd, int width, int height)
 {
 	RECT workrc;
-	const int scx = GetSystemMetrics(SM_CXSCREEN);
-	const int scy = GetSystemMetrics(SM_CYSCREEN);
 	
 	// マルチモニタ対応
 	workrc.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -168,9 +166,18 @@ void scrnmng_setwindowsize(HWND hWnd, int width, int height)
 		cy += rectwindow.bottom - rectwindow.top;
 		cy -= rectclient.bottom - rectclient.top;
 
+		// マルチモニタ対応
+		POINT pt = { winx, winy };
+		HMONITOR hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+		MONITORINFOEX monInfoEx;
+		monInfoEx.cbSize = sizeof(monInfoEx);
+		GetMonitorInfo(hMon, &monInfoEx);
+		int scx = monInfoEx.rcMonitor.right - monInfoEx.rcMonitor.left;
+		int scy = monInfoEx.rcMonitor.bottom - monInfoEx.rcMonitor.top;
+		
 		if (scx < cx)
 		{
-			winx = (scx - cx) / 2;
+			winx = (scx - cx) / 2 + monInfoEx.rcWork.left;
 		}
 		else
 		{
@@ -185,7 +192,7 @@ void scrnmng_setwindowsize(HWND hWnd, int width, int height)
 		}
 		if (scy < cy)
 		{
-			winy = (scy - cy) / 2;
+			winy = (scy - cy) / 2 + monInfoEx.rcWork.top;
 		}
 		else
 		{

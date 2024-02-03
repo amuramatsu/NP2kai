@@ -705,8 +705,8 @@ BRESULT scrnmngDD_create(UINT8 scrnmode) {
 #ifdef SUPPORT_WAB
 		if(!np2wabwnd.multiwindow){
 			if((FSCRNCFG_fscrnmod & FSCRNMOD_SAMERES) || np2_multithread_Enabled()){
-				int maxx = GetSystemMetrics(SM_CXSCREEN);
-				int maxy = GetSystemMetrics(SM_CYSCREEN);
+				int maxx = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+				int maxy = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 				ddsd.dwWidth = (WAB_MAX_WIDTH > maxx ? maxx : WAB_MAX_WIDTH);
 				ddsd.dwHeight = (WAB_MAX_HEIGHT > maxy ? maxy : WAB_MAX_HEIGHT);
 			}else{
