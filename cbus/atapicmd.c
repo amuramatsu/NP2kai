@@ -207,7 +207,7 @@ void atapicmd_a0(IDEDRV drv) {
 			drv->asc = ATAPI_ASC_MEDIUM_NOT_PRESENT;
 			if(drv->sxsidrv==cdchange_drv && g_nevent.item[NEVENT_CDWAIT].clock > 0){
 				if(mediachangeflag==MEDIA_CHANGE_WAIT){
-					nevent_set(NEVENT_CDWAIT, 1, cdchange_timeoutproc, NEVENT_ABSOLUTE); // OS側がCDを催促しているようなので更に急いで交換
+					nevent_set(NEVENT_CDWAIT, 500, cdchange_timeoutproc, NEVENT_ABSOLUTE); // OS側がCDを催促しているようなので更に急いで交換
 				}else if(mediachangeflag==0){
 					//nevent_setbyms(NEVENT_CDWAIT, 1000, cdchange_timeoutproc, NEVENT_ABSOLUTE); // OS側がCDが無いと認識したようなので急いで交換
 				}
@@ -565,7 +565,7 @@ void atapi_dataread_asyncwait(int wait) {
 		case 1:
 			ATAPI_SET_SENSE_KEY(drv, ATAPI_SK_ILLEGAL_REQUEST);
 			drv->asc = 0x21;
-			sxsi->cdflag_ecc = (sxsi->cdflag_ecc & ~CD_ECC_BITMASK) | CD_ECC_NOERROR;
+			sxsi->cdflag_ecc = (sxsi->cdflag_ecc & ~CD_ECC_BITMASK) | CD_ECC_NOERROR;
 			senderror(drv);
 			TRACEOUT(("atapicmd: read error at sector %d", drv->sector));
 			break;
