@@ -637,6 +637,14 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("IDERWAIT"), INITYPE_UINT32,	&np2cfg.iderwait,	0},
 	{OEMTEXT("IDEWWAIT"), INITYPE_UINT32,	&np2cfg.idewwait,	0},
 	{OEMTEXT("IDEMWAIT"), INITYPE_UINT32,	&np2cfg.idemwait,	0},
+	{OEMTEXT("CD_ASYNC"), INITYPE_BOOL,	&np2cfg.useasynccd,	0},
+	{OEMTEXT("CDTRAYOP"), INITYPE_BOOL,	&np2cfg.allowcdtraycmd,	0},
+	{OEMTEXT("SVCDFILE"), INITYPE_BOOL,	&np2cfg.savecdfile,	0},
+	{OEMTEXT("HD_ASYNC"), INIRO_BOOL,	&np2cfg.useasynchd,	0},
+	{OEMTEXT("CD1_FILE"), INITYPE_STR,	np2cfg.idecd[0],	MAX_PATH},
+	{OEMTEXT("CD2_FILE"), INITYPE_STR,	np2cfg.idecd[1],	MAX_PATH},
+	{OEMTEXT("CD3_FILE"), INITYPE_STR,	np2cfg.idecd[2],	MAX_PATH},
+	{OEMTEXT("CD4_FILE"), INITYPE_STR,	np2cfg.idecd[3],	MAX_PATH},
 #endif
 	{OEMTEXT("SampleHz"), INITYPE_UINT32,	&np2cfg.samplingrate,	0},
 	{OEMTEXT("Latencys"), INITYPE_UINT16,	&np2cfg.delayms,	0},
@@ -747,11 +755,15 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("GDMELOFS"), INITYPE_UINT8,	&np2cfg.gd5430melofs,	0},
 	{OEMTEXT("GANBBSEX"), INITYPE_BOOL,	&np2cfg.ga98nb_bigscrn_ex,	0},
 #endif
+#if defined(SUPPORT_VGA_MODEX)
+	{OEMTEXT("USEMODEX"), INITYPE_BOOL,	&np2cfg.usemodex,	0},
+#endif
 #if defined(SUPPORT_PCI)
 	{OEMTEXT("USE98PCI"), INITYPE_BOOL,	&np2cfg.usepci,	0},
 	{OEMTEXT("PCI_PCMC"), INITYPE_UINT8,	&np2cfg.pci_pcmc,	0},
 	{OEMTEXT("P_BIOS32"), INITYPE_BOOL,	&np2cfg.pci_bios32,	0},
 #endif
+	{OEMTEXT("MODELNUM"), INITYPE_HEX8,	&np2cfg.modelnum,	255},
 	{OEMTEXT("TIMERFIX"), INITYPE_BOOL,	&np2cfg.timerfix,	0},
 
 	{OEMTEXT("WINNTFIX"), INITYPE_BOOL,	&np2cfg.winntfix,	0},
@@ -778,6 +790,9 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("memckspd"), INITYPE_UINT8,	&np2cfg.memcheckspeed,	0},
 #endif
 	{OEMTEXT("USERAM_D"), INITYPE_BOOL,	&np2cfg.useram_d,	0},
+	{OEMTEXT("USEPEGCP"), INITYPE_BOOL,	&np2cfg.usepegcplane,	0},
+	{OEMTEXT("USECDECC"), INITYPE_BOOL,	&np2cfg.usecdecc,	0},
+	{OEMTEXT("CDDTSKIP"), INITYPE_BOOL,	&np2cfg.cddtskip,	0},
 #if defined(SUPPORT_ASYNC_CPU)
 	{OEMTEXT("ASYNCCPU"), INITYPE_BOOL,	&np2cfg.asynccpu,	0},
 #endif
