@@ -40,6 +40,30 @@ enum {
 								*(((UINT8*)(a))+1) = (UINT8)((b)>>8)
 #endif
 
+#ifndef LOADINTELQWORD
+#define	LOADINTELQWORD(a)		(((UINT64)(((UINT8*)(a))[0])) |				\
+								((UINT64)(((UINT8*)(a))[1]) << 8) |			\
+								((UINT64)(((UINT8*)(a))[2]) << 16) |		\
+								((UINT64)(((UINT8*)(a))[3]) << 24) |		\
+								((UINT64)(((UINT8*)(a))[4]) << 32) |		\
+								((UINT64)(((UINT8*)(a))[5]) << 40) |		\
+								((UINT64)(((UINT8*)(a))[6]) << 48) |		\
+								((UINT64)(((UINT8*)(a))[7]) << 56))
+#endif
+
+#ifndef STOREINTELQWORD
+#define	STOREINTELQWORD(a, b)	do {		\
+	*(((UINT8*)(a))+0) = (UINT8)((b));		\
+	*(((UINT8*)(a))+1) = (UINT8)((b)>>8);	\
+	*(((UINT8*)(a))+2) = (UINT8)((b)>>16);	\
+	*(((UINT8*)(a))+3) = (UINT8)((b)>>24);	\
+	*(((UINT8*)(a))+4) = (UINT8)((b)>>32);	\
+	*(((UINT8*)(a))+5) = (UINT8)((b)>>40);	\
+	*(((UINT8*)(a))+6) = (UINT8)((b)>>48);	\
+	*(((UINT8*)(a))+7) = (UINT8)((b)>>56);	\
+} while (0/*CONSTCOND*/)
+#endif
+
 /* Big Ending */
 
 #ifndef LOADMOTOROLAQWORD

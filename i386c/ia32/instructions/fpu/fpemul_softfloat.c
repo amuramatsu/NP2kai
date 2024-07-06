@@ -127,6 +127,45 @@ static INLINE uint8_t exception_x87_to_softfloat(UINT16 in)
 	return result;
 }
 
+static INLINE sw_extFloat80_t mem_to_extF80(const void *src)
+{
+	const unsigned char *sp = src;
+	struct extFloat80M result;
+	result.signExp = LOADINTELWORD(sp);
+	result.signif = LOADINTELQWORD(sp+2);
+	return (sw_extFloat80_t)result;
+}
+
+static INLINE sw_extFloat80_t REG80_to_extF80(REG80 src)
+{
+	struct extFloat80M result;
+	result.signExp = LOADINTELWORD(&src.w[0]);
+	result.signif = LOADINTELQWORD(&src.w[1]);
+	return (sw_extFloat80_t)result;
+}
+
+static INLINE void extF80_to_mem(const sw_extFloat80_t src, void *dst)
+{
+	const struct extFloat80M *sp = (struct extFloat80M *)&src;
+	unsigned char *dp = (unsigned char *)dst;
+	STOREINTELWORD(dp, sp->signExp);
+	STOREINTELQWORD(dp+2, sp->signif);
+}
+
+static INLINE REG80 extF80M_to_REG80(const sw_extFloat80_t *src)
+{
+	REG80 result;
+	struct extFloat80M *sp = (struct extFloat80M *)src;
+	STOREINTELWORD(&result.w[0], sp->signExp);
+	STOREINTELQWORD(&result.w[1], sp->signif);
+	return result;
+}
+
+static INLINE REG80 extF80_to_REG80(const sw_extFloat80_t src)
+{
+	return extF80M_to_REG80(&src);
+}
+
 static INLINE sw_extFloat80_t cf32_to_extF80(float Value)
 {
 	return f32_to_extF80(*(sw_float32_t*)&Value);
@@ -253,7 +292,7 @@ static void FPU_FLD_F64(UINT32 addr, UINT reg) {
 }
 
 static void FPU_FLD_F80(UINT32 addr) {
-	FPU_FLD80(addr, FPU_STAT_TOP);
+	FPU_STAT.reg[FPU_STAT_TOP].d = REG80_to_extF80(fpu_memoryread_f(addr));
 }
 
 static void FPU_FLD_I16(UINT32 addr, UINT reg) {
@@ -323,7 +362,8 @@ static void FPU_FST_F64(UINT32 addr) {
 }
 
 static void FPU_FST_F80(UINT32 addr) {
-	FPU_ST80(addr, FPU_STAT_TOP);
+	REG80 d = extF80M_to_REG80(&FPU_STAT.reg[FPU_STAT_TOP].d);
+	fpu_memorywrite_f(addr, &d);
 }
 
 static void FPU_FST_I16(UINT32 addr) {
