@@ -131,33 +131,33 @@ static INLINE sw_extFloat80_t mem_to_extF80(const void *src)
 {
 	const unsigned char *sp = src;
 	struct extFloat80M result;
-	result.signExp = LOADINTELWORD(sp);
-	result.signif = LOADINTELQWORD(sp+2);
-	return (sw_extFloat80_t)result;
+	result.signif = LOADINTELQWORD(sp);
+	result.signExp = LOADINTELWORD(sp+8);
+	return *((sw_extFloat80_t *)&result);
 }
 
 static INLINE sw_extFloat80_t REG80_to_extF80(REG80 src)
 {
 	struct extFloat80M result;
-	result.signExp = LOADINTELWORD(&src.w[0]);
-	result.signif = LOADINTELQWORD(&src.w[1]);
-	return (sw_extFloat80_t)result;
+	result.signif = LOADINTELQWORD(&src.w[0]);
+	result.signExp = LOADINTELWORD(&src.w[4]);
+	return *((sw_extFloat80_t *)&result);
 }
 
 static INLINE void extF80_to_mem(const sw_extFloat80_t src, void *dst)
 {
 	const struct extFloat80M *sp = (struct extFloat80M *)&src;
 	unsigned char *dp = (unsigned char *)dst;
-	STOREINTELWORD(dp, sp->signExp);
-	STOREINTELQWORD(dp+2, sp->signif);
+	STOREINTELQWORD(dp, sp->signif);
+	STOREINTELWORD(dp+8, sp->signExp);
 }
 
 static INLINE REG80 extF80M_to_REG80(const sw_extFloat80_t *src)
 {
 	REG80 result;
 	struct extFloat80M *sp = (struct extFloat80M *)src;
-	STOREINTELWORD(&result.w[0], sp->signExp);
-	STOREINTELQWORD(&result.w[1], sp->signif);
+	STOREINTELQWORD(&result.w[0], sp->signif);
+	STOREINTELWORD(&result.w[4], sp->signExp);
 	return result;
 }
 
