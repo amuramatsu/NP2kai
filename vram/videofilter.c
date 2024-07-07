@@ -149,7 +149,7 @@ static uint32_t RGBtoXYZ(const uint32_t u32RGB) {
 	return SETXYZ(u8X, u8Y, u8Z);
 }
 
-static uint32_t XYZtoRGB_d(uint8_t* pu8R, uint8_t* pu8G, uint8_t* pu8B, const uint8_t u8X, const uint8_t u8Y, const uint8_t u8Z) {
+static void XYZtoRGB_d(uint8_t* pu8R, uint8_t* pu8G, uint8_t* pu8B, const uint8_t u8X, const uint8_t u8Y, const uint8_t u8Z) {
 //	if(!pu8R || !pu8G || !pu8B) {
 //		return;
 //	}

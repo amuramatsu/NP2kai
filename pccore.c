@@ -1672,6 +1672,7 @@ int SetCpuTypeIndex(UINT index){
 	default:
 		return 0;
 	}
+	return 0;
 }
 #endif
 

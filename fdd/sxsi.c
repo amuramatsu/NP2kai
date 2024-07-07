@@ -517,6 +517,7 @@ BRESULT sxsi_state_save(const OEMCHAR *ext) {
 
 		sxsi++;
 	}
+	return SUCCESS;
 }
 
 static int str_get_mem_size(const OEMCHAR *str)
@@ -610,5 +611,6 @@ BRESULT sxsi_state_load(const OEMCHAR *ext)
 
 		sxsi++;
 	}
+	return SUCCESS;
 }
 

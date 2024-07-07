@@ -1548,6 +1548,7 @@ int statsave_save(const OEMCHAR *filename) {
 		milstr_ncpy(m_strStateFilename, filename, MAX_PATH);
 		g_u8ControlState = 1;
 	}
+	return 0;
 }
 
 #if defined(__LIBRETRO__)
@@ -1732,6 +1733,7 @@ int statsave_load(const OEMCHAR *filename) {
 		milstr_ncpy(m_strStateFilename, filename, MAX_PATH);
 		g_u8ControlState = 2;
 	}
+	return 0;
 }
 
 #if defined(__LIBRETRO__)
