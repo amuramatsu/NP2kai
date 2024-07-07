@@ -63,6 +63,22 @@
 
 #if 1
 #undef	TRACEOUT
+#define	TRACEOUT(s)	_TRACEOUT s
+#include <stdarg.h>
+#include <stdio.h>
+static void _TRACEOUT(const char *format, ...)
+{
+	FILE *f;
+	va_list ap;
+	f = fopen("fpu.log", "a+");
+	va_start(ap, format);
+	vfprintf(f, format, ap);
+	va_end(ap);
+	fputc('\n', f);
+	fclose(f);
+}
+#else
+#undef	TRACEOUT
 #define	TRACEOUT(s)	(void)(s)
 #endif	/* 0 */
 
@@ -1408,6 +1424,7 @@ DB2_ESC0(void)
 		FPU_FLD_F32_EA(madr);
 		EA_TREE(op);
 	}
+	fpu_dump();
 }
 
 // d9
@@ -1670,6 +1687,7 @@ DB2_ESC1(void)
 			break;
 		}
 	}
+	fpu_dump();
 }
 
 // da
@@ -1728,6 +1746,7 @@ DB2_ESC2(void)
 		FPU_FLD_I32_EA(madr);
 		EA_TREE(op);
 	}
+	fpu_dump();
 }
 
 // db
@@ -1849,6 +1868,7 @@ DB2_ESC3(void)
 			break;
 		}
 	}
+	fpu_dump();
 }
 
 // dc
@@ -1910,6 +1930,7 @@ DB2_ESC4(void)
 		FPU_FLD_F64_EA(madr);
 		EA_TREE(op);
 	}
+	fpu_dump();
 }
 
 // dd
@@ -2016,6 +2037,7 @@ DB2_ESC5(void)
 			break;
 		}
 	}
+	fpu_dump();
 }
 
 // de
@@ -2088,6 +2110,7 @@ DB2_ESC6(void)
 		FPU_FLD_I16_EA(madr);
 		EA_TREE(op);
 	}
+	fpu_dump();
 }
 
 // df
@@ -2208,5 +2231,6 @@ DB2_ESC7(void)
 			break;
 		}
 	}
+	fpu_dump();
 }
 #endif

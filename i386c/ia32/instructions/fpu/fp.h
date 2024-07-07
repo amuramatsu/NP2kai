@@ -29,7 +29,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+void fpu_dump(void);
 void fpu_initialize(void);
 
 void FPU_FWAIT(void);
