@@ -189,8 +189,8 @@ list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/fpu/fpdummy.c")
 list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/fpu/fpemul_dosbox.c")
 list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/fpu/fpemul_dosbox2.c")
 list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/fpu/fpemul_softfloat.c")
-file(GLOB NP2kai_temp "i386c/ia32/instructions/fpu/softfloat/*.c")
-list(APPEND NP2kai_ia32_sources ${NP2kai_temp})
+#file(GLOB NP2kai_temp "i386c/ia32/instructions/fpu/softfloat/*.c")
+#list(APPEND NP2kai_ia32_sources ${NP2kai_temp})
 list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/mmx/3dnow.c")
 list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/mmx/mmx.c")
 list(APPEND NP2kai_ia32_sources "i386c/ia32/instructions/sse/sse.c")
@@ -711,6 +711,12 @@ if(CMAKE_CROSSCOMPILING)
 
 endif()
 
+# softfloat as library
+file(GLOB NP2kai_temp "i386c/ia32/instructions/fpu/softfloat/*.c")
+add_library(softfloat STATIC ${NP2kai_temp})
+target_compile_definitions(softfloat PRIVATE ${NP2kai_common_definitions} ${NP2kai_ia32_definitions})
+target_include_directories(softfloat PRIVATE ${NP2kai_common_include_dirs} ${NP2kai_ia32_include_dirs})
+
 # target base
 add_library(NP2kai_bbase INTERFACE)
 target_compile_definitions(NP2kai_bbase INTERFACE ${NP2kai_common_definitions} "NP2KAI_GIT_TAG=\"${NP2kai_GIT_TAG}\"" "NP2KAI_GIT_HASH=\"${NP2kai_GIT_HASH}\"")
@@ -732,7 +738,7 @@ add_library(NP21kai_base INTERFACE)
 target_compile_definitions(NP21kai_base INTERFACE ${NP2kai_ia32_definitions})
 target_include_directories(NP21kai_base INTERFACE ${NP2kai_ia32_include_dirs})
 target_sources(NP21kai_base INTERFACE ${NP2kai_ia32_sources})
-target_link_libraries(NP21kai_base INTERFACE NP2kai_bbase)
+target_link_libraries(NP21kai_base INTERFACE NP2kai_bbase softfloat)
 
 add_library(NP21kai_HAXM_base INTERFACE)
 target_compile_definitions(NP21kai_HAXM_base INTERFACE ${NP2kai_HAXM_definitions})
