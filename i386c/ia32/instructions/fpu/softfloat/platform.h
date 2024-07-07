@@ -36,7 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*----------------------------------------------------------------------------
 *----------------------------------------------------------------------------*/
+#include "compiler_base.h"
+#ifdef BYTESEX_LITTLE
 #define LITTLEENDIAN 1
+#endif
+#ifdef BYTESEX_BIG
+#undef LITTLEENDIAN
+#endif
 #define SOFTFLOAT_FAST_INT64
 
 /*----------------------------------------------------------------------------

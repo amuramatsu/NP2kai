@@ -1,0 +1,22 @@
+This is METAFONT, Version 2.71828182 (preloaded base=mf 2024.3.24)  8 JUL 2024 00:07
+**f64_add.c f64_div.c f64_eq.c f64_eq_signaling.c f64_isSignalingNaN.c f64_le.c
+ f64_le_quiet.c f64_lt.c f64_lt_quiet.c f64_mul.c f64_mulAdd.c f64_rem.c f64_ro
+undToInt.c f64_sqrt.c f64_sub.c f64_to_extF80.c f64_to_extF80M.c f64_to_f32.c f
+64_to_i32.c f64_to_i32_r_minMag.c f64_to_i64.c f64_to_i64_r_minMag.c f64_to_ui3
+2.c f64_to_ui32_r_minMag.c f64_to_ui64.c f64_to_ui64_r_minMag.c unused
+(f64_add.c
+>> /*==========================================================================
+==This.C.source.file.is.part
+! Isolated expression.
+<to be read again> 
+                   of
+l.4 This C source file is part of
+                                  the SoftFloat IEEE Floating-Point Arithmetic
+? ls
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, E to edit your file,
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? x
+
