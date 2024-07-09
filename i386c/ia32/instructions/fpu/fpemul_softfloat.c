@@ -619,6 +619,8 @@ static INLINE void FPU_FDIVR_EA(UINT op1) {
 static void FPU_FPREM(void) {
 	sw_extFloat80_t val, div;
 	SINT64 qint;
+	UINT8 orig_pc = extF80_roundingPrecision;
+	extF80_roundingPrecision = 80;
 
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	val = FPU_STAT.reg[FPU_STAT_TOP].d;
@@ -632,12 +634,15 @@ static void FPU_FPREM(void) {
 	if(qint & 1) FPU_STATUSWORD |= FP_C1_FLAG; // 商のbit0
 	// C2クリアで完了扱い
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	extF80_roundingPrecision = orig_pc;
 }
 
 static void FPU_FPREM1(void) {
 #if 1
 	sw_extFloat80_t val, div, q;
 	SINT64 qint;
+	UINT8 orig_pc = extF80_roundingPrecision;
+	extF80_roundingPrecision = 80;
 
 	// IEEE 754 剰余　商を最も近い整数値とする。余りが負値になることが有り得る
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
@@ -652,10 +657,13 @@ static void FPU_FPREM1(void) {
 	if(qint & 1) FPU_STATUSWORD |= FP_C1_FLAG; // 商のbit0
 	// C2クリアで完了扱い
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	extF80_roundingPrecision = orig_pc;
 #else
 	sw_extFloat80_t val, div, q;
 	SINT64 qint;
 	unsigned char oldrnd = softfloat_roundingMode;
+	UINT8 orig_pc = extF80_roundingPrecision;
+	extF80_roundingPrecision = 80;
 
 	// IEEE 754 剰余　商を最も近い整数値とする。余りが負値になることが有り得る
 
@@ -674,26 +682,35 @@ static void FPU_FPREM1(void) {
 	// C2クリアで完了扱い
 	softfloat_roundingMode = oldrnd;
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	extF80_roundingPrecision = orig_pc;
 #endif
 }
 
 // 数学関数
 static void FPU_FSIN(void) {
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	cf64_to_extF80M(sin(extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d)), &FPU_STAT.reg[FPU_STAT_TOP].d);
 	FPU_STATUSWORD &= ~FP_C2_FLAG;
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	//extF80_roundingPrecision = orig_pc;
 	return;
 }
 static void FPU_FCOS(void) {
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	cf64_to_extF80M(cos(extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d)), &FPU_STAT.reg[FPU_STAT_TOP].d);
 	FPU_STATUSWORD &= ~FP_C2_FLAG;
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	//extF80_roundingPrecision = orig_pc;
 	return;
 }
 static void FPU_FSINCOS(void) {
 	double temp;
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	temp = extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d);
@@ -701,53 +718,78 @@ static void FPU_FSINCOS(void) {
 	FPU_push(cf64_to_extF80(cos(temp)));
 	FPU_STATUSWORD &= ~FP_C2_FLAG;
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	//extF80_roundingPrecision = orig_pc;
 	return;
 }
 static void FPU_FPTAN(void) {
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	cf64_to_extF80M(tan(extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d)), &FPU_STAT.reg[FPU_STAT_TOP].d);
 	FPU_push(cf64_to_extF80(1.0));
 	FPU_STATUSWORD &= ~FP_C2_FLAG;
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	//extF80_roundingPrecision = orig_pc;
 	return;
 }
 static void FPU_FPATAN(void) {
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	cf64_to_extF80M(atan2(extF80M_to_cf64(&FPU_STAT.reg[FPU_ST(1)].d), extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d)), &FPU_STAT.reg[FPU_ST(1)].d);
 	FPU_pop();
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	//extF80_roundingPrecision = orig_pc;
 	return;
 }
 static void FPU_FSQRT(void) {
+	//FSQRT use rounding precision
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	extF80M_sqrt(&FPU_STAT.reg[FPU_STAT_TOP].d, &FPU_STAT.reg[FPU_STAT_TOP].d);
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
 	return;
 }
 static void FPU_FRNDINT(void) {
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 	softfloat_exceptionFlags = exception_x87_to_softfloat(FPU_STATUSWORD);
 	extF80M_roundToInt(&FPU_STAT.reg[FPU_STAT_TOP].d, softfloat_roundingMode, false, &FPU_STAT.reg[FPU_STAT_TOP].d);
 	FPU_STATUSWORD |= exception_softfloat_to_x87(softfloat_exceptionFlags);
+	//extF80_roundingPrecision = orig_pc;
 }
 static void FPU_F2XM1(void) {
+	//UINT8 orig_pc = extF80_roundingPrecision;
+	//extF80_roundingPrecision = 80;
 	cf64_to_extF80M(pow(2.0, extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d)) - 1, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	//extF80_roundingPrecision = orig_pc;
 }
 static void FPU_FYL2X(void) {
+	UINT8 orig_pc = extF80_roundingPrecision;
+	extF80_roundingPrecision = 80;
 	FPU_STAT.reg[FPU_ST(1)].d = extF80_mul(FPU_STAT.reg[FPU_ST(1)].d, cf64_to_extF80(log(extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d)) / log(2.0)));
 	FPU_pop();
+	extF80_roundingPrecision = orig_pc;
 }
 static void FPU_FYL2XP1(void) {
+	UINT8 orig_pc = extF80_roundingPrecision;
+	extF80_roundingPrecision = 80;
 	FPU_STAT.reg[FPU_ST(1)].d = extF80_mul(FPU_STAT.reg[FPU_ST(1)].d, cf64_to_extF80(log(extF80M_to_cf64(&FPU_STAT.reg[FPU_STAT_TOP].d) + 1.0) / log(2.0)));
 	FPU_pop();
+	extF80_roundingPrecision = orig_pc;
 }
 static void FPU_FSCALE(void) {
+	UINT8 orig_pc = extF80_roundingPrecision;
+	extF80_roundingPrecision = 80;
 	FPU_STAT.reg[FPU_STAT_TOP].d = extF80_mul(FPU_STAT.reg[FPU_STAT_TOP].d, cf64_to_extF80(pow(2.0, extF80M_to_cf64(&FPU_STAT.reg[FPU_ST(1)].d))));
+	extF80_roundingPrecision = orig_pc;
 }
 static void FPU_FCHS(void) {
-	FPU_STAT.reg[FPU_STAT_TOP].b[9] ^= 0x80;
+	struct extFloat80M *p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signExp ^= 0x8000;
 }
 static void FPU_FABS(void) {
-	FPU_STAT.reg[FPU_STAT_TOP].b[9] &= ~0x80;
+	struct extFloat80M *p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signExp &= ~0x8000;
 }
 
 // 比較
