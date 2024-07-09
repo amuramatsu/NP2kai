@@ -92,6 +92,20 @@
 #define L2T		3.3219280948873623478703194294894
 #define LN2		0.6931471805599453094172321214582
 #define LG2		0.3010299956639811952137388947245
+static const uint64_t VALUE_0_MANTISSA = 0x0ULL;
+static const uint16_t VALUE_0_EXPONENT = 0x0U;
+static const uint64_t VALUE_1_MANTISSA = 0x8000000000000000ULL;
+static const uint16_t VALUE_1_EXPONENT = 0x3fffU;
+static const uint64_t VALUE_PI_MANTISSA = 0xc90fdaa22168c235ULL;
+static const uint16_t VALUE_PI_EXPONENT = 0x4000U;
+static const uint64_t VALUE_L2T_MANTISSA = 0xd49a784bcd1b8afeULL;
+static const uint16_t VALUE_L2T_EXPONENT = 0x4000U;
+static const uint64_t VALUE_L2E_MANTISSA = 0xb8aa3b295c17f0bcULL;
+static const uint16_t VALUE_L2E_EXPONENT = 0x3fffU;
+static const uint64_t VALUE_LN2_MANTISSA = 0xb17217f7d1cf79acULL;
+static const uint16_t VALUE_LN2_EXPONENT = 0x3ffeU;
+static const uint64_t VALUE_LG2_MANTISSA = 0x9a209a84fbcff799ULL;
+static const uint16_t VALUE_LG2_EXPONENT = 0x3ffdU;
 
 static INLINE UINT16 exception_softfloat_to_x87(uint8_t in)
 {
@@ -531,32 +545,60 @@ static void FPU_FXCH(UINT st, UINT other) {
 	FPU_STAT.reg[st] = reg;
 }
 static void FPU_FLD1(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(1.0, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_1_MANTISSA;
+	p->signExp = VALUE_1_EXPONENT;
+	//cf64_to_extF80M(1.0, (sw_extFloat80_t *)p);
 }
 static void FPU_FLDL2T(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(L2T, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_L2T_MANTISSA;
+	p->signExp = VALUE_L2T_EXPONENT;
+	//cf64_to_extF80M(L2T, (sw_extFloat80_t *)p);
 }
 static void FPU_FLDL2E(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(L2E, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_L2E_MANTISSA;
+	p->signExp = VALUE_L2E_EXPONENT;
+	//cf64_to_extF80M(L2E, (sw_extFloat80_t *)p);
 }
 static void FPU_FLDPI(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(PI, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_PI_MANTISSA;
+	p->signExp = VALUE_PI_EXPONENT;
+	//cf64_to_extF80M(PI, (sw_extFloat80_t *)p);
 }
 static void FPU_FLDLG2(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(LG2, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_LG2_MANTISSA;
+	p->signExp = VALUE_LG2_EXPONENT;
+	//cf64_to_extF80M(LG2, (sw_extFloat80_t *)p);
 }
 static void FPU_FLDLN2(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(LN2, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_LN2_MANTISSA;
+	p->signExp = VALUE_LN2_EXPONENT;
+	//cf64_to_extF80M(LN2, (sw_extFloat80_t *)p);
 }
 static void FPU_FLDZ(void) {
+	struct extFloat80M *p;
 	FPU_prepush();
-	cf64_to_extF80M(0.0, &FPU_STAT.reg[FPU_STAT_TOP].d);
+	p = (struct extFloat80M *)&FPU_STAT.reg[FPU_STAT_TOP].d;
+	p->signif = VALUE_0_MANTISSA;
+	p->signExp = VALUE_0_EXPONENT;
+	//cf64_to_extF80M(0.0, (sw_extFloat80_t *)p);
 	FPU_STAT.tag[FPU_STAT_TOP] = TAG_Zero;
 	FPU_STAT.mmxenable = 0;
 }
