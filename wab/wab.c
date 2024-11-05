@@ -274,9 +274,6 @@ void np2wab_setScreenSizeMT(int width, int height)
 
 	// 画面更新
 	np2wab_forceupdateflag = 1;
-
-	// 画面更新
-	np2wab_forceupdateflag = 1;
 }
 
 /**
@@ -298,6 +295,9 @@ void np2wab_resetscreensize()
 		SetWindowPos( np2wabwnd.hWndWAB, NULL, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOMOVE|SWP_NOZORDER );
 #endif
 	}
+
+	// 画面更新
+	np2wab_forceupdateflag = 1;
 }
 
 #if !defined(NP2_X) && !defined(NP2_SDL) && !defined(__LIBRETRO__)
@@ -552,7 +552,7 @@ void np2wab_drawframe()
 					scrnmng_bltwab();
 					scrnmng_update();
 				}
- 			}
+			}
 #if !defined(NP2_X) && !defined(NP2_SDL) && !defined(__LIBRETRO__)
 		}
 	}else{

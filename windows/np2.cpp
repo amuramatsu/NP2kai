@@ -3278,6 +3278,7 @@ void autoSendKey(){
 							if ((!shift_on[sendchar]) && (capslock ^ shift))
 							{
 								keystat_senddata(0x80 | 0x70);
+								shift = 0;
 							}
 							keystat_senddata(0x00 | vkeylist[sendchar]);
 							keystat_senddata(0x80 | vkeylist[sendchar]);

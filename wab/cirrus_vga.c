@@ -1108,8 +1108,8 @@ static int cirrus_bitblt_solidfill(CirrusVGAState *s, int blt_rop)
 			     s->cirrus_blt_dstpitch, s->cirrus_blt_width,
 			     s->cirrus_blt_height);
     cirrus_bitblt_reset(s);
-	cirrusvga_updated = 1;
-    return 1;
+ 	cirrusvga_updated = 1;
+   return 1;
 }
 
 /***************************************

@@ -766,7 +766,7 @@ static UINT16 boot_fd1(REG8 type, REG8 rpm) {
 	return(bootseg);
 }
 
-static UINT16 boot_fd(REG8 drv, REG8 boot_2hd, REG8 boot_2dd) {
+static UINT16 boot_fd(REG8 drv, REG8 type) {
 
 	UINT16	bootseg;
 
@@ -779,7 +779,7 @@ static UINT16 boot_fd(REG8 drv, REG8 boot_2hd, REG8 boot_2dd) {
 	}
 
 	// 2HD
-	if (boot_2hd) {
+	if (type & 1) {
 		fdc.chgreg |= 0x01;
 		// 1.25MB
 		bootseg = boot_fd1(3, 0);
@@ -796,7 +796,7 @@ static UINT16 boot_fd(REG8 drv, REG8 boot_2hd, REG8 boot_2dd) {
 			return(bootseg);
 		}
 	}
-	if (boot_2dd) {
+	if (type & 2) {
 		fdc.chgreg &= ~0x01;
 		// 2DD
 		bootseg = boot_fd1(0, 0);
@@ -840,7 +840,7 @@ REG16 bootstrapload(void) {
 		case 0x20:					// 640KB FDD
 			for (i=0; (i<4) && (!bootseg); i++) {
 				if (fdd_diskready(i)) {
-					bootseg = boot_fd(i, 0, 1);
+					bootseg = boot_fd(i, 2);
 				}
 			}
 			break;
@@ -848,7 +848,7 @@ REG16 bootstrapload(void) {
 		case 0x40:					// 1.2MB FDD
 			for (i=0; (i<4) && (!bootseg); i++) {
 				if (fdd_diskready(i)) {
-					bootseg = boot_fd(i, 1, 0);
+					bootseg = boot_fd(i, 1);
 				}
 			}
 			break;
@@ -875,7 +875,7 @@ REG16 bootstrapload(void) {
 	}
 	for (i=0; (i<4) && (!bootseg); i++) {
 		if (fdd_diskready(i)) {
-			bootseg = boot_fd(i, 1, 1);
+			bootseg = boot_fd(i, 3);
 		}
 	}
 	if(pccore.hddif & PCHDD_IDE){

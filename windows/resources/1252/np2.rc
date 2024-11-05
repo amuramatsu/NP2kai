@@ -1494,9 +1494,9 @@ BEGIN
     IDS_APP_NAME2           "Neko Project II/W"
     IDS_APP_NAME21          "Neko Project 21/W"
     IDS_FILENAME_HELP       "np2.chm"
-    IDS_FONTFACE            "ÇlÇr ÉSÉVÉbÉN"
+    IDS_FONTFACE            "\82l\82r \83S\83V\83b\83N"
     IDS_PFONTFACE           "MS Sans Serif"
-    IDS_FONTFACE_PRIMARY    "ÇlÇr ÉSÉVÉbÉN"
+    IDS_FONTFACE_PRIMARY    "\82l\82r \83S\83V\83b\83N"
     IDS_PFONTFACE_PRIMARY   "MS Sans Serif"
     IDS_FONTFACE_SECONDARY  "MS Gothic"
 END
@@ -1755,7 +1755,7 @@ BEGIN
     IDS_CPU_AMD_K7_ATHLONXP   "AMD K7 Athlon XP"
     IDS_CPU_AMD_K8_ATHLON64   "AMD K8 Athlon 64"
     IDS_CPU_AMD_K8_ATHLON64X2 "AMD K8 Athlon 64X2"
-    IDS_CPU_AMD_K10_PHENOM    "AMD K10 Phenom" 
+    IDS_CPU_AMD_K10_PHENOM    "AMD K10 Phenom"
     IDS_CPU_NEKOPRO           "Neko Processor II"
 END
 

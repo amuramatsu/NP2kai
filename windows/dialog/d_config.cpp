@@ -1,15 +1,15 @@
 /**
  * @file	d_config.cpp
- * @brief	è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°
+ * @brief	İ’èƒ_ƒCƒAƒƒO
  */
 
-#include <compiler.h>
+#include "compiler.h"
 #include "resource.h"
 #include "dialog.h"
 #include "c_combodata.h"
-#include <np2.h>
-#include <soundmng.h>
-#include <sysmng.h>
+#include "np2.h"
+#include "soundmng.h"
+#include "sysmng.h"
 #include "misc/DlgProc.h"
 #if defined(SUPPORT_ASIO)
 #include "soundmng/sdasio.h"
@@ -18,15 +18,15 @@
 #if defined(SUPPORT_WASAPI)
 #include "soundmng\sdwasapi.h"
 #endif	// defined(SUPPORT_WASAPI)
-#include <pccore.h>
-#include <common/strres.h>
+#include "pccore.h"
+#include "common/strres.h"
 #if defined(CPUCORE_IA32)
 #include "i386c/ia32/cpu.h"
 #endif
 
 /**
- * @brief è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°
- * @param[in] hwndParent è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+ * @brief İ’èƒ_ƒCƒAƒƒO
+ * @param[in] hwndParent eƒEƒBƒ“ƒhƒE
  */
 class CConfigureDlg : public CDlgProc
 {
@@ -39,13 +39,13 @@ protected:
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
-	CComboData m_baseClock;			//!< ãƒ™ãƒ¼ã‚¹ ã‚¯ãƒ­ãƒƒã‚¯
-	CComboData m_multiple;			//!< å€ç‡
-	CComboData m_cputype;			//!< CPUç¨®é¡
-	CComboData m_type;				//!< ã‚¿ã‚¤ãƒ—
-	CComboData m_name;				//!< ãƒ‡ãƒã‚¤ã‚¹å
-	CComboData m_rate;				//!< ãƒ¬ãƒ¼ãƒˆ
-	CWndProc   m_chk21port;			//!< PC-9821ãƒãƒ¼ãƒˆãƒãƒƒãƒ—
+	CComboData m_baseClock;			//!< ƒx[ƒX ƒNƒƒbƒN
+	CComboData m_multiple;			//!< ”{—¦
+	CComboData m_cputype;			//!< CPUí—Ş
+	CComboData m_type;				//!< ƒ^ƒCƒv
+	CComboData m_name;				//!< ƒfƒoƒCƒX–¼
+	CComboData m_rate;				//!< ƒŒ[ƒg
+	CWndProc   m_chk21port;			//!< PC-9821ƒ|[ƒgƒ}ƒbƒv
 	std::vector<LPCTSTR> m_dsound3;	//!< DSound3
 	std::vector<LPCTSTR> m_wasapi;	//!< WASAPI
 	std::vector<LPCTSTR> m_asio;	//!< ASIO
@@ -56,14 +56,14 @@ private:
 	int SetCpuTypeIndex(UINT index);
 };
 
-//! ã‚³ãƒ³ãƒœ ãƒœãƒƒã‚¯ã‚¹ ã‚¢ã‚¤ãƒ†ãƒ 
+//! ƒRƒ“ƒ{ ƒ{ƒbƒNƒX ƒAƒCƒeƒ€
 static const CComboData::Entry s_baseclock[] =
 {
 	{MAKEINTRESOURCE(IDS_2_0MHZ),	PCBASECLOCK20},
 	{MAKEINTRESOURCE(IDS_2_5MHZ),	PCBASECLOCK25},
 };
 
-//! CPUç¨®é¡ ã‚³ãƒ³ãƒœ ãƒœãƒƒã‚¯ã‚¹ ã‚¢ã‚¤ãƒ†ãƒ 
+//! CPUí—Ş ƒRƒ“ƒ{ ƒ{ƒbƒNƒX ƒAƒCƒeƒ€
 static const CComboData::Entry s_cputype[] =
 {
 	{MAKEINTRESOURCE(IDS_CPU_CUSTOM),	0},
@@ -94,19 +94,19 @@ static const CComboData::Entry s_cputype_286[] =
 	{MAKEINTRESOURCE(IDS_CPU_80286),	0},
 };
 
-//! å€ç‡ãƒªã‚¹ãƒˆ
+//! ”{—¦ƒŠƒXƒg
 static const UINT32 s_mulval[] = {1, 2, 4, 5, 6, 8, 10, 12, 16, 20, 24, 30, 32, 34, 36, 
 	40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90};
 
-//! ã‚¯ãƒ­ãƒƒã‚¯ ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆ
+//! ƒNƒƒbƒN ƒtƒH[ƒ}ƒbƒg
 static const TCHAR str_clockfmt[] = _T("%2u.%.4u");
 
-//! ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚° ãƒ¬ãƒ¼ãƒˆ
+//! ƒTƒ“ƒvƒŠƒ“ƒO ƒŒ[ƒg
 static const UINT32 s_nSamplingRate[] = {11025, 22050, 44100, 48000, 88200, 96000};
 
 /**
- * ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
- * @param[in] hwndParent è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+ * ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+ * @param[in] hwndParent eƒEƒBƒ“ƒhƒE
  */
 CConfigureDlg::CConfigureDlg(HWND hwndParent)
 	: CDlgProc(IDD_CONFIG, hwndParent)
@@ -114,9 +114,9 @@ CConfigureDlg::CConfigureDlg(HWND hwndParent)
 }
 
 /**
- * ã“ã®ãƒ¡ã‚½ãƒƒãƒ‰ã¯ WM_INITDIALOG ã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã«å¿œç­”ã—ã¦å‘¼ã³å‡ºã•ã‚Œã¾ã™
- * @retval TRUE æœ€åˆã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã«å…¥åŠ›ãƒ•ã‚©ãƒ¼ã‚«ã‚¹ã‚’è¨­å®š
- * @retval FALSE æ—¢ã«è¨­å®šæ¸ˆ
+ * ‚±‚Ìƒƒ\ƒbƒh‚Í WM_INITDIALOG ‚ÌƒƒbƒZ[ƒW‚É‰“š‚µ‚ÄŒÄ‚Ño‚³‚ê‚Ü‚·
+ * @retval TRUE Å‰‚ÌƒRƒ“ƒgƒ[ƒ‹‚É“ü—ÍƒtƒH[ƒJƒX‚ğİ’è
+ * @retval FALSE Šù‚Éİ’èÏ
  */
 BOOL CConfigureDlg::OnInitDialog()
 {
@@ -173,7 +173,7 @@ BOOL CConfigureDlg::OnInitDialog()
 	m_chk21port.EnableWindow(FALSE);
 #endif
 
-	// ã‚µã‚¦ãƒ³ãƒ‰é–¢ä¿‚
+	// ƒTƒEƒ“ƒhŠÖŒW
 	m_type.SubclassDlgItem(IDC_SOUND_DEVICE_TYPE, this);
 
 	CSoundDeviceDSound3::EnumerateDevices(m_dsound3);
@@ -270,7 +270,7 @@ BOOL CConfigureDlg::OnInitDialog()
 }
 
 /**
- * ãƒªã‚¹ãƒˆæ›´æ–°
+ * ƒŠƒXƒgXV
  */
 void CConfigureDlg::UpdateDeviceList()
 {
@@ -314,7 +314,7 @@ void CConfigureDlg::UpdateDeviceList()
 }
 
 /**
- * np2cfg CPUID -> CPU type index ç›¸äº’å¤‰æ›
+ * np2cfg CPUID -> CPU type index ‘ŠŒİ•ÏŠ·
  */
 int CConfigureDlg::GetCpuTypeIndex(){
 #if defined(CPUCORE_IA32)
@@ -829,7 +829,7 @@ int CConfigureDlg::SetCpuTypeIndex(UINT index){
 		strcpy(np2cfg.cpu_brandstring, CPU_BRAND_STRING_AMD_K10_PHENOM);
 		np2cfg.cpu_brandid = CPU_BRAND_ID_AMD_K10_PHENOM;
 		break;
-	case 255: // å…¨æ©Ÿèƒ½ä½¿ç”¨å¯
+	case 255: // ‘S‹@”\g—p‰Â
 		np2cfg.cpu_family = 0;
 		np2cfg.cpu_model = 0;
 		np2cfg.cpu_stepping = 0;
@@ -858,7 +858,7 @@ int CConfigureDlg::SetCpuTypeIndex(UINT index){
 }
 
 /**
- * ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒ OK ã®ãƒœã‚¿ãƒ³ (IDOK ID ãŒã®ãƒœã‚¿ãƒ³) ã‚’ã‚¯ãƒªãƒƒã‚¯ã™ã‚‹ã¨å‘¼ã³å‡ºã•ã‚Œã¾ã™
+ * ƒ†[ƒU[‚ª OK ‚Ìƒ{ƒ^ƒ“ (IDOK ID ‚ª‚Ìƒ{ƒ^ƒ“) ‚ğƒNƒŠƒbƒN‚·‚é‚ÆŒÄ‚Ño‚³‚ê‚Ü‚·
  */
 void CConfigureDlg::OnOK()
 {
@@ -992,10 +992,10 @@ void CConfigureDlg::OnOK()
 }
 
 /**
- * ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®é …ç›®ã‚’é¸æŠã—ãŸã¨ãã«ã€ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¯ãƒ¼ã‚¯ã«ã‚ˆã£ã¦å‘¼ã³å‡ºã•ã‚Œã¾ã™
- * @param[in] wParam ãƒ‘ãƒ©ãƒ¡ã‚¿
- * @param[in] lParam ãƒ‘ãƒ©ãƒ¡ã‚¿
- * @retval TRUE ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ãŒã“ã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å‡¦ç†ã—ãŸ
+ * ƒ†[ƒU[‚ªƒƒjƒ…[‚Ì€–Ú‚ğ‘I‘ğ‚µ‚½‚Æ‚«‚ÉAƒtƒŒ[ƒ€ƒ[ƒN‚É‚æ‚Á‚ÄŒÄ‚Ño‚³‚ê‚Ü‚·
+ * @param[in] wParam ƒpƒ‰ƒƒ^
+ * @param[in] lParam ƒpƒ‰ƒƒ^
+ * @retval TRUE ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ª‚±‚ÌƒƒbƒZ[ƒW‚ğˆ—‚µ‚½
  */
 BOOL CConfigureDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 {
@@ -1032,8 +1032,8 @@ BOOL CConfigureDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 }
 
 /**
- * ã‚¯ãƒ­ãƒƒã‚¯ã‚’è¨­å®šã™ã‚‹
- * @param[in] nMultiple å€ç‡
+ * ƒNƒƒbƒN‚ğİ’è‚·‚é
+ * @param[in] nMultiple ”{—¦
  */
 void CConfigureDlg::SetClock(UINT nMultiple)
 {
@@ -1053,8 +1053,8 @@ void CConfigureDlg::SetClock(UINT nMultiple)
 }
 
 /**
- * è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°
- * @param[in] hwndParent è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+ * İ’èƒ_ƒCƒAƒƒO
+ * @param[in] hwndParent eƒEƒBƒ“ƒhƒE
  */
 void dialog_configure(HWND hwndParent)
 {
