@@ -48,6 +48,9 @@
 #include	<i386hax/haxcore.h>
 #endif
 #include	<np2_tickcount.h>
+#ifdef USE_NATIVEFILEDIALOG
+#include	<nfd.h>
+#endif
 
 static const char appname[] =
 #if defined(CPUCORE_IA32)
@@ -137,6 +140,9 @@ static unsigned int np2_main_cd_drv[5] = {0xF, 0xF, 0xF, 0xF, 0xF};
 
 UINT8 scrnmode = 0;
 UINT8 changescreeninit = 0;
+#ifdef USE_NATIVEFILEDIALOG
+BOOL nfd_initialized = FALSE;
+#endif
 
 static void usage(const char *progname) {
 
@@ -634,6 +640,10 @@ int np2_main(int argc, char *argv[]) {
 	commng_initialize();
 	sysmng_initialize();
 	taskmng_initialize();
+#ifdef USE_NATIVEFILEDIALOG
+	if (NFD_Init() == NFD_OKAY)
+		nfd_initialized = TRUE;
+#endif
 	pccore_init();
 	S98_init();
 

@@ -25,7 +25,7 @@ static SCRNSURF scrnsurf;
 #if SDL_MAJOR_VERSION == 1
 static SDL_VideoInfo* s1_videoinfo;
 #else
-static SDL_Window* s_window;
+SDL_Window* s_window;
 static SDL_Renderer* s_renderer;
 static SDL_Texture* s_texture;
 #endif

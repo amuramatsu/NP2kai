@@ -49,6 +49,12 @@ static UINT bmpno = 0;
 
 /* Forward declarations */
 extern void changescreen(UINT8 newmode);
+#ifdef USE_NATIVEFILEDIALOG
+extern void filesel_fdd_native(REG8 drv);
+extern void filesel_hdd_native(REG8 drv);
+#define	filesel_fdd(n)	filesel_fdd_native(n)
+#define	filesel_hdd(n)	filesel_hdd_native(n)
+#endif
 
 static void sys_cmd(MENUID id) {
 

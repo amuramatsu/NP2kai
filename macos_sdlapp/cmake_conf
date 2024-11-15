@@ -1,6 +1,7 @@
 cmake .. \
   -D BUILD_SDL=ON -D USE_SDL=OFF -D USE_SDL2=ON \
   -D BUILD_I286=ON \
+  -D USE_NATIVEFILEDIALOG=ON \
   -D SDL2_INCLUDE_DIR=/Library/Frameworks/SDL2.framework/Headers \
   -D SDL2_MIXER_INCLUDE_DIR=/Library/Frameworks/SDL2_mixer.framework/Headers \
   -D SDL2_TTF_INCLUDE_DIR=/Library/Frameworks/SDL2_ttf.framework/Headers \

@@ -11,3 +11,6 @@
 [submodule "cmake/sdl2-cmake-modules"]
 	path = cmake/sdl2-cmake-modules
 	url = https://github.com/aminosbh/sdl2-cmake-modules.git
+[submodule "nativefiledialog-extended"]
+	path = nativefiledialog-extended
+	url = https://github.com/btzy/nativefiledialog-extended.git
