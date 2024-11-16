@@ -1,5 +1,6 @@
 #include	<compiler.h>
 #include	<common/strres.h>
+#include	<common/milstr.h>
 #include	"np2.h"
 #include	"fontmng.h"
 #include	"scrnmng.h"
@@ -1080,6 +1081,31 @@ void sysmenu_destroy(void) {
 	menusys_destroy();
 }
 
+static void sysmenu_setfilename(MENUID id, char *src) {
+	const char *prefix = str_remove;
+	switch (id) {
+		case MID_FDD1EJECT:
+		case MID_FDD2EJECT:
+		case MID_FDD3EJECT:
+		case MID_FDD4EJECT:
+			prefix = str_eject;
+			break;
+	}
+	if (src == NULL || src[0] == '\0') {
+		menusys_settext(id, prefix);
+		menusys_setenable(id, 0);
+	}
+	else {
+		OEMCHAR p[65];
+		milstr_ncpy(p, prefix, sizeof(p)-1);
+		milstr_ncat(p, " (", sizeof(p)-1);
+		milstr_ncat(p, file_getname(src), sizeof(p)-1);
+		milstr_ncat(p, ")", sizeof(p)-1);
+		menusys_settext(id, p);
+		menusys_setenable(id, 1);
+	}
+}
+
 BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 
 	UINT8	b;
@@ -1201,5 +1227,25 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_sethide(MID_DBSS, np2cfg.debugss ? 0 : 1);
 #endif
 	menusys_setcheck(MID_HF_ENABLE, (hf_enable == 1));
+
+	/* set file names */
+	sysmenu_setfilename(MID_FDD1EJECT, fdd_diskname(0));
+	sysmenu_setfilename(MID_FDD2EJECT, fdd_diskname(1));
+	sysmenu_setfilename(MID_FDD3EJECT, fdd_diskname(2));
+	sysmenu_setfilename(MID_FDD4EJECT, fdd_diskname(3));
+#if defined(SUPPORT_IDEIO)
+	sysmenu_setfilename(MID_IDE1EJECT, np2cfg.sasihdd[0]);
+	sysmenu_setfilename(MID_IDE2EJECT, np2cfg.sasihdd[1]);
+	sysmenu_setfilename(MID_IDECDEJECT, np2cfg.sasihdd[2]);
+#else
+	sysmenu_setfilename(MID_SASI1EJECT, np2cfg.sasihdd[0]);
+	sysmenu_setfilename(MID_SASI2EJECT, np2cfg.sasihdd[1]);
+#endif
+#if defined(SUPPORT_SCSI)
+	sysmenu_setfilename(MID_SCSI0EJECT, np2cfg.scsihdd[0]);
+	sysmenu_setfilename(MID_SCSI1EJECT, np2cfg.scsihdd[1]);
+	sysmenu_setfilename(MID_SCSI2EJECT, np2cfg.scsihdd[2]);
+	sysmenu_setfilename(MID_SCSI3EJECT, np2cfg.scsihdd[3]);
+#endif
 	return(menusys_open(x, y));
 }
