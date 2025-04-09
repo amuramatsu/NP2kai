@@ -53,6 +53,52 @@ static CT1741FN last_ct1741fn = nomake;
 static int playwaitcounter = 0;
 static int testflag = 0;
 
+// PIO用　バッファが少ないとブツブツ切れるので仮想的に大きなバッファを設ける
+// 本来はSB16構造体にいるべきだがステートセーブ互換が面倒くさいので暫定でここに置く
+#define PIO_BUFSIZE 16384
+#define PIO_BUFMASK (PIO_BUFSIZE - 1)
+static UINT8 ct1741_pio_buffer[PIO_BUFSIZE];
+static int ct1741_pio_bufpos = 0;
+static int ct1741_pio_bufwpos = 0;
+static int ct1741_pio_bufdatas = 0;
+
+#if defined(SUPPORT_MULTITHREAD)
+static int ct1741_cs_initialized = 0;
+static CRITICAL_SECTION ct1741_cs;
+
+void ct1741cs_enter_criticalsection(void)
+{
+	if (!ct1741_cs_initialized) return;
+	EnterCriticalSection(&ct1741_cs);
+}
+void ct1741cs_leave_criticalsection(void)
+{
+	if (!ct1741_cs_initialized) return;
+	LeaveCriticalSection(&ct1741_cs);
+}
+
+void ct1741cs_initialize(void)
+{
+	/* クリティカルセクション準備 */
+	if (!ct1741_cs_initialized)
+	{
+		memset(&ct1741_cs, 0, sizeof(ct1741_cs));
+		InitializeCriticalSection(&ct1741_cs);
+		ct1741_cs_initialized = 1;
+	}
+}
+void ct1741cs_shutdown(void)
+{
+	/* クリティカルセクション破棄 */
+	if (ct1741_cs_initialized)
+	{
+		memset(&ct1741_cs, 0, sizeof(ct1741_cs));
+		DeleteCriticalSection(&ct1741_cs);
+		ct1741_cs_initialized = 0;
+	}
+}
+#endif
+
 void ct1741_initialize(UINT rate) {
 
 	g_sb16.dsp_info.dma.rate2 = ct1741_np2_rate = rate;
@@ -254,20 +300,35 @@ static void ct1741_exec_command()
 		break;
 	case 0x10:	/* Direct DAC */
 		ct1741_change_mode(DSP_MODE_DAC);
+		playwaitcounter = 0;
 		// PIO再生のつもりだがノーチェック
-		if(g_sb16.dsp_info.dma.bufdatas < DMA_BUFSIZE){
-			g_sb16.dsp_info.dma.buffer[g_sb16.dsp_info.dma.bufpos] = g_sb16.dsp_info.in.data[0];
-			g_sb16.dsp_info.dma.bufpos++;
-			if(g_sb16.dsp_info.dma.bufpos >= DMA_BUFSIZE) g_sb16.dsp_info.dma.bufpos -= DMA_BUFSIZE;
-			g_sb16.dsp_info.dma.bufdatas++;
+#if defined(SUPPORT_MULTITHREAD)
+		ct1741cs_enter_criticalsection();
+#endif
+		if(ct1741_pio_bufdatas < PIO_BUFSIZE){
+			ct1741_pio_buffer[ct1741_pio_bufwpos] = g_sb16.dsp_info.in.data[0];
+			ct1741_pio_bufwpos++;
+			if(ct1741_pio_bufwpos >= PIO_BUFSIZE) ct1741_pio_bufwpos -= PIO_BUFSIZE;
+			ct1741_pio_bufdatas++;
 			last_ct1741fn = pcm8mPIO;
 		}
-		if(g_sb16.dsp_info.dma.bufdatas > DMA_BUFSIZE / 2 && !g_sb16.dsp_info.write_busy){
-			g_sb16.dsp_info.write_busy = 1;
+#if defined(SUPPORT_MULTITHREAD)
+		ct1741cs_leave_criticalsection();
+#endif
+		if(ct1741_pio_bufdatas > PIO_BUFSIZE / 2){
 			//sound_sync();
+			if (ct1741_pio_bufdatas > PIO_BUFSIZE)
+			{
+				g_sb16.dsp_info.write_busy = 1;
+			}
+			else
+			{
+				g_sb16.dsp_info.write_busy = 0;
+			}
 		}
-		if(g_sb16.dsp_info.dma.bufdatas == 0){
-			playwaitcounter = DMA_BUFSIZE/2;
+		else
+		{
+			g_sb16.dsp_info.write_busy = 0;
 		}
 //		if (sb.dac.used<DSP_DACSIZE) {
 //			sb.dac.data[sb.dac.used++]=(Bit8s(sb.dsp.in.data[0] ^ 0x80)) << 8;
@@ -657,6 +718,9 @@ void ct1741_dma(NEVENTITEM item)
 			if (g_sb16.dsp_info.mode == DSP_MODE_DMA || g_sb16.dsp_info.mode == DSP_MODE_DMA_MASKED) {
 				g_sb16.dsp_info.write_busy = 1;
 
+#if defined(SUPPORT_MULTITHREAD)
+				ct1741cs_enter_criticalsection();
+#endif
 				// 転送〜
 				// DMAでデータを取るのが速すぎるといかれるのでバッファサイズに制限を設けた方が良いのかなと思いました（無意味な気もする）
 				//if(g_sb16.dsp_info.dma.bufsize * BUF_ALIGN[g_sb16.dsp_info.dma.mode|g_sb16.dsp_info.dma.stereo <<3] / 4 * g_sb16.dsp_info.freq / 44100 < g_sb16.dsp_info.dma.bufdatas){
@@ -691,8 +755,11 @@ void ct1741_dma(NEVENTITEM item)
 						playwaitcounter = 0;
 					}
 				}
-				printf("g_sb16.dsp_info.dma.mode = %x¥n",g_sb16.dsp_info.dma.mode);
+				//TRACEOUT(("g_sb16.dsp_info.dma.mode = %x\n",g_sb16.dsp_info.dma.mode));
 				//g_sb16.dsp_info.dma.bufdatas += r;
+#if defined(SUPPORT_MULTITHREAD)
+				ct1741cs_leave_criticalsection();
+#endif
 
 				// 一定のデータ量を転送したら割り込みを発生させる（フォーマットによってなぜか違いますが何故なのかは不明）
 				g_sb16.dsp_info.smpcounter += r;
@@ -787,6 +854,9 @@ REG8 DMACCALL ct1741dmafunc(REG8 func)
 	switch(func) {
 		case DMAEXT_START:
 			// DMA転送開始
+#if defined(SUPPORT_MULTITHREAD)
+			ct1741cs_enter_criticalsection();
+#endif
 			g_sb16.dsp_info.dma.laststartaddr = g_sb16.dsp_info.dma.chan->startaddr;
 			g_sb16.dsp_info.dma.laststartcount = g_sb16.dsp_info.dma.chan->startcount;
 			if((g_sb16.dsp_info.dmach & 0xe0) && (g_sb16.dsp_info.dma.mode==DSP_DMA_16 || g_sb16.dsp_info.dma.mode==DSP_DMA_NONE)){
@@ -804,6 +874,9 @@ REG8 DMACCALL ct1741dmafunc(REG8 func)
 			g_sb16.dsp_info.smpcounter2 = 0;
 			g_sb16.dsp_info.dma.bufdatas = 0;
 			g_sb16.dsp_info.dma.bufpos = 0;
+#if defined(SUPPORT_MULTITHREAD)
+			ct1741cs_leave_criticalsection();
+#endif
 			playwaitcounter = DMA_BUFSIZE * BUF_ALIGN[g_sb16.dsp_info.dma.mode|g_sb16.dsp_info.dma.stereo <<3] * g_sb16.dsp_info.freq / 44100 / 16;
 			cnt = pccore.realclock / g_sb16.dsp_info.freq * g_sb16.dsp_info.dma.rate2 / g_sb16.dsp_info.freq * (DMAPLAY_ADJUST_VALUE * g_sb16.dsp_info.freq / 44100);
 			if(cnt != 0){
@@ -851,7 +924,7 @@ const UINT8	*ptr2;
 	int	samplen_dst = soundcfg.rate;
 	int	samplen_src = g_sb16.dsp_info.freq;
 
-	leng = cs->bufdatas;
+	leng = ct1741_pio_bufdatas;
 	if (!leng) {
 		return;
 	}
@@ -861,8 +934,8 @@ const UINT8	*ptr2;
 		if(samppos >= leng){
 			break;
 		}
-		ptr1 = cs->buffer + ((cs->bufpos + samppos + 0) & DMA_BUFMASK);
-		ptr2 = cs->buffer + ((cs->bufpos + samppos + 0) & DMA_BUFMASK);
+		ptr1 = ct1741_pio_buffer + ((ct1741_pio_bufpos + samppos + 0) & PIO_BUFMASK);
+		ptr2 = ct1741_pio_buffer + ((ct1741_pio_bufpos + samppos + 0) & PIO_BUFMASK);
 		samp1 = ((SINT32)ptr1[0] - 0x80) << 8;
 		samp2 = ((SINT32)ptr2[0] - 0x80) << 8;
 		//samp1 += ((samp2 - samp1) * fract) >> 12;
@@ -872,9 +945,9 @@ const UINT8	*ptr2;
 	}
 
 	leng = MIN(leng, samppos);
-	cs->bufdatas -= (leng << 0);
-	cs->bufpos = (cs->bufpos + (leng << 0)) & DMA_BUFMASK;
-	if(g_sb16.dsp_info.dma.bufdatas < DMA_BUFSIZE / 2){
+	ct1741_pio_bufdatas -= (leng << 0);
+	ct1741_pio_bufpos = (ct1741_pio_bufpos + (leng << 0)) & PIO_BUFMASK;
+	if(ct1741_pio_bufdatas < PIO_BUFSIZE / 2){
 		g_sb16.dsp_info.write_busy = 0;
 	}
 }
@@ -1099,14 +1172,32 @@ static void SOUNDCALL ct1741_getpcm(DMA_INFO *ct, SINT32 *pcm, UINT count) {
 	// 再生用バッファに送る
 	if(playwaitcounter <= 0){
 		int idx = g_sb16.dsp_info.dma.mode|g_sb16.dsp_info.dma.stereo << 3;
-		if(idx!=0){
-			(*ct1741fn[idx])(ct, pcm, count);
-			last_ct1741fn = ct1741fn[idx];
-		}else if(ct->bufdatas >= BUF_ALIGN[idx]){
-			(*last_ct1741fn)(ct, pcm, count);
-		}else{
-			(*ct1741fn[idx])(ct, pcm, count);
+#if defined(SUPPORT_MULTITHREAD)
+		ct1741cs_enter_criticalsection();
+#endif
+		if (g_sb16.dsp_info.mode == DSP_MODE_DAC)
+		{
+			(*pcm8mPIO)(ct, pcm, count);
 		}
+		else
+		{
+			if (idx != 0)
+			{
+				(*ct1741fn[idx])(ct, pcm, count);
+				last_ct1741fn = ct1741fn[idx];
+			}
+			else if (ct->bufdatas >= BUF_ALIGN[idx])
+			{
+				(*last_ct1741fn)(ct, pcm, count);
+			}
+			else
+			{
+				(*ct1741fn[idx])(ct, pcm, count);
+			}
+		}
+#if defined(SUPPORT_MULTITHREAD)
+		ct1741cs_leave_criticalsection();
+#endif
 	}
 }
 
@@ -1134,15 +1225,15 @@ void ct1741io_bind(void)
 	iocore_attachinp(0x2f00 + g_sb16.base, ct1741_read_rstatus16);	/* DSP Read Buffer Status (Bit 7) */
 	
 	// Canopus PowerWindow T64S/98 音源部テスト
-	//iocore_attachout(0x6600 + g_sb16.base, ct1741_write_reset);	/* DSP Reset */
-	//iocore_attachout(0x6C00 + g_sb16.base, ct1741_write_data);	/* DSP Write Command/Data */
+	iocore_attachout(0x6600 + g_sb16.base, ct1741_write_reset);	/* DSP Reset */
+	iocore_attachout(0x6C00 + g_sb16.base, ct1741_write_data);	/* DSP Write Command/Data */
 
-	//iocore_attachinp(0x6600 + g_sb16.base, ct1741_read_reset);	/* DSP Reset */
-	//iocore_attachinp(0x6a00 + g_sb16.base, ct1741_read_data);		/* DSP Read Data Port */
-	//iocore_attachinp(0x6c00 + g_sb16.base, ct1741_read_wstatus);	/* DSP Write Buffer Status (Bit 7) */
-	//iocore_attachinp(0x6d00 + g_sb16.base, ct1741_read_reset);	/* DSP Reset */
-	//iocore_attachinp(0x6e00 + g_sb16.base, ct1741_read_rstatus);	/* DSP Read Buffer Status (Bit 7) */
-	//iocore_attachinp(0x6f00 + g_sb16.base, ct1741_read_rstatus16);	/* DSP Read Buffer Status (Bit 7) */
+	iocore_attachinp(0x6600 + g_sb16.base, ct1741_read_reset);	/* DSP Reset */
+	iocore_attachinp(0x6a00 + g_sb16.base, ct1741_read_data);		/* DSP Read Data Port */
+	iocore_attachinp(0x6c00 + g_sb16.base, ct1741_read_wstatus);	/* DSP Write Buffer Status (Bit 7) */
+	iocore_attachinp(0x6d00 + g_sb16.base, ct1741_read_reset);	/* DSP Reset */
+	iocore_attachinp(0x6e00 + g_sb16.base, ct1741_read_rstatus);	/* DSP Read Buffer Status (Bit 7) */
+	iocore_attachinp(0x6f00 + g_sb16.base, ct1741_read_rstatus16);	/* DSP Read Buffer Status (Bit 7) */
 	
 	// PC/AT互換機テスト
 	if(np2cfg.sndsb16at){
@@ -1167,7 +1258,18 @@ void ct1741io_unbind(void)
 	iocore_detachinp(0x2c00 + g_sb16.base);	/* DSP Write Buffer Status (Bit 7) */
 	iocore_detachinp(0x2e00 + g_sb16.base);	/* DSP Read Buffer Status (Bit 7) */
 	iocore_detachinp(0x2f00 + g_sb16.base);	/* DSP Read Buffer Status (Bit 7) */
-	
+
+	// Canopus PowerWindow T64S/98 音源部テスト
+	iocore_detachinp(0x6600 + g_sb16.base);	/* DSP Reset */
+	iocore_detachinp(0x6C00 + g_sb16.base);	/* DSP Write Command/Data */
+
+	iocore_detachinp(0x6600 + g_sb16.base);	/* DSP Reset */
+	iocore_detachinp(0x6a00 + g_sb16.base);	/* DSP Read Data Port */
+	iocore_detachinp(0x6c00 + g_sb16.base);	/* DSP Write Buffer Status (Bit 7) */
+	iocore_detachinp(0x6d00 + g_sb16.base);	/* DSP Reset */
+	iocore_detachinp(0x6e00 + g_sb16.base);	/* DSP Read Buffer Status (Bit 7) */
+	iocore_detachinp(0x6f00 + g_sb16.base);	/* DSP Read Buffer Status (Bit 7) */
+
 	// PC/AT互換機テスト
 	if(np2cfg.sndsb16at){
 		iocore_detachout(0x226);	/* DSP Reset */

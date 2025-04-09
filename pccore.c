@@ -463,6 +463,9 @@ void pccore_init(void) {
 	
 #if defined(SUPPORT_MULTITHREAD)
 	nevent_initialize();
+	pcm86cs_initialize();
+	cs4231cs_initialize();
+	ct1741cs_initialize();
 #endif
 	
 #if defined(SUPPORT_IA32_HAXM)
@@ -616,6 +619,9 @@ void pccore_term(void) {
 #endif
 	
 #if defined(SUPPORT_MULTITHREAD)
+	pcm86cs_shutdown();
+	cs4231cs_shutdown();
+	ct1741cs_shutdown();
 	nevent_shutdown();
 #endif
 }
@@ -1176,6 +1182,162 @@ void pccore_postevent(UINT32 event) {	// yet!
 	(void)event;
 }
 
+#if defined(SUPPORT_ASYNC_CPU)
+UINT8 pccore_asynccpu_drawskip = 1;
+UINT8 pccore_asynccpu_nowait = 0;
+double pccore_asynccpu_lastTimingValue = 1.0;
+int pccore_asynccpu_lastTimingValid = 0;
+int pccore_asynccpu_screendisp = 0;
+#define LATECOUNTER_THRESHOLD	6
+#define LATECOUNTER_THRESHOLDM	2
+static void pccore_asynccpu()
+{
+	// 非同期CPU処理
+	static int latecount = 0;
+	static int latecount2 = 0;
+	static unsigned int hltflag = 0;
+	if (np2cfg.asynccpu && !pccore_asynccpu_nowait)
+	{
+		int remclkcnt = INT_MAX;
+
+		if (latecount2 == 0)
+		{
+			if (latecount > 0)
+			{
+				//latecount--;
+			}
+			else if (latecount < 0)
+			{
+				latecount++;
+			}
+		}
+		latecount2 = (latecount2 + 1) & 0x1fff;
+
+#if defined(CPUCORE_IA32)
+		if (CPU_STAT_HLT)
+		{
+			hltflag = pccore.multiple;
+		}
+#endif
+		if (!asynccpu_fastflag && !asynccpu_lateflag)
+		{
+			double timimg = pccore_asynccpu_lastTimingValue;
+			if (timimg > pccore_asynccpu_drawskip)
+			{
+				latecount++;
+				if (latecount > +LATECOUNTER_THRESHOLD)
+				{
+					if (pccore.multiple > 4)
+					{
+						UINT32 oldmultiple = pccore.multiple;
+						if (pccore.multiple > 40)
+						{
+							if (timimg > 2.0)
+							{
+								pccore.multiple -= 10;
+							}
+							else if (timimg > 1.5)
+							{
+								pccore.multiple -= 5;
+							}
+							else if (timimg > 1.2)
+							{
+								pccore.multiple -= 3;
+							}
+							else
+							{
+								pccore.multiple -= 1;
+							}
+						}
+						else if (pccore.multiple > 20)
+						{
+							if (timimg > 2.0)
+							{
+								pccore.multiple -= 6;
+							}
+							else if (timimg > 1.5)
+							{
+								pccore.multiple -= 3;
+							}
+							else if (timimg > 1.2)
+							{
+								pccore.multiple -= 2;
+							}
+							else
+							{
+								pccore.multiple -= 1;
+							}
+						}
+						else
+						{
+							pccore.multiple -= 1;
+						}
+						pccore.realclock = pccore.baseclock * pccore.multiple;
+						pcm86_changeclock(oldmultiple);
+						nevent_changeclock(oldmultiple, pccore.multiple);
+
+						sound_changeclock();
+						beep_changeclock();
+						mpu98ii_changeclock();
+#if defined(SUPPORT_SMPU98)
+						smpu98_changeclock();
+#endif
+						keyboard_changeclock();
+						mouseif_changeclock();
+						gdc_updateclock();
+					}
+
+					latecount = 0;
+				}
+				asynccpu_lateflag = 1;
+			}
+			else if (timimg < pccore_asynccpu_drawskip)
+			{
+				if (!hltflag && pccore_asynccpu_screendisp)
+				{
+					latecount--;
+					if (latecount < -LATECOUNTER_THRESHOLDM)
+					{
+						if (pccore.multiple < pccore.maxmultiple)
+						{
+							UINT32 oldmultiple = pccore.multiple;
+							if (timimg < 0.5)
+							{
+								pccore.multiple += 3;
+							}
+							else if (timimg < 0.7)
+							{
+								pccore.multiple += 2;
+							}
+							else
+							{
+								pccore.multiple += 1;
+							}
+							pccore.realclock = pccore.baseclock * pccore.multiple;
+							pcm86_changeclock(oldmultiple);
+							nevent_changeclock(oldmultiple, pccore.multiple);
+
+							sound_changeclock();
+							beep_changeclock();
+							mpu98ii_changeclock();
+#if defined(SUPPORT_SMPU98)
+							smpu98_changeclock();
+#endif
+							keyboard_changeclock();
+							mouseif_changeclock();
+							gdc_updateclock();
+						}
+						latecount = 0;
+					}
+					asynccpu_fastflag = 1;
+				}
+			}
+		}
+	}
+	if (hltflag > 0) hltflag--;
+}
+#endif
+
 void pccore_exec(BOOL draw) {
 
 	// ここでローカル変数を使うとsetjmp周りの最適化で破壊される可能性があるので注意
@@ -1292,6 +1454,9 @@ void pccore_exec(BOOL draw) {
 #endif
 #endif
 		nevent_progress();
+#if defined(SUPPORT_ASYNC_CPU)
+		pccore_asynccpu();
+#endif
 	}
 #if defined(SUPPORT_ASYNC_CPU)
 	asynccpu_lateflag = 0;

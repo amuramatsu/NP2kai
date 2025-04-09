@@ -303,7 +303,7 @@ static GtkToggleActionEntry togglemenu_entries[] = {
 { "mouserapid",   NULL, "_Mouse rapid",       NULL, NULL, G_CALLBACK(cb_mouserapid), FALSE },
 { "nowait",       NULL, "_No wait",           NULL, NULL, G_CALLBACK(cb_nowait), FALSE },
 #if defined(SUPPORT_ASYNC_CPU)
-{ "asynccpu",     NULL, "_Async CPU(experimental)", NULL, NULL, G_CALLBACK(cb_asynccpu), FALSE },
+{ "asynccpu",     NULL, "Dyn_amic CPU clk adj.", NULL, NULL, G_CALLBACK(cb_asynccpu), FALSE },
 #endif
 #if defined(SUPPORT_VIDEOFILTER)
 { "vf1en",        NULL, "Enable",             NULL, NULL, G_CALLBACK(cb_vf1en), FALSE },
