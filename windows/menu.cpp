@@ -228,6 +228,8 @@ void sysmenu_update(HMENU hMenu)
 	CheckMenuItem(hMenu, IDM_BGSOUND, MF_BYCOMMAND | MFCHECK(background & 2));
 
 	const int scrnmul = scrnmng_getmultiple();
+	CheckMenuItem(hMenu, IDM_ALLOWRESIZE, MF_BYCOMMAND | MFCHECK(np2oscfg.thickframe));
+	CheckMenuItem(hMenu, IDM_SAVEWINDOWSIZE, MF_BYCOMMAND | MFCHECK(np2oscfg.svscrmul));
 	CheckMenuItem(hMenu, IDM_SCRNMUL4, MF_BYCOMMAND | MFCHECK(scrnmul == 4));
 	CheckMenuItem(hMenu, IDM_SCRNMUL6, MF_BYCOMMAND | MFCHECK(scrnmul == 6));
 	CheckMenuItem(hMenu, IDM_SCRNMUL8, MF_BYCOMMAND | MFCHECK(scrnmul == 8));
@@ -339,6 +341,11 @@ void xmenu_update(HMENU hMenu)
 	CheckMenuItem(hMenu, IDM_CPUSTABILIZER, MF_BYCOMMAND | MFCHECK(np2oscfg.cpustabf != 0));
 #if defined(SUPPORT_ASYNC_CPU)
 	CheckMenuItem(hMenu, IDM_ASYNCCPU, MF_BYCOMMAND | MFCHECK(np2cfg.asynccpu != 0));
+	CheckMenuItem(hMenu, IDM_ASYNCCPU_MAX, MF_BYCOMMAND | MFCHECK(np2cfg.asynctgt == 100));
+	CheckMenuItem(hMenu, IDM_ASYNCCPU_20, MF_BYCOMMAND | MFCHECK(np2cfg.asynctgt == 20));
+	CheckMenuItem(hMenu, IDM_ASYNCCPU_30, MF_BYCOMMAND | MFCHECK(np2cfg.asynctgt == 30));
+	CheckMenuItem(hMenu, IDM_ASYNCCPU_50, MF_BYCOMMAND | MFCHECK(np2cfg.asynctgt == 50));
+	CheckMenuItem(hMenu, IDM_ASYNCCPU_70, MF_BYCOMMAND | MFCHECK(np2cfg.asynctgt == 70));
 #endif
 	const UINT8 DRAW_SKIP = 	CheckMenuItem(hMenu, IDM_AUTOFPS, MF_BYCOMMAND | MFCHECK(DRAW_SKIP == 0));
 	CheckMenuItem(hMenu, IDM_60FPS, MF_BYCOMMAND | MFCHECK(DRAW_SKIP == 1));
@@ -392,6 +399,7 @@ DRAW_SKIP;
 	CheckMenuItem(hMenu, IDM_BEEPLOW, MF_BYCOMMAND | MFCHECK(BEEP_VOL == 1));
 	CheckMenuItem(hMenu, IDM_BEEPMID, MF_BYCOMMAND | MFCHECK(BEEP_VOL == 2));
 	CheckMenuItem(hMenu, IDM_BEEPHIGH, MF_BYCOMMAND | MFCHECK(BEEP_VOL == 3));
+	CheckMenuItem(hMenu, IDM_FIXBEEPOFFSET, MF_BYCOMMAND | MFCHECK(np2cfg.nbeepofs != 0));
 	const UINT8 SOUND_SW = np2cfg.SOUND_SW;
 	CheckMenuItem(hMenu, IDM_NOSOUND, MF_BYCOMMAND | MFCHECK(SOUND_SW == SOUNDID_NONE));
 	CheckMenuItem(hMenu, IDM_PC9801_14, MF_BYCOMMAND | MFCHECK(SOUND_SW == SOUNDID_PC_9801_14));

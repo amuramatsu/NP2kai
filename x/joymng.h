@@ -65,6 +65,8 @@ typedef struct {
 
 REG8 joymng_getstat(void);
 REG8 joymng_available(void);
+UINT32 joymng_getAnalogX(void);
+UINT32 joymng_getAnalogY(void);
 
 // -- X11
 void joymng_initialize(void);
@@ -76,6 +78,8 @@ void joymng_sync(void);
 
 #define	joymng_getstat()		(REG8)0xff
 #define	joymng_available()		(REG8)0
+#define	joymng_getAnalogX()		(UINT32)0x8000
+#define	joymng_getAnalogY()		(UINT32)0x8000
 
 // -- X11
 #define	joymng_initialize()		(np2oscfg.JOYPAD1 |= 2)

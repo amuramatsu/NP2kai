@@ -119,10 +119,18 @@
 #include	<process.h>
 
 #if defined(SUPPORT_ASYNC_CPU)
-extern "C" UINT8 pccore_asynccpu_drawskip;
-extern "C" UINT8 pccore_asynccpu_nowait;
-extern "C" double pccore_asynccpu_lastTimingValue;
-extern "C" int pccore_asynccpu_lastTimingValid;
+extern "C" UINT32 pccore_asynccpu_drawskip;
+extern "C" UINT32 pccore_asynccpu_nowait;
+extern "C" UINT32 pccore_asynccpu_lastTimingValue;
+extern "C" UINT32 pccore_asynccpu_asyncOffset;
+
+static void setasyncoffset()
+{
+	UINT32 asynctgt = np2cfg.asynctgt;
+	if (asynctgt > 100) asynctgt = 100;
+	if (asynctgt < 1) asynctgt = 1;
+	pccore_asynccpu_asyncOffset = TIMING_MSSHIFT_VALUE * (100 - asynctgt) / 100;
+}
 #endif
 extern bool scrnmng_create_pending; // グラフィックレンダラ生成保留中
 
@@ -1330,6 +1338,32 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 			np2cfg.asynccpu = !np2cfg.asynccpu;
 			update |= SYS_UPDATECFG;
 			break;
+
+		case IDM_ASYNCCPU_MAX:
+			np2cfg.asynctgt = 100;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_ASYNCCPU_20:
+			np2cfg.asynctgt = 20;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_ASYNCCPU_30:
+			np2cfg.asynctgt = 30;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_ASYNCCPU_50:
+			np2cfg.asynctgt = 50;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_ASYNCCPU_70:
+			np2cfg.asynctgt = 70;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
 #endif
 
 		case IDM_AUTOFPS:
@@ -1541,6 +1575,11 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 		case IDM_BEEPHIGH:
 			np2cfg.BEEP_VOL = 3;
 			beep_setvol(3);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case IDM_FIXBEEPOFFSET:
+			np2cfg.nbeepofs = (np2cfg.nbeepofs == 0 ? 1 : 0);
 			update |= SYS_UPDATECFG;
 			break;
 
@@ -1779,7 +1818,6 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 		case IDM_MOUSENC:
 			np2oscfg.mouse_nc = !np2oscfg.mouse_nc;
 			if(np2oscfg.mouse_nc){
-				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
 				if (np2oscfg.wintype != 0) {
 					// XXX: メニューが出せなくなって詰むのを回避（暫定）
 					if (!scrnmng_isfullscreen()) {
@@ -1793,7 +1831,11 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 						sysmng_update(SYS_UPDATEOSCFG);
 					}
 				}
-			}else{
+			}
+			if (np2oscfg.MOUSE_SW || np2oscfg.mouse_nc) {
+				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
+			}
+			else {
 				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) | CS_DBLCLKS);
 			}
 #ifdef SUPPORT_WACOM_TABLET
@@ -2071,7 +2113,7 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 				sysmng_update(SYS_UPDATEOSCFG);
 			}
 			break;
-			
+
 		case IDM_COPYPASTE_COPYTVRAM:
 			{
 				HGLOBAL hMem;
@@ -2410,12 +2452,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 					CDebugUtyView::New();
 					break;
 
+				case IDM_ALLOWRESIZE:
+					np2oscfg.thickframe ^= 1;
+					update |= SYS_UPDATEOSCFG;
+					if (!scrnmng_isfullscreen())
+					{
+						UINT8 thick;
+						thick = (GetWindowLong(hWnd, GWL_STYLE) & WS_THICKFRAME) ? 1 : 0;
+						if (thick != np2oscfg.thickframe)
+						{
+							WINLOCEX wlex;
+							wlex = np2_winlocexallwin(hWnd);
+							winlocex_setholdwnd(wlex, hWnd);
+							np2class_frametype(hWnd, np2oscfg.thickframe);
+							winlocex_move(wlex);
+							winlocex_destroy(wlex);
+						}
+					}
+					break;
+
+				case IDM_SAVEWINDOWSIZE:
+					np2oscfg.svscrmul ^= 1;
+					update |= SYS_UPDATEOSCFG;
+					break;
+
 				case IDM_SCRNMUL4:
 				case IDM_SCRNMUL6:
 				case IDM_SCRNMUL8:
 				case IDM_SCRNMUL10:
 				case IDM_SCRNMUL12:
 				case IDM_SCRNMUL16:
+				case IDM_SCRNMUL24:
+				case IDM_SCRNMUL32:
 					if ((!scrnmng_isfullscreen()) &&
 						!(GetWindowLong(g_hWndMain, GWL_STYLE) & WS_MINIMIZE))
 					{
@@ -2474,6 +2542,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				keystat_allrelease();
 				mousemng_enable(MOUSEPROC_BG);
 				np2_multithread_LeaveCriticalSection();
+				// キャプチャ外す
+				mousemng_disable(MOUSEPROC_SYSTEM);
+				np2oscfg.MOUSE_SW = 0;
+				update |= SYS_UPDATECFG;
 			}
 			else {
 				np2break |= NP2BREAK_MAIN;
@@ -2608,10 +2680,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			if ((wParam == VK_F12) && (!np2oscfg.F12COPY)) {
 				mousemng_toggle(MOUSEPROC_SYSTEM);
 				np2oscfg.MOUSE_SW = !np2oscfg.MOUSE_SW;
-				if(!np2oscfg.mouse_nc){
-					SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) | CS_DBLCLKS);
-				}else/* if (!scrnmng_isfullscreen())*/ {
-					SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
+				if(np2oscfg.mouse_nc){
 					if (np2oscfg.wintype != 0) {
 						// XXX: メニューが出せなくなって詰むのを回避（暫定）
 						if (!scrnmng_isfullscreen()) {
@@ -2625,6 +2694,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 							sysmng_update(SYS_UPDATEOSCFG);
 						}
 					}
+				}
+				if (np2oscfg.MOUSE_SW || np2oscfg.mouse_nc) {
+					SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
+				}
+				else {
+					SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) | CS_DBLCLKS);
 				}
 				sysmng_update(SYS_UPDATECFG);
 			}
@@ -2853,8 +2928,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 						}
 					}
 				}
-			}else{
+			}
+			if (np2oscfg.MOUSE_SW || np2oscfg.mouse_nc) {
 				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
+			}
+			else {
+				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) | CS_DBLCLKS);
 			}
 			np2_multithread_LeaveCriticalSection();
 			break;
@@ -2894,13 +2973,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_LBUTTONDBLCLK:
-			if (!np2oscfg.MOUSE_SW) {
-				if(!np2oscfg.mouse_nc){
+			if(np2oscfg.mouse_nc){
+				if (np2oscfg.wintype != 0) {
+					// XXX: メニューが出せなくなって詰むのを回避（暫定）
 					if (!scrnmng_isfullscreen()) {
-						np2oscfg.wintype++;
-						if (np2oscfg.wintype >= 3) {
-							np2oscfg.wintype = 0;
-						}
+						WINLOCEX	wlex;
+						np2oscfg.wintype = 0;
 						wlex = np2_winlocexallwin(hWnd);
 						winlocex_setholdwnd(wlex, hWnd);
 						np2class_windowtype(hWnd, np2oscfg.wintype);
@@ -2908,48 +2986,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 						winlocex_destroy(wlex);
 						sysmng_update(SYS_UPDATEOSCFG);
 					}
-				}else if (!scrnmng_isfullscreen()) {
-					SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
-					if (np2oscfg.wintype != 0) {
-						// XXX: メニューが出せなくなって詰むのを回避（暫定）
-						if (!scrnmng_isfullscreen()) {
-							WINLOCEX	wlex;
-							np2oscfg.wintype = 0;
-							wlex = np2_winlocexallwin(hWnd);
-							winlocex_setholdwnd(wlex, hWnd);
-							np2class_windowtype(hWnd, np2oscfg.wintype);
-							winlocex_move(wlex);
-							winlocex_destroy(wlex);
-							sysmng_update(SYS_UPDATEOSCFG);
-						}
-					}
 				}
-			}else{
+			}
+			else {
+				if (!scrnmng_isfullscreen())
+				{
+					np2oscfg.wintype++;
+					if (np2oscfg.wintype >= 3)
+					{
+						np2oscfg.wintype = 0;
+ 					}
+					wlex = np2_winlocexallwin(hWnd);
+					winlocex_setholdwnd(wlex, hWnd);
+					np2class_windowtype(hWnd, np2oscfg.wintype);
+					winlocex_move(wlex);
+					winlocex_destroy(wlex);
+					sysmng_update(SYS_UPDATEOSCFG);
+				}
+			}
+			if (np2oscfg.MOUSE_SW || np2oscfg.mouse_nc) {
 				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
+			}
+			else {
+				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) | CS_DBLCLKS);
 			}
 			break;
 
 		case WM_RBUTTONDBLCLK:
-			if (!np2oscfg.MOUSE_SW) {
+ 			if (!np2oscfg.MOUSE_SW) {
 				if(!np2oscfg.mouse_nc){
-				}else/* if (!scrnmng_isfullscreen())*/ {
-					SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
-					if (np2oscfg.wintype != 0) {
-						// XXX: メニューが出せなくなって詰むのを回避（暫定）
-						if (!scrnmng_isfullscreen()) {
-							WINLOCEX	wlex;
-							np2oscfg.wintype = 0;
-							wlex = np2_winlocexallwin(hWnd);
-							winlocex_setholdwnd(wlex, hWnd);
-							np2class_windowtype(hWnd, np2oscfg.wintype);
-							winlocex_move(wlex);
-							winlocex_destroy(wlex);
-							sysmng_update(SYS_UPDATEOSCFG);
-						}
+					// XXX: メニューが出せなくなって詰むのを回避（暫定）
+					if (!scrnmng_isfullscreen()) {
+						WINLOCEX	wlex;
+						np2oscfg.wintype = 0;
+						wlex = np2_winlocexallwin(hWnd);
+						winlocex_setholdwnd(wlex, hWnd);
+						np2class_windowtype(hWnd, np2oscfg.wintype);
+						winlocex_move(wlex);
+						winlocex_destroy(wlex);
+						sysmng_update(SYS_UPDATEOSCFG);
 					}
 				}
-			}else{
+			}
+			if (np2oscfg.MOUSE_SW || np2oscfg.mouse_nc)
+			{
 				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) & ~CS_DBLCLKS);
+			}
+			else
+			{
+				SetClassLong(g_hWndMain, GCL_STYLE, GetClassLong(g_hWndMain, GCL_STYLE) | CS_DBLCLKS);
 			}
 			break;
 
@@ -3424,7 +3509,8 @@ void autoSendKey(){
 void createAsciiTo98KeyCodeList(){
 	int i;
 	// キーコード表作成（暫定）
-	char numkeys[] = {0,'!', '"','#','$','%','&','\'','(',')'};
+	UINT8 numkeys[] = {0,'!', '"','#','$','%','&','\'','(',')'};
+
 	for(i='0';i<='9';i++){
 		vkeylist[i] = i-'0';
 		if(i=='0') vkeylist[i] = 0x0a;
@@ -3437,16 +3523,16 @@ void createAsciiTo98KeyCodeList(){
 		shift_on[i] = 1;
 		vkeylist[i+0x20] = vkeylist[i];
 	}
-	char spkeyascii[] = { '-', '^','\\', '@', '[', ';', ':', ']', ',', '.', '/', '_'};
-	char spshascii[]  = { '=', '`', '|', '~', '{', '+', '*', '}', '<', '>', '?', '_'};
+	UINT8 spkeyascii[] = { '-', '^','\\', '@', '[', ';', ':', ']', ',', '.', '/', '_'};
+	UINT8 spshascii[]  = { '=', '`', '|', '~', '{', '+', '*', '}', '<', '>', '?', '_'};
 	char spkeycode[]  = {0x0B,0x0C,0x0D,0x1A,0x1B,0x26,0x27,0x28,0x30,0x31,0x32,0x33};
 	vkeylist[' '] = 0x34;
 	vkeylist['\t'] = 0x0f;
 	vkeylist['\n'] = 0x1c;
-	for(i=0;i<=sizeof(spkeyascii)/sizeof(spkeyascii[0]);i++){
+	for(i=0;i<NELEMENTS(spkeyascii);i++){
 		vkeylist[spkeyascii[i]] = spkeycode[i];
-		vkeylist[ spshascii[i]] = spkeycode[i];
-		shift_on[ spshascii[i]] = 1;
+		vkeylist[spshascii[i] ] = spkeycode[i];
+		shift_on[spshascii[i] ] = 1;
 	}
 	char kanakeycode[] = { 0x31,0x1b,0x28,0x30,0x32,0x0a,0x03,0x12,0x04,0x05,0x06,0x07,0x08,0x09,0x29,0x0d,0x03,0x12,0x04,0x05,0x06,0x14,0x21,0x22,0x27,0x2d,0x2a,0x1f,0x13,0x19,0x2b,0x10,0x1d,0x29,0x11,0x1e,0x16,0x17,0x01,0x30,0x24,0x20,0x2c,0x02,0x0c,0x0b,0x23,0x2e,0x28,0x32,0x2f,0x07,0x08,0x09,0x18,0x25,0x31,0x26,0x33,0x0a,0x15,0x1a,0x1b };
 	for (i = 0xa1; i <= 0xdf; i++)
@@ -3571,8 +3657,6 @@ static void ExecuteOneFrame_MT_EmulateThread(BOOL bDraw)
 
 	pccore_exec(bDraw);
 
-	joymng_sync();
-	mousemng_sync();
 	recvideo_write();
 }
 static void ExecuteOneFrame(BOOL bDraw)
@@ -3623,19 +3707,19 @@ static void framereset_ALL(UINT cnt) {
 
 static void (*framereset)(UINT cnt) = framereset_ALL;
 
+static void processasyncwait()
+{
+#if defined(SUPPORT_ASYNC_CPU)
+	UINT32 rawTiming = timing_getcount_raw();
+	pccore_asynccpu_lastTimingValue = rawTiming + pccore_asynccpu_asyncOffset;
+#endif
+}
+
 static void processwait(UINT cnt) {
 
-	static int averageskipcounter = 0;
-	static int skipnext = 0;
-	static int incskip = 0;
+	static int frameSleep = 0;
 
 	UINT count = timing_getcount();
-#if defined(SUPPORT_ASYNC_CPU)
-	if (!pccore_asynccpu_lastTimingValid) {
-		pccore_asynccpu_lastTimingValue = timing_getcount_raw();
-		pccore_asynccpu_lastTimingValid = 1;
-	}
-#endif
 	if (count+lateframecount >= cnt) {
 		lateframecount = lateframecount + count - cnt;
 #if defined(SUPPORT_IA32_HAXM)
@@ -3647,40 +3731,23 @@ static void processwait(UINT cnt) {
 		if(lateframecount > np2oscfg.cpustabf) lateframecount = np2oscfg.cpustabf;
 		timing_setcount(0);
 		framereset(cnt);
-		if(skipnext > 0){
-			if(averageskipcounter <= 1){
-				skipnext = 0;
-			}
-		}
-		incskip = 0;
-		averageskipcounter = 0;
-#if defined(SUPPORT_ASYNC_CPU)
-		pccore_asynccpu_lastTimingValid = 0;
-#endif
+		frameSleep = 0;
 	}
-	else {
-		if (lateframecount)
+	else if (frameSleep == 0)
+	{
+		UINT32 rawTiming = timing_getcount_raw();
+		int waitTime = (TIMING_MSSHIFT_VALUE - (rawTiming & TIMING_MSSHIFT_MASK)) / timing_getmsstep();
+		waitTime--; // 少し減らす
+		if (waitTime > 0)
 		{
-			//Sleep(0);
-			if (skipnext > 0) skipnext--;
+			if (waitTime > 1000) waitTime = 1000;
+			Sleep(waitTime); // 休む
 		}
-		else
+		else if (waitTime == 0)
 		{
-			if (skipnext > 0 && averageskipcounter == 0)
-			{
-				Sleep(skipnext); // 休めるだけ休む
-			}
-			else
-			{
-				//Sleep(0);
-			}
-			if (averageskipcounter > 1)
-			{
-				if (!incskip && skipnext < 10) skipnext++;
-				incskip = 1;
-			}
-			averageskipcounter++;
+			Sleep(0);
 		}
+		frameSleep = 1;
 	}
 }
 
@@ -3912,6 +3979,9 @@ void loadNP2INI(const OEMCHAR *fname){
 #endif
 	
 	SetTickCounterMode(np2oscfg.tickmode);
+#if defined(SUPPORT_ASYNC_CPU)
+	setasyncoffset();
+#endif
 	pccore_reset();
 	np2_SetUserPause(0);
 	
@@ -4011,7 +4081,7 @@ void loadNP2INI(const OEMCHAR *fname){
 static unsigned int __stdcall np2_multithread_EmulatorThreadMain(LPVOID vdParam){
 	while (!np2_multithread_hThread_requestexit) {
 		if (!np2stopemulate && !np2_multithread_pauseemulation && !np2userpause) {
-			UINT8 drawskip = (np2oscfg.DRAW_SKIP == 0 ? 1 : np2oscfg.DRAW_SKIP);
+			UINT32 drawskip = (np2oscfg.DRAW_SKIP == 0 ? 1 : np2oscfg.DRAW_SKIP);
 #if defined(SUPPORT_ASYNC_CPU)
 			pccore_asynccpu_drawskip = drawskip;
 			pccore_asynccpu_nowait = np2oscfg.NOWAIT;
@@ -4037,6 +4107,7 @@ static unsigned int __stdcall np2_multithread_EmulatorThreadMain(LPVOID vdParam)
 			else if (drawskip) {		// frame skip
 				if (framecnt < drawskip) {
 					ExecuteOneFrame_MT_EmulateThread(framecnt == 0);
+					if (framecnt == 0) processasyncwait();
 					framecnt++;
 				}
 				else {
@@ -4067,6 +4138,7 @@ static unsigned int __stdcall np2_multithread_EmulatorThreadMain(LPVOID vdParam)
 							timing_setcount(cnt - framecnt);
 						}
 						framereset_MT_EmulateThread(0);
+						if (framecnt == 0) processasyncwait();
 					}
 				}
 				else {
@@ -4217,7 +4289,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst,
 
 	np2class_initialize(hInstance);
 	if (!hPrevInst) {
-		if(np2oscfg.mouse_nc/* && !scrnmng_isfullscreen()*/){
+		if(np2oscfg.MOUSE_SW || np2oscfg.mouse_nc){
 			wc.style = CS_BYTEALIGNCLIENT | CS_HREDRAW | CS_VREDRAW;
 		}else{
 			wc.style = CS_BYTEALIGNCLIENT | CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
@@ -4254,6 +4326,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst,
 	hWnd = CreateWindowEx(0, szClassName, np2oscfg.titles, style,
 						winx, winy, 640, 400,
 						NULL, NULL, hInstance, NULL);
+	winloc_DisableCornerRound(g_hWndMain);
 	g_hWndMain = hWnd;
 
 	//{
@@ -4383,6 +4456,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst,
 #endif
 
 	SetTickCounterMode(np2oscfg.tickmode);
+#if defined(SUPPORT_ASYNC_CPU)
+	setasyncoffset();
+#endif
 	pccore_reset();
 	np2_SetUserPause(0);
 	
@@ -4540,6 +4616,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst,
 					TranslateMessage(&msg);
 				}
 				DispatchMessage(&msg);
+				joymng_sync();
+				mousemng_sync();
 				scrnmng_delaychangemode();
 				mousemng_UIThreadSync();
 				scrnmng_UIThreadProc();
@@ -4573,7 +4651,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst,
 					}
 					else
 					{
-						UINT8 drawskip = (np2oscfg.DRAW_SKIP == 0 ? 1 : np2oscfg.DRAW_SKIP);
+						UINT32 drawskip = (np2oscfg.DRAW_SKIP == 0 ? 1 : np2oscfg.DRAW_SKIP);
 #if defined(SUPPORT_ASYNC_CPU)
 						pccore_asynccpu_drawskip = drawskip;
 						pccore_asynccpu_nowait = np2oscfg.NOWAIT;

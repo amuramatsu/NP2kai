@@ -21,6 +21,7 @@
 #include	<sound/beep.h>
 #include	"fdd/diskdrv.h"
 #include	<keystat.h>
+#include	<timing.h>
 #include	<embed/vramhdl.h>
 #include	<embed/menubase/menubase.h>
 #include	<embed/menu/menustr.h>
@@ -56,6 +57,16 @@ extern void filesel_hdd_native(REG8 drv);
 #define	filesel_fdd(n)	filesel_fdd_native(n)
 #define	filesel_hdd(n)	filesel_hdd_native(n)
 #endif
+
+extern UINT32 pccore_asynccpu_asyncOffset;
+static void setasyncoffset()
+{
+       UINT32 asynctgt = np2cfg.asynctgt;
+       if (asynctgt > 100) asynctgt = 100;
+       if (asynctgt < 1) asynctgt = 1;
+       pccore_asynccpu_asyncOffset = TIMING_MSSHIFT_VALUE * (100 - asynctgt) /
+100;
+}
 
 static void sys_cmd(MENUID id) {
 
@@ -377,6 +388,36 @@ static void sys_cmd(MENUID id) {
 			np2cfg.asynccpu ^= 1;
 			update |= SYS_UPDATECFG;
 			break;
+
+		case MID_ASYNCCPU_MAX:
+			np2cfg.asynctgt = 100;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_ASYNCCPU_70:
+			np2cfg.asynctgt = 100;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_ASYNCCPU_50:
+			np2cfg.asynctgt = 100;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_ASYNCCPU_30:
+			np2cfg.asynctgt = 100;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_ASYNCCPU_20:
+			np2cfg.asynctgt = 20;
+			setasyncoffset();
+			update |= SYS_UPDATECFG;
+			break;
 #endif
 
 		case MID_AUTOFPS:
@@ -627,6 +668,11 @@ static void sys_cmd(MENUID id) {
 		case MID_BEEPHIGH:
 			np2cfg.BEEP_VOL = 3;
 			beep_setvol(3);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_FIXBEEPOFFSET:
+			np2cfg.nbeepofs = (np2cfg.nbeepofs == 0) ? 1 : 0;
 			update |= SYS_UPDATECFG;
 			break;
 
@@ -1115,6 +1161,11 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_setcheck(MID_NOWAIT, (np2oscfg.NOWAIT & 1));
 #if defined(SUPPORT_ASYNC_CPU)
 	menusys_setcheck(MID_ASYNCCPU, (np2cfg.asynccpu & 1));
+	menusys_setcheck(MID_ASYNCCPU_MAX, (np2cfg.asynctgt > 70));
+	menusys_setcheck(MID_ASYNCCPU_70, (np2cfg.asynctgt > 50 && np2cfg.asynctgt <= 70));
+	menusys_setcheck(MID_ASYNCCPU_50, (np2cfg.asynctgt > 30 && np2cfg.asynctgt <= 50));
+	menusys_setcheck(MID_ASYNCCPU_30, (np2cfg.asynctgt > 20 && np2cfg.asynctgt <= 30));
+	menusys_setcheck(MID_ASYNCCPU_20, (np2cfg.asynctgt <= 20));
 #endif
 	menusys_setcheck(MID_SIZEx1,    ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1));
 	menusys_setcheck(MID_SIZEx1_5,  ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1_5));
@@ -1150,6 +1201,7 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_setcheck(MID_BEEPLOW, (b == 1));
 	menusys_setcheck(MID_BEEPMID, (b == 2));
 	menusys_setcheck(MID_BEEPHIGH, (b == 3));
+	menusys_setcheck(MID_FIXBEEPOFFSET, (np2cfg.nbeepofs != 0));
 	b = np2cfg.SOUND_SW;
 	menusys_setcheck(MID_NOSOUND, (b == 0x00));
 	menusys_setcheck(MID_PC9801_14, (b == 0x01));

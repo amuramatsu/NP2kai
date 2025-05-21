@@ -314,6 +314,11 @@ inireadcb(void *arg, const OEMCHAR *para, const OEMCHAR *key, const OEMCHAR *dat
 				*((UINT32 *)p->value) = (UINT32)milstr_solveINT(data);
 				break;
 
+			case INITYPE_SINT64:
+			case INITYPE_UINT64:
+				*((UINT64 *)p->value) = (UINT64)milstr_solveINT64(data);
+				break;
+
 			case INITYPE_HEX8:
 				*((UINT8 *)p->value) = (UINT8)milstr_solveHEX(data);
 				break;
@@ -602,6 +607,9 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("hdrvroot"), INITYPE_STR,	&np2cfg.hdrvroot,	MAX_PATH},
 	{OEMTEXT("hdrv_acc"), INITYPE_UINT8,	&np2cfg.hdrvacc,	0},
 #endif
+#if defined(SUPPORT_HOSTDRVNT)
+	{OEMTEXT("usehdrvn"), INITYPE_BOOL,	&np2cfg.hdrvntenable,	0},
+#endif
 
 	{OEMTEXT("pc_model"), INITYPE_STR,	np2cfg.model,		sizeof(np2cfg.model)},
 
@@ -795,6 +803,7 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("CDDTSKIP"), INITYPE_BOOL,	&np2cfg.cddtskip,	0},
 #if defined(SUPPORT_ASYNC_CPU)
 	{OEMTEXT("ASYNCCPU"), INITYPE_BOOL,	&np2cfg.asynccpu,	0},
+	{OEMTEXT("ASYNCMAX"), INITYPE_UINT8,	&np2cfg.asynctgt,	0},
 #endif
 	{OEMTEXT("CONSTTSC"), INITYPE_BOOL,	&np2cfg.consttsc,	0},
 #if defined(SUPPORT_IDEIO)
@@ -802,8 +811,11 @@ static const INITBL iniitem[] = {
 #endif
 #if defined(SUPPORT_GAMEPORT)
 	{OEMTEXT("GAMEPORT"), INITYPE_BOOL,	&np2cfg.gameport,	0},
+	{OEMTEXT("ANLG_JOY"), INITYPE_BOOL,	&np2cfg.analogjoy,	0},
 #endif
 	{OEMTEXT("USEMOVCS"), INIRO_BOOL,	&np2cfg.allowMOVCS,	0},
+	{OEMTEXT("NBEEPOFS"), INITYPE_BOOL,	&np2cfg.nbeepofs,	0},
+	{OEMTEXT("CAL_VOFS"), INITYPE_SINT64,	&np2cfg.cal_vofs,	0},
 
 	{OEMTEXT("keyboard"), INITYPE_KB,	&np2oscfg.KEYBOARD,	0},
 #if !defined(__LIBRETRO__)

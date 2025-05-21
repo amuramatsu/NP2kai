@@ -88,6 +88,7 @@
 #define IDC_SOUND_DEVICE_NAME           11117
 #define IDC_SAVEWINDOWSIZE              11118
 #define IDC_MULTITHREADMODE             11119
+#define IDC_SAVEWINDOWSIZEPERRES        11120
 #define IDC_DISKLABEL                   12101
 #define IDC_MAKE2DD                     12102
 #define IDC_MAKE2HD                     12103
@@ -271,6 +272,8 @@
 #define IDC_PAD1_RC                     15712
 #define IDC_PAD1_RD                     15713
 #define IDC_PAD1_ID                     15714
+#define IDC_PAD1_GAMEPORT               15715
+#define IDC_PAD1_ANALOG                 15716
 #define IDC_USEFMGEN                    15801
 #define IDC_CLNDREAL                    16101
 #define IDC_CLNDVIR                     16102
@@ -322,6 +325,7 @@
 #define IDC_HOSTDRVREAD					19092
 #define IDC_HOSTDRVWRITE				19093
 #define IDC_HOSTDRVDELETE				19094
+#define IDC_HOSTDRVNTENABLE				19095
 #define IDC_HOSTDRVBROWSE				19099
 #define IDC_IDE1TYPE                    19100
 #define IDC_IDE2TYPE                    19101
@@ -576,6 +580,8 @@
 #define IDM_DEBUGUTY                    40011
 #define IDM_VIEWER                      40012
 #define IDM_RESTOREBORDER               40013
+#define IDM_ALLOWRESIZE					40048
+#define IDM_SAVEWINDOWSIZE				40049
 #define IDM_SCRNMUL                     40050
 #define IDM_SCRNMUL4                    40054
 #define IDM_SCRNMUL6                    40056
@@ -583,6 +589,8 @@
 #define IDM_SCRNMUL10                   40060
 #define IDM_SCRNMUL12                   40062
 #define IDM_SCRNMUL16                   40066
+#define IDM_SCRNMUL24                   40074
+#define IDM_SCRNMUL32                   40082
 #define IDM_RESET                       40101
 #define IDM_CONFIG                      40102
 #define IDM_NEWDISK                     40103
@@ -693,14 +701,19 @@
 #define IDM_30FPS                       40511
 #define IDM_20FPS                       40512
 #define IDM_15FPS                       40513
-#define IDM_VF1EN                       40517
-#define IDM_VF1P0                       40518
-#define IDM_VF1P1                       40519
-#define IDM_VF1P2                       40520
-#define IDM_VF1BO                       40521
 #define IDM_SCREENOPT                   40514
 #define IDM_CPUSTABILIZER               40515
 #define IDM_ASYNCCPU                    40516
+#define IDM_ASYNCCPU_MAX                40520
+#define IDM_ASYNCCPU_20                 40522
+#define IDM_ASYNCCPU_30                 40523
+#define IDM_ASYNCCPU_50                 40525
+#define IDM_ASYNCCPU_70                 40527
+#define IDM_VF1EN                       40550
+#define IDM_VF1P0                       40551
+#define IDM_VF1P1                       40552
+#define IDM_VF1P2                       40553
+#define IDM_VF1BO                       40554
 #define IDM_KEY                         40601
 #define IDM_JOY1                        40602
 #define IDM_JOY2                        40603
@@ -725,6 +738,7 @@
 #define IDM_BEEPLOW                     40632
 #define IDM_BEEPMID                     40633
 #define IDM_BEEPHIGH                    40634
+#define IDM_FIXBEEPOFFSET               40635
 #define IDM_NOSOUND                     40641
 #define IDM_PC9801_14                   40642
 #define IDM_PC9801_26K                  40643

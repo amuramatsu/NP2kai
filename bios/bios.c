@@ -31,6 +31,7 @@
 #endif
 #if defined(SUPPORT_HRTIMER)
 #include	<timemng.h>
+#include	<calendar.h>
 #endif
 #include	<sound/fmboard.h>
 
@@ -338,7 +339,7 @@ static void bios_reinitbyswitch(void) {
 		_SYSTIME hrtimertime;
 		UINT32 hrtimertimeuint;
 
-		timemng_gettime(&hrtimertime);
+		calendar_getdt(&hrtimertime);
 		hrtimertimeuint = (((UINT32)hrtimertime.hour*60 + (UINT32)hrtimertime.minute)*60 + (UINT32)hrtimertime.second)*32 + ((UINT32)hrtimertime.milli*32)/1000;
 		hrtimertimeuint |= 0x400000; // こうしないとWin98の時計が1日ずれる?
 		STOREINTELDWORD(mem+0x04F1, hrtimertimeuint); // XXX: 04F4にも書いちゃってるけど差し当たっては問題なさそうなので･･･

@@ -43,6 +43,9 @@
 #include <font/font.h>
 #include <generic/keydisp.h>
 #include <generic/hostdrv.h>
+#if defined(SUPPORT_HOSTDRVNT)
+#include <generic/hostdrvnt.h>
+#endif
 #include <calendar.h>
 #include <keystat.h>
 #include <io/bmsio.h>
@@ -135,6 +138,7 @@ enum
 	STATFLAG_BMS,
 #endif
 	STATFLAG_SXSI,
+	STATFLAG_HDRVNT,
 	STATFLAG_MASK				= 0x3fff,
 	
 	STATFLAG_BWD_COMPATIBLE			= 0x4000, // このフラグが立っているとき、古いバージョンのステートセーブと互換性がある（足りないデータは0で埋められるので注意する）いまのところSTATFLAG_BINのみサポート
@@ -1630,8 +1634,13 @@ const SFENTRY	*tblterm;
 				break;
 
 #if defined(SUPPORT_HOSTDRV)
-				case STATFLAG_HDRV:
+			case STATFLAG_HDRV:
 				ret |= hostdrv_sfsave(&sffh->sfh, tbl);
+				break;
+#endif
+#if defined(SUPPORT_HOSTDRVNT)
+			case STATFLAG_HDRVNT:
+				ret |= hostdrvNT_sfsave(&sffh->sfh, tbl);
 				break;
 #endif
 
@@ -1701,8 +1710,17 @@ const SFENTRY	*tblterm;
 #if !defined(DISABLE_SOUND)
 				case STATFLAG_FM:
 #endif
+					ret |= flagcheck_veronly(&sffh->sfh, tbl);
+					break;
+
 #if defined(SUPPORT_HOSTDRV)
 				case STATFLAG_HDRV:
+#endif
+					ret |= flagcheck_veronly(&sffh->sfh, tbl);
+					break;
+
+#if defined(SUPPORT_HOSTDRVNT)
+				case STATFLAG_HDRVNT:
 #endif
 					ret |= flagcheck_veronly(&sffh->sfh, tbl);
 					break;
@@ -1856,6 +1874,12 @@ const SFENTRY	*tblterm;
 					break;
 #endif
 
+#if defined(SUPPORT_HOSTDRVNT)
+				case STATFLAG_HDRVNT:
+					ret |= hostdrvNT_sfload(&sffh->sfh, tbl);
+					break;
+#endif
+
 				case STATFLAG_MEM:
 					ret |= flagload_mem(&sffh->sfh, tbl);
 					break;
@@ -1936,6 +1960,9 @@ const SFENTRY	*tblterm;
 #endif
 
 #if defined(CPUCORE_IA32)
+#if defined(USE_CPU_EIPMASK)
+	CPU_EIPMASK = CPU_STATSAVE.cpu_inst_default.op_32 ? 0xffffffff : 0xffff;
+#endif
 	fpu_initialize();
 #endif
 

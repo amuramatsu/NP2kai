@@ -96,7 +96,7 @@ static const CComboData::Entry s_cputype_286[] =
 
 //! 倍率リスト
 static const UINT32 s_mulval[] = {1, 2, 4, 5, 6, 8, 10, 12, 16, 20, 24, 30, 32, 34, 36, 
-	40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90};
+	40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 100, 120, 140 };
 
 //! クロック フォーマット
 static const TCHAR str_clockfmt[] = _T("%2u.%.4u");
@@ -263,6 +263,7 @@ BOOL CConfigureDlg::OnInitDialog()
 	CheckDlgButton(IDC_COMFIRM, (np2oscfg.comfirm) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(IDC_RESUME, (np2oscfg.resume) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(IDC_SAVEWINDOWSIZE, (np2oscfg.svscrmul) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(IDC_SAVEWINDOWSIZEPERRES, (np2oscfg.fsrescfg) ? BST_CHECKED : BST_UNCHECKED);
 #if defined(SUPPORT_MULTITHREAD)
 	CheckDlgButton(IDC_MULTITHREADMODE, (np2oscfg.multithread) ? BST_CHECKED : BST_UNCHECKED);
 #else
@@ -989,6 +990,12 @@ void CConfigureDlg::OnOK()
 	if (np2oscfg.svscrmul != bSaveScrnMul)
 	{
 		np2oscfg.svscrmul = bSaveScrnMul;
+		nUpdated |= SYS_UPDATEOSCFG;
+	}
+	const UINT8 bSaveResConfig = (IsDlgButtonChecked(IDC_SAVEWINDOWSIZEPERRES) != BST_UNCHECKED) ? 1 : 0;
+	if (np2oscfg.fsrescfg != bSaveResConfig)
+	{
+		np2oscfg.fsrescfg = bSaveResConfig;
 		nUpdated |= SYS_UPDATEOSCFG;
 	}
 #if defined(SUPPORT_MULTITHREAD)

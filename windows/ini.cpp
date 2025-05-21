@@ -463,6 +463,9 @@ static const PFTBL s_IniItems[] =
 	PFSTR("hdrvroot", PFTYPE_STR,		np2cfg.hdrvroot),
 	PFVAL("hdrv_acc", PFTYPE_UINT8,		&np2cfg.hdrvacc),
 #endif
+#if defined(SUPPORT_HOSTDRVNT)
+	PFVAL("usehdrvn", PFTYPE_BOOL,		&np2cfg.hdrvntenable),
+#endif
 
 	PFSTR("pc_model", PFTYPE_STR,		np2cfg.model),
 	PFVAL("clk_base", PFTYPE_UINT32,	&np2cfg.baseclock),
@@ -682,6 +685,7 @@ static const PFTBL s_IniItems[] =
 	
 #if defined(SUPPORT_ASYNC_CPU)
 	PFVAL("ASYNCCPU", PFTYPE_BOOL,		&np2cfg.asynccpu), // 非同期CPUモード有効
+	PFVAL("ASYNCMAX", PFTYPE_UINT8,		&np2cfg.asynctgt), // 非同期CPUモード 目標負荷
 #endif
 	PFVAL("CONSTTSC", PFTYPE_BOOL,		&np2cfg.consttsc), // RDTSCをクロック変更によらず一定間隔にする
 #if defined(SUPPORT_IDEIO)
@@ -689,10 +693,13 @@ static const PFTBL s_IniItems[] =
 #endif
 #if defined(SUPPORT_GAMEPORT)
 	PFVAL("GAMEPORT", PFTYPE_BOOL,		&np2cfg.gameport),
+	PFVAL("ANLG_JOY", PFTYPE_BOOL,		&np2cfg.analogjoy),
 #endif
 	PFVAL("USEMOVCS", PFRO_BOOL,		&np2cfg.allowMOVCS),
 	PFVAL("USETHOOK", PFRO_BOOL,		&np2cfg.usetexthook),
 	PFVAL("RASCSI92", PFRO_BOOL,		&np2cfg.rascsi92),
+	PFVAL("NBEEPOFS", PFTYPE_BOOL,		&np2cfg.nbeepofs),
+	PFVAL("CAL_VOFS", PFTYPE_SINT64,	&np2cfg.cal_vofs),
 
 	
 

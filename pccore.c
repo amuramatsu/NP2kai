@@ -54,6 +54,9 @@
 #if defined(SUPPORT_HOSTDRV)
 #include	<generic/hostdrv.h>
 #endif
+#if defined(SUPPORT_HOSTDRVNT)
+#include	<generic/hostdrvnt.h>
+#endif
 #include	<np2ver.h>
 #include	<calendar.h>
 #include	<timing.h>
@@ -116,7 +119,7 @@ const OEMCHAR np2version[] = OEMTEXT(NP2KAI_GIT_TAG " " NP2KAI_GIT_HASH);
 				0, 0, {1, 1, 6, 1, 8, 1},
 				128, 0x00, 1, 
 #if defined(SUPPORT_ASYNC_CPU)
-				0, 
+				0, 100,
 #endif
 				1,
 #if defined(SUPPORT_IDEIO)
@@ -150,7 +153,7 @@ const OEMCHAR np2version[] = OEMTEXT(NP2KAI_GIT_TAG " " NP2KAI_GIT_HASH);
 #if defined(SUPPORT_FMGEN)
 				1,
 #endif	/* SUPPORT_FMGEN */
-				3, 0, 50, 0, 0, 1,
+				3, 0, 50, 0, 0, 1, 0,
 
 				0, {OEMTEXT(""), OEMTEXT(""), OEMTEXT(""), OEMTEXT("")},
 #if defined(SUPPORT_IDEIO)
@@ -205,8 +208,10 @@ const OEMCHAR np2version[] = OEMTEXT(NP2KAI_GIT_TAG " " NP2KAI_GIT_HASH);
 				0, 0,
 				1, 0,
 #if defined(SUPPORT_GAMEPORT)
-				0,
+				0, 0,
 #endif
+				0,
+				0,
 				0,
 				0,
 				0,
@@ -545,6 +550,10 @@ void pccore_init(void) {
 	hostdrv_initialize();
 #endif
 
+#if defined(SUPPORT_HOSTDRVNT)
+	hostdrvNT_initialize();
+#endif
+
 #if defined(SUPPORT_GPIB)
 	gpibio_initialize();
 #endif
@@ -554,6 +563,10 @@ void pccore_term(void) {
 	
 #if defined(SUPPORT_GPIB)
 	gpibio_shutdown();
+#endif
+
+#if defined(SUPPORT_HOSTDRVNT)
+	hostdrvNT_deinitialize();
 #endif
 
 #if defined(SUPPORT_HOSTDRV)
@@ -910,6 +923,9 @@ void pccore_reset(void) {
 #if defined(SUPPORT_HOSTDRV)
 	hostdrv_reset();
 #endif
+#if defined(SUPPORT_HOSTDRVNT)
+	hostdrvNT_reset();
+#endif
 
 	timing_reset();
 	soundmng_play();
@@ -1183,13 +1199,14 @@ void pccore_postevent(UINT32 event) {	// yet!
 }
 
 #if defined(SUPPORT_ASYNC_CPU)
-UINT8 pccore_asynccpu_drawskip = 1;
-UINT8 pccore_asynccpu_nowait = 0;
-double pccore_asynccpu_lastTimingValue = 1.0;
+UINT32 pccore_asynccpu_drawskip = 1;
+UINT32 pccore_asynccpu_nowait = 0;
+UINT32 pccore_asynccpu_lastTimingValue = 0;
+UINT32 pccore_asynccpu_asyncOffset = 0;
 int pccore_asynccpu_lastTimingValid = 0;
 int pccore_asynccpu_screendisp = 0;
-#define LATECOUNTER_THRESHOLD	6
-#define LATECOUNTER_THRESHOLDM	2
+#define LATECOUNTER_THRESHOLD_DOWN	6
+#define LATECOUNTER_THRESHOLD_UP	2
 static void pccore_asynccpu()
 {
 	// 非同期CPU処理
@@ -1221,26 +1238,27 @@ static void pccore_asynccpu()
 #endif
 		if (!asynccpu_fastflag && !asynccpu_lateflag)
 		{
-			double timimg = pccore_asynccpu_lastTimingValue;
-			if (timimg > pccore_asynccpu_drawskip)
+			UINT32 timimg = pccore_asynccpu_lastTimingValue;
+			UINT32 shdrawskip = 1 << TIMING_MSSHIFT;
+			if (timimg > shdrawskip)
 			{
 				latecount++;
-				if (latecount > +LATECOUNTER_THRESHOLD)
+				if (latecount > +LATECOUNTER_THRESHOLD_DOWN)
 				{
-					if (pccore.multiple > 4)
+					if (pccore.multiple > 1)
 					{
 						UINT32 oldmultiple = pccore.multiple;
 						if (pccore.multiple > 40)
 						{
-							if (timimg > 2.0)
+							if (timimg > 2 * shdrawskip)
 							{
 								pccore.multiple -= 10;
 							}
-							else if (timimg > 1.5)
+							else if (timimg > 15 * shdrawskip / 10)
 							{
 								pccore.multiple -= 5;
 							}
-							else if (timimg > 1.2)
+							else if (timimg > 12 * shdrawskip / 10)
 							{
 								pccore.multiple -= 3;
 							}
@@ -1251,15 +1269,15 @@ static void pccore_asynccpu()
 						}
 						else if (pccore.multiple > 20)
 						{
-							if (timimg > 2.0)
+							if (timimg > 2 * shdrawskip)
 							{
 								pccore.multiple -= 6;
 							}
-							else if (timimg > 1.5)
+							else if (timimg > 15 * shdrawskip / 10)
 							{
 								pccore.multiple -= 3;
 							}
-							else if (timimg > 1.2)
+							else if (timimg > 12 * shdrawskip / 10)
 							{
 								pccore.multiple -= 2;
 							}
@@ -1291,21 +1309,25 @@ static void pccore_asynccpu()
 				}
 				asynccpu_lateflag = 1;
 			}
-			else if (timimg < pccore_asynccpu_drawskip)
+			else
 			{
 				if (!hltflag && pccore_asynccpu_screendisp)
 				{
 					latecount--;
-					if (latecount < -LATECOUNTER_THRESHOLDM)
+					if (latecount < -LATECOUNTER_THRESHOLD_UP)
 					{
 						if (pccore.multiple < pccore.maxmultiple)
 						{
 							UINT32 oldmultiple = pccore.multiple;
-							if (timimg < 0.5)
+							if (timimg < 5 * shdrawskip / 10)
+							{
+								pccore.multiple += 4;
+							}
+							else if (timimg < 7 * shdrawskip / 10)
 							{
 								pccore.multiple += 3;
 							}
-							else if (timimg < 0.7)
+							else if (timimg < 8 * shdrawskip / 10)
 							{
 								pccore.multiple += 2;
 							}
@@ -1401,6 +1423,9 @@ void pccore_exec(BOOL draw) {
 #endif
 #if defined(SUPPORT_HOSTDRV)
 			hostdrv_reset(); // XXX: Win9xの再起動で必要
+#endif
+#if defined(SUPPORT_HOSTDRVNT)
+			hostdrvNT_reset(); // XXX: Win9x?̍ċN???ŕK?v
 #endif
 #if defined(SUPPORT_PCI)
 			pcidev_basereset(); // XXX: Win9xの再起動で必要

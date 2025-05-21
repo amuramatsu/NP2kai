@@ -21,13 +21,13 @@
 #include "scrnmng.h"
 #include "scrnmng_d3d.h"
 // #include "sysmng.h"
-#include "dialog\np2class.h"
+#include "dialog/np2class.h"
 #include "pccore.h"
-#include "vram\scrndraw.h"
-#include "vram\palettes.h"
+#include "vram/scrndraw.h"
+#include "vram/palettes.h"
 
 #if defined(SUPPORT_DCLOCK)
-#include "subwnd\dclock.h"
+#include "subwnd/dclock.h"
 #endif
 #include "recvideo.h"
 
@@ -776,11 +776,6 @@ BRESULT scrnmngD3D_create(UINT8 scrnmode) {
 	winstyle = GetWindowLong(g_hWndMain, GWL_STYLE);
 	winstyleex = GetWindowLong(g_hWndMain, GWL_EXSTYLE);
 	if (scrnmode & SCRNMODE_FULLSCREEN) {
-		//if(np2oscfg.mouse_nc){
-		//	winstyle &= ~CS_DBLCLKS;
-		//}else{
-			winstyle |= CS_DBLCLKS;
-		//}
 		if(!(lastscrnmode & SCRNMODE_FULLSCREEN)){
 			GetWindowPlacement(g_hWndMain, &wp);
 		}
@@ -799,7 +794,6 @@ BRESULT scrnmngD3D_create(UINT8 scrnmode) {
 		scrnmng.flag = SCRNFLAG_HAVEEXTEND;
 		winstyle |= WS_SYSMENU;
 		if(np2oscfg.mouse_nc){
-			winstyle &= ~CS_DBLCLKS;
 			if (np2oscfg.wintype != 0) {
 				WINLOCEX	wlex;
 				// XXX: メニューが出せなくなって詰むのを回避（暫定）
@@ -811,8 +805,6 @@ BRESULT scrnmngD3D_create(UINT8 scrnmode) {
 				winlocex_move(wlex);
 				winlocex_destroy(wlex);
 			}
-		}else{
-			winstyle |= CS_DBLCLKS;
 		}
 		if (np2oscfg.thickframe) {
 			winstyle |= WS_THICKFRAME;
@@ -2133,10 +2125,10 @@ void scrnmngD3D_getrect(RECT *lpRect) {
 #include "scrnmng.h"
 #include "scrnmng_d3d.h"
 // #include "sysmng.h"
-#include "dialog\np2class.h"
+#include "dialog/np2class.h"
 #include "pccore.h"
-#include "vram\scrndraw.h"
-#include "vram\palettes.h"
+#include "vram/scrndraw.h"
+#include "vram/palettes.h"
 
 #if defined(SUPPORT_DCLOCK)
 #include "subwnd\dclock.h"

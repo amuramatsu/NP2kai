@@ -118,6 +118,7 @@ struct tagNP2Config
 	
 #if defined(SUPPORT_ASYNC_CPU)
 	UINT8	asynccpu; // 非同期CPUモード有効
+	UINT8	asynctgt; // 非同期CPUモード 目標負荷
 #endif
 	UINT8	consttsc; // RDTSCをAsyncクロック変更によらず一定間隔にする
 #if defined(SUPPORT_IDEIO)
@@ -210,6 +211,7 @@ struct tagNP2Config
 	UINT8	PROTECTMEM;
 	UINT8	hdrvacc;
 	UINT8	hdrvenable;
+	UINT8	hdrvntenable;
 	
 	UINT8	savefddfile;											// ver0.86w rev20
 	OEMCHAR	fddfile[4][MAX_PATH];									// ver0.86w rev20
@@ -316,10 +318,14 @@ struct tagNP2Config
 
 #if defined(SUPPORT_GAMEPORT)
 	UINT8	gameport; // 118音源のゲームポートを使用する
+	UINT8	analogjoy; // ゲームポートをアナログジョイスティックにする
 #endif
 	UINT8	allowMOVCS; // mov cs,xx命令の実行を許可する（8086）
 	UINT8	usetexthook; // Text Hookを有効にする（海外向け）
 	UINT8	rascsi92; // 92互換でRaSCSI形式(*.HDN)を読む
+	UINT8	nbeepofs; // BEEPの出力オフセットを消す
+
+	SINT64	cal_vofs; // 仮想カレンダ時刻オフセット(秒)
 
 #if defined(SUPPORT_DEBUGSS)
 	UINT8	debugss;

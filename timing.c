@@ -5,8 +5,6 @@
 #include	<timing.h>
 
 
-#define	MSSHIFT		16
-
 void wabrly_callback(UINT nowtime);
 
 typedef struct {
@@ -28,7 +26,7 @@ void timing_reset(void) {
 
 void timing_setrate(UINT lines, UINT crthz) {
 
-	timing.msstep = (crthz << (MSSHIFT - 3)) / lines / (1000 >> 3);
+	timing.msstep = (crthz << (TIMING_MSSHIFT - 3)) / lines / (1000 >> 3);
 }
 
 void timing_setcount(UINT value) {
@@ -39,6 +37,12 @@ void timing_setcount(UINT value) {
 #ifdef SUPPORT_WAB
 void wabrly_callback(UINT nowtime);
 #endif
+
+UINT32 timing_getmsstep(void)
+{
+	return(timing.msstep);
+}
+
 
 UINT timing_getcount(void) {
 
@@ -59,8 +63,8 @@ UINT timing_getcount(void) {
 			span = 1000;
 		}
 		fraction = timing.fraction + (span * timing.msstep);
-		timing.cnt += fraction >> MSSHIFT;
-		timing.fraction = fraction & ((1 << MSSHIFT) - 1);
+		timing.cnt += fraction >> TIMING_MSSHIFT;
+		timing.fraction = fraction & ((1 << TIMING_MSSHIFT) - 1);
 	}
 	return(timing.cnt);
 }
@@ -79,17 +83,16 @@ UINT timing_getcount_baseclock(void) {
 			span = 1000;
 		}
 		fraction = timing.fraction + (span * timing.msstep);
-		ret = timing.cnt + (fraction >> MSSHIFT);
+		ret = timing.cnt + (fraction >> TIMING_MSSHIFT);
 	}
 	return(ret);
 }
 
-double timing_getcount_raw(void) {
+UINT32 timing_getcount_raw(void) {
 
 	UINT32	ticknow;
 	UINT32	span;
 	UINT32	fraction;
-	double	ret = 0;
 
 	ticknow = GETTICK();
 	span = ticknow - timing.tick;
@@ -97,6 +100,5 @@ double timing_getcount_raw(void) {
 		span = 1000;
 	}
 	fraction = timing.fraction + (span * timing.msstep);
-	ret = timing.cnt + ((double)fraction / (1 << MSSHIFT));
-	return(ret);
+	return((timing.cnt << TIMING_MSSHIFT) + fraction);
 }

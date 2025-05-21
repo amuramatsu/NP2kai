@@ -31,6 +31,8 @@
 extern retro_input_state_t input_cb;
 
 static UINT8 s_cJoyFlag = 0;
+static UINT32 joyAnalogX = 0x8000;
+static UINT32 joyAnalogY = 0x8000;
 
 enum
 {
@@ -184,6 +186,7 @@ joymng_getstat(void)
 			joyinfo.flag = 0xff;
 
 			/* X */
+			joyAnalogX = ji.axis[0];
 			if (ji.axis[0] > 0x4000) {
 				joyinfo.flag &= ~JOY_RIGHT_BIT;
 			} else if (ji.axis[0] < -0x4000) {
@@ -191,6 +194,7 @@ joymng_getstat(void)
 			}
 
 			/* Y */
+			joyAnalogY = ji.axis[1];
 			if (ji.axis[1] > 0x4000) {
 				joyinfo.flag &= ~JOY_DOWN_BIT;
 			} else if (ji.axis[1] < -0x4000) {
@@ -211,6 +215,12 @@ joymng_getstat(void)
 
 REG8 joymng_available(void) {
 	return(joyavailable);
+}
+UINT32 joymng_getAnalogX(void) {
+	return joyAnalogX;
+}
+UINT32 joymng_getAnalogY(void) {
+	return joyAnalogY;
 }
 
 #if defined(USE_SDL_JOYSTICK)
