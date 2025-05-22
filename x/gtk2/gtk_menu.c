@@ -255,6 +255,7 @@ static const guint n_menu_entries = G_N_ELEMENTS(menu_entries);
 /* Toggle */
 static void cb_clockdisp(GtkToggleAction *action, gpointer user_data);
 static void cb_dispvsync(GtkToggleAction *action, gpointer user_data);
+static void cb_fixbeeppcm(GtkToggleAction *action, gpointer user_data);
 static void cb_framedisp(GtkToggleAction *action, gpointer user_data);
 static void cb_jastsound(GtkToggleAction *action, gpointer user_data);
 static void cb_joyrapid(GtkToggleAction *action, gpointer user_data);
@@ -294,6 +295,7 @@ static void cb_en_dbss(GtkToggleAction *action, gpointer user_data);
 static GtkToggleActionEntry togglemenu_entries[] = {
 { "clockdisp",    NULL, "_Clock disp",        NULL, NULL, G_CALLBACK(cb_clockdisp), FALSE },
 { "dispvsync",    NULL, "_Disp Vsync",        NULL, NULL, G_CALLBACK(cb_dispvsync), FALSE },
+{ "fixbeeppcm",   NULL, "_Fix beep PCM offs", NULL, NULL, G_CALLBACK(cb_fixbeeppcm), FALSE },
 { "framedisp",    NULL, "_Frame disp",        NULL, NULL, G_CALLBACK(cb_framedisp), FALSE },
 { "jastsound",    NULL, "_Jast sound",        NULL, NULL, G_CALLBACK(cb_jastsound), FALSE },
 { "joyrapid",     NULL, "Joy _rapid",         NULL, NULL, G_CALLBACK(cb_joyrapid), FALSE },
@@ -642,6 +644,7 @@ static const gchar *ui_info =
 "    <menuitem action='beeplow'/>\n"
 "    <menuitem action='beepmid'/>\n"
 "    <menuitem action='beephigh'/>\n"
+"    <menuitem action='fixbeeppcm'/>\n"
 "    <separator/>\n"
 "    <menuitem action='disableboards'/>\n"
 "    <menuitem action='pc-9801-14'/>\n"
@@ -1921,6 +1924,19 @@ cb_dispvsync(GtkToggleAction *action, gpointer user_data)
 	if (f) {
 		np2cfg.DISPSYNC = !np2cfg.DISPSYNC;
 		sysmng_update(SYS_UPDATECFG);
+	}
+}
+
+static void
+cb_fixbeeppcm(GtkToggleAction *action, gpointer user_data)
+{
+	gboolean b = gtk_toggle_action_get_active(action);
+	gboolean f;
+
+	f = (np2cfg.nbeepofs ? 1 : 0) ^ (b ? 1 : 0);
+	if (f) {
+		np2cfg.nbeepofs = !np2cfg.nbeepofs;
+		sysmng_update(SYS_UPDATEOSCFG);
 	}
 }
 
