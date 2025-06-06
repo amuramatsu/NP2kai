@@ -45,6 +45,18 @@ void mousemng_onmove(int x, int y);
 BOOL mousemng_buttonevent(UINT event);
 #endif	/* __LIBRETRO__ */
 
+void mousemng_updateclip();
+UINT8 mousemng_getabspos(int* x, int* y);
+void mousemng_reset(void);
+void mousemng_setautohidecursor(int autohide);
+int mousemng_getautohidecursor(void);
+void mousemng_updateautohidecursor(void);
+
+typedef struct {
+	UINT32	autohide;
+} MOUSEMNGSTAT;
+extern MOUSEMNGSTAT mousemngstat;
+
 #ifdef __cplusplus
 }
 #endif

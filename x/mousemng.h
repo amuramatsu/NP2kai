@@ -47,6 +47,18 @@ enum {
 	MOUSE_RATIO_100 = 0
 };
 
+void mousemng_updateclip();
+UINT8 mousemng_getabspos(int* x, int* y);
+void mousemng_reset(void);
+void mousemng_setautohidecursor(int autohide);
+int mousemng_getautohidecursor(void);
+void mousemng_updateautohidecursor(void);
+
+typedef struct {
+	UINT32	autohide;
+} MOUSEMNGSTAT;
+extern MOUSEMNGSTAT mousemngstat;
+
 G_END_DECLS
 
 #endif	/* NP2_X_MOUSEMNG_H__ */

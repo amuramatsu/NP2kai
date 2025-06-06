@@ -11,6 +11,7 @@
 #include <scrnmng.h>
 #include <soundmng.h>
 #include <timemng.h>
+#include <mousemng.h>
 #include <cpucore.h>
 #include <pccore.h>
 #include <io/iocore.h>
@@ -2044,6 +2045,9 @@ const SFENTRY	*tblterm;
 #if defined(SUPPORT_RS232C_FIFO)
 	rs232c_vfast_setrs232cspeed(rs232cfifo.vfast);
 #endif
+
+	// カーソル表示状態復元
+	mousemng_updateautohidecursor();
 	
 	return(ret);
 }

@@ -9,7 +9,7 @@
 
 #include "statsave.h"
 
-#define NP2HOSTDRVNT_FILES_MAX	2048
+#define NP2HOSTDRVNT_FILES_MAX	65536
 
 typedef struct
 {
@@ -25,7 +25,9 @@ typedef struct
 	UINT32 hostdrvWinAPICreateDisposition;
 	UINT32 hostdrvFileAttributes;
 
-	UINT32 deleteOnClose;
+	UINT8 deleteOnClose;
+	UINT8 allowDeleteChild;
+	UINT16 extendLength; // Œã‘±‚ÌŠg’£—Ìˆæ‚Ì’·‚³
 } NP2HOSTDRVNT_FILEINFO;
 
 typedef struct

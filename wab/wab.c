@@ -246,9 +246,7 @@ void np2wab_setScreenSize(int width, int height)
 #endif
 			}
 			scrnmng_updatefsres(); // フルスクリーン解像度更新
-#if !defined(NP2_X) && !defined(NP2_SDL) && !defined(__LIBRETRO__)
 			mousemng_updateclip(); // マウスキャプチャのクリップ範囲を修正
-#endif
 		}
 	}
 	// とりあえずパレットは更新しておく
@@ -884,9 +882,7 @@ void np2wab_setRelayState(REG8 state)
 				scrnmng_setheight(0, dsync.scrnymax); // XXX: 画面高さを乗っ取る前に戻す
 #endif
 				scrnmng_updatefsres(); // フルスクリーン解像度更新
-#if !defined(NP2_X) && !defined(NP2_SDL) && !defined(__LIBRETRO__)
 				mousemng_updateclip(); // マウスキャプチャのクリップ範囲を修正
-#endif
 			}
 		}
 	}

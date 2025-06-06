@@ -57,6 +57,7 @@ static mouse_stat_t ms;
 static void getmaincenter(GtkWidget *w, int *cx, int *cy);
 static void mouseonoff(int onoff);
 
+MOUSEMNGSTAT mousemngstat;
 
 BRESULT
 mousemng_initialize(void)
@@ -237,4 +238,31 @@ mousemng_set_ratio(UINT8 new_ratio)
 	ms.mouse_move_ratio = np2oscfg.mouse_move_ratio;
 	ms.mouse_move_mul = (ms.mouse_move_ratio >> 4) & 0xf;
 	ms.mouse_move_div = ms.mouse_move_ratio & 0xf;
+}
+
+void mousemng_updateclip(void)
+{
+	//NOT IMPLEMENTED YET
+}
+UINT8 mousemng_getabspos(int* x, int* y)
+{
+	//NOT IMPLEMENTED YET
+	return 0;
+}
+void mousemng_reset(void)
+{
+	//NOT IMPLEMENTED YET
+}
+void mousemng_setautohidecursor(int autohide)
+{
+	//NOT IMPLEMENTED YET
+}
+int mousemng_getautohidecursor(void)
+{
+	//NOT IMPLEMENTED YET
+	return 0;
+}
+void mousemng_updateautohidecursor(void)
+{
+	//NOT IMPLEMENTED YET
 }

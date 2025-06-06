@@ -12,6 +12,7 @@
 #include	<soundmng.h>
 #include	<sysmng.h>
 #include	<timemng.h>
+#include	<mousemng.h>
 #include	<cpucore.h>
 #include	<pccore.h>
 #include	<io/iocore.h>
@@ -982,6 +983,9 @@ void pccore_reset(void) {
 	}
 #endif
 #endif
+
+	// マウスリセット
+	mousemng_reset();
 }
 
 static void drawscreen(void) {
@@ -1425,7 +1429,7 @@ void pccore_exec(BOOL draw) {
 			hostdrv_reset(); // XXX: Win9xの再起動で必要
 #endif
 #if defined(SUPPORT_HOSTDRVNT)
-			hostdrvNT_reset(); // XXX: Win9x?̍ċN???ŕK?v
+			hostdrvNT_reset(); // XXX: Win9xの再起動で必要
 #endif
 #if defined(SUPPORT_PCI)
 			pcidev_basereset(); // XXX: Win9xの再起動で必要
@@ -1444,6 +1448,9 @@ void pccore_exec(BOOL draw) {
 				np2haxcore.hltflag = 0;
 			}
 #endif
+			// マウスリセット
+			mousemng_reset();
+
 			CPU_SHUT();
 		}
 #if defined(SUPPORT_IA32_HAXM)

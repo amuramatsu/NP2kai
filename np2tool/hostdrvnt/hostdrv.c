@@ -1,4 +1,13 @@
 #include <ntddk.h>
+#include "miniifs.h"
+#include "minisop.h"
+#include "irplock.h"
+
+// NonPagedPoolへのコピーではなくページロックを使う
+#define USE_FAST_IRPSTACKLOCK
+
+#define HOSTDRVNT_IO_ADDR	0x7EC
+#define HOSTDRVNT_IO_CMD	0x7EE
 
 // このデバイスドライバのデバイス名
 #define DEVICE_NAME     L"\\Device\\HOSTDRV"
@@ -12,6 +21,9 @@
 #define HOSTDRVNTOPTIONS_USEREALCAPACITY	0x2
 #define HOSTDRVNTOPTIONS_USECHECKNOTIFY		0x4
 #define HOSTDRVNTOPTIONS_AUTOMOUNTDRIVE		0x8
+#define HOSTDRVNTOPTIONS_DISKDEVICE			0x10
+
+#define HOSTDRVNT_VERSION		4
 
 // エミュレータとの通信用
 typedef struct tagHOSTDRV_INFO {
@@ -48,24 +60,10 @@ typedef struct tagHOSTDRV_NOTIFYINFO {
 // ないとOSが決め打ちの範囲外参照してIRQL_NOT_LESS_OR_EQUALが頻発。どこまであれば安全かは不明。
 // FSRTL_COMMON_FCB_HEADERを構造体の最初に含めなければならないという条件が必須のようにも思えます。
 typedef struct tagHOSTDRV_FSCONTEXT {
+	FSRTL_COMMON_FCB_HEADER header; // OSが使うので触ってはいけない。32bit環境では40byte
     ULONG fileIndex; // エミュレータ本体が管理するファイルID
-    ULONG reserved[15]; // 予約
+    ULONG reserved[5]; // 予約
 } HOSTDRV_FSCONTEXT, *PHOSTDRV_FSCONTEXT;
-
-// 高速I/Oの処理可否を返す関数。使わないので常時FALSEを返す。
-BOOLEAN HostdrvFastIoCheckIfPossible (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    IN BOOLEAN CheckForReadOperation,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    )
-{
-    return FALSE;
-}
 
 // グローバルに管理する変数群
 static FAST_MUTEX g_Mutex; // I/Oの排他ロック用
@@ -154,6 +152,9 @@ VOID HostdrvCheckOptions(IN PUNICODE_STRING RegistryPath) {
 	    return;
 	}
 	
+	if (HostdrvReadDWORDReg(hKey, L"IsDiskDevice")){
+		g_hostdrvNTOptions |= HOSTDRVNTOPTIONS_DISKDEVICE;
+	}
 	if (HostdrvReadDWORDReg(hKey, L"IsRemovableDevice")){
 		g_hostdrvNTOptions |= HOSTDRVNTOPTIONS_REMOVABLEDEVICE;
 	}
@@ -211,32 +212,108 @@ VOID HostdrvStopTimer()
 	g_checkNotifyTimerEnabled = 0;
 }
 
+NTSTATUS ReserveIoPortRange(PDRIVER_OBJECT DriverObject)
+{
+    PCM_PARTIAL_RESOURCE_DESCRIPTOR pResourceDescriptor;
+    PCM_PARTIAL_RESOURCE_LIST pPartialResourceList;
+    PCM_FULL_RESOURCE_DESCRIPTOR pFullResourceDescriptor;
+    PCM_RESOURCE_LIST pResourceList;
+    ULONG listSize;
+    UNICODE_STRING className;
+
+    BOOLEAN conflictDetected = FALSE;
+    NTSTATUS status;
+    
+    listSize = sizeof(CM_RESOURCE_LIST) + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
+    pResourceList = ExAllocatePoolWithTag(PagedPool, listSize, 'resl');
+    if(!pResourceList){
+    	return STATUS_INSUFFICIENT_RESOURCES;
+    }
+    RtlZeroMemory(pResourceList, listSize);
+    pResourceList->Count = 1;
+
+	pFullResourceDescriptor = &(pResourceList->List[0]);
+    pFullResourceDescriptor->InterfaceType = Internal;
+    pFullResourceDescriptor->BusNumber = 0;
+    
+    pPartialResourceList = &(pFullResourceDescriptor->PartialResourceList);
+    pPartialResourceList->Version = 1;
+    pPartialResourceList->Revision = 1;
+    pPartialResourceList->Count = 2;
+    
+    pResourceDescriptor = &(pPartialResourceList->PartialDescriptors[0]);
+    pResourceDescriptor->Type = CmResourceTypePort;
+    pResourceDescriptor->ShareDisposition = CmResourceShareDriverExclusive;
+    pResourceDescriptor->Flags = CM_RESOURCE_PORT_IO | CM_RESOURCE_PORT_16_BIT_DECODE;
+    pResourceDescriptor->u.Port.Start.QuadPart = HOSTDRVNT_IO_ADDR;
+    pResourceDescriptor->u.Port.Length = 1;
+    
+    pResourceDescriptor = &(pPartialResourceList->PartialDescriptors[1]);
+    pResourceDescriptor->Type = CmResourceTypePort;
+    pResourceDescriptor->ShareDisposition = CmResourceShareDriverExclusive;
+    pResourceDescriptor->Flags = CM_RESOURCE_PORT_IO | CM_RESOURCE_PORT_16_BIT_DECODE;
+    pResourceDescriptor->u.Port.Start.QuadPart = HOSTDRVNT_IO_CMD;
+    pResourceDescriptor->u.Port.Length = 1;
+    
+    // リソース使用の報告
+	RtlInitUnicodeString(&className, L"LegacyDriver");
+    status = IoReportResourceUsage(
+        &className,           // DriverClassName
+        DriverObject,         // OwningDriverObject
+        pResourceList,        // ResourceList
+        listSize,             // ResourceListSize
+        NULL,                 // PhysicalDeviceObject
+        NULL,                 // ConflictList
+        0,                    // ConflictCount
+        FALSE,                // ArbiterRequest
+        &conflictDetected     // ConflictDetected
+    );
+    
+	ExFreePool(pResourceList);
+
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+
+    if (conflictDetected) {
+        return STATUS_CONFLICTING_ADDRESSES;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 // デバイスドライバのエントリポイント
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath) {
     UNICODE_STRING deviceNameUnicodeString, dosDeviceNameUnicodeString;
     PDEVICE_OBJECT deviceObject = NULL;
-    BOOLEAN isRemovableDevice = FALSE;
     DEVICE_TYPE deviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+    ULONG deviceCharacteristics = FILE_DEVICE_IS_MOUNTED;
     NTSTATUS status;
     int i;
     
+    // I/Oポートが使えるかを確認
+    status = ReserveIoPortRange(DriverObject);
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+
     // hostdrv for NT対応かを簡易チェック
-    if(READ_PORT_UCHAR((PUCHAR)0x7EC) != 98 || READ_PORT_UCHAR((PUCHAR)0x7EE) != 21){
+    if(READ_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR) != 98 || READ_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD) != 21){
         return STATUS_NO_SUCH_DEVICE;
 	}
 	
     // hostdrv for NTをリセット
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)0);
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)0);
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)0);
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)0);
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'H');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'D');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'R');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'9');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'8');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'0');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'1');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)0);
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)0);
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)0);
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)0);
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'H');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'D');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'R');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'9');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'8');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'0');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'1');
 
     // 排他ロック初期化　初期化のみで破棄処理はいらない
     ExInitializeFastMutex(&g_Mutex);
@@ -244,16 +321,24 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
     // オプションチェック
     HostdrvCheckOptions(RegistryPath);
     
-    // リムーバブルデバイスの振りをするモード
-    isRemovableDevice = (g_hostdrvNTOptions & HOSTDRVNTOPTIONS_REMOVABLEDEVICE);
-    if(isRemovableDevice){
+    // デバイスタイプなどの設定
+    if(g_hostdrvNTOptions & HOSTDRVNTOPTIONS_REMOVABLEDEVICE){
+    	// リムーバブルデバイスの振りをするモード
     	deviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+    	deviceCharacteristics |= FILE_REMOVABLE_MEDIA;
+    }else if(g_hostdrvNTOptions & HOSTDRVNTOPTIONS_DISKDEVICE){
+    	// ローカルディスクの振りをするモード
+    	deviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+    }else{
+    	// ネットワークファイルシステムの振りをするモード
+    	deviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+    	deviceCharacteristics |= FILE_REMOTE_DEVICE;
     }
     
     // デバイスを作成　ローカルディスクの振りをするならFILE_DEVICE_DISK_FILE_SYSTEM
     RtlInitUnicodeString(&deviceNameUnicodeString, DEVICE_NAME);
     status = IoCreateDevice(DriverObject, 0, &deviceNameUnicodeString,
-                            deviceType, 0, FALSE, &deviceObject);
+                            deviceType, deviceCharacteristics, FALSE, &deviceObject);
     if (!NT_SUCCESS(status)) {
         return status;
     }
@@ -304,17 +389,11 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
     // ドライバの終了処理を登録
     DriverObject->DriverUnload = HostdrvUnload;
     
-    if(isRemovableDevice){
-	    // ごみ箱を使わせないためにリムーバブルディスクの振りをする
-	    deviceObject->Characteristics |= FILE_REMOVABLE_MEDIA;
-    }else{
-	    // ごみ箱を使わせないためにネットワークデバイスの振りをする
-	    deviceObject->Characteristics |= FILE_REMOTE_DEVICE;
-    }
+    // キャッシュ未実装でもメモリマップトファイルが使えるようにするWORKAROUNDキャッシュを初期化
+    MiniSOP_InitializeCache(DriverObject);
     
     // その他追加フラグを設定
     deviceObject->Flags |= DO_BUFFERED_IO; // データ受け渡しでSystemBufferを基本とする？指定しても他方式で来るときは来る気がする。
-    deviceObject->Flags |= DO_LOW_PRIORITY_FILESYSTEM; // 低優先度で処理
     
     if(g_hostdrvNTOptions & HOSTDRVNTOPTIONS_USECHECKNOTIFY){
     	KeInitializeTimer(&g_checkNotifyTimer);
@@ -333,17 +412,34 @@ VOID HostdrvUnload(IN PDRIVER_OBJECT DriverObject) {
     // 待機中のIRPを全部キャンセルする
     for (i = 0; i < PENDING_IRP_MAX; i++) {
         if (g_pendingIrpList[i] != NULL) {
+    		KIRQL oldIrql;
         	PIRP Irp = g_pendingIrpList[i];
 		    g_pendingIrpList[i] = NULL;
 		    g_pendingAliveList[i] = 0;
-		    Irp->IoStatus.Status = STATUS_CANCELLED;
-		    Irp->IoStatus.Information = 0;
-		    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        	IoAcquireCancelSpinLock(&oldIrql);
+        	if(Irp->CancelRoutine){
+				Irp->CancelRoutine = NULL;
+    			IoReleaseCancelSpinLock(Irp->CancelIrql);
+			    Irp->IoStatus.Status = STATUS_CANCELLED;
+			    Irp->IoStatus.Information = 0;
+	        	IoCompleteRequest(Irp, IO_NO_INCREMENT); // キャンセルする
+        	}else{
+    			IoReleaseCancelSpinLock(Irp->CancelIrql); // 何故かキャンセル済み　通常はないはず
+        	}
         }
     }
 	g_pendingCounter = 0;
     
+    // 排他領域開始
+    ExAcquireFastMutex(&g_Mutex);
+    
     HostdrvStopTimer();
+    
+    // SOPリスト解放
+    MiniSOP_ReleaseSOPList();
+    
+    // 排他領域終了
+    ExReleaseFastMutex(&g_Mutex);
     
     // 自動ドライブ文字割り当ての場合、解除
     if(g_hostdrvNTOptions & HOSTDRVNTOPTIONS_AUTOMOUNTDRIVE){
@@ -370,7 +466,7 @@ VOID HostdrvCancelRoutine(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
     int i;
     
     // 待機キャンセル要求登録解除
-    //IoSetCancelRoutine(Irp, NULL);
+    //IoSetCancelRoutine(Irp, NULL); // 旧OSで動かないが本当はこちらが推奨
     Irp->CancelRoutine = NULL;
     
     // キャンセルのロックを解除
@@ -409,58 +505,95 @@ NTSTATUS HostdrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp) {
     HOSTDRV_INFO *lpHostdrvInfo;
     ULONG hostdrvInfoAddr;
     PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
+#ifdef USE_FAST_IRPSTACKLOCK
+	IRPSTACKLOCK_INFO irpLockInfo;
+#else
+    PIO_STACK_LOCATION irpSpNPP = NULL;
+    PIO_STACK_LOCATION irpSpNPPBefore = NULL;
+#endif
     BOOLEAN pending = FALSE;
 	ULONG completeIrpCount = 0; // I/O待機で今回完了したものの数
 	PIRP *completeIrpList = NULL; // I/O待機で今回完了したIRPのリスト
+	ULONG sopIndex = -1;
+	NTSTATUS status;
 	int i;
 
     // IRP_MJ_CREATEの時、必要なメモリを仮割り当て
     if(irpSp->MajorFunction == IRP_MJ_CREATE) {
         // FileObjectがNULLなのは異常なので弾く
         if(irpSp->FileObject == NULL){
-            Irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+            Irp->IoStatus.Status = status = STATUS_INVALID_PARAMETER;
             Irp->IoStatus.Information = 0;
             IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            return Irp->IoStatus.Status;
+            return status;
         }
         // FsContextとSectionObjectPointerにExAllocatePoolWithTag(NonPagedPool,～でメモリ割り当て
         // NULLのままだったり違う方法で割り当てると正常に動かないので注意
         irpSp->FileObject->FsContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(HOSTDRV_FSCONTEXT), "HSFC");
         if(irpSp->FileObject->FsContext == NULL){
-		    Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		    Irp->IoStatus.Status = status = STATUS_INSUFFICIENT_RESOURCES;
 		    Irp->IoStatus.Information = 0;
             IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            return Irp->IoStatus.Status;
+            return status;
         }
         RtlZeroMemory(irpSp->FileObject->FsContext, sizeof(HOSTDRV_FSCONTEXT));
-        irpSp->FileObject->SectionObjectPointer = ExAllocatePoolWithTag(NonPagedPool, sizeof(SECTION_OBJECT_POINTERS), "HSOP");
-        if(irpSp->FileObject->SectionObjectPointer == NULL){
+        
+    	// SOP取得
+	    ExAcquireFastMutex(&g_Mutex);
+    	sopIndex = MiniSOP_GetSOPIndex(irpSp->FileObject->FileName);
+	    ExReleaseFastMutex(&g_Mutex);
+	    
+    	if(sopIndex == -1){
         	ExFreePool(irpSp->FileObject->FsContext);
-		    Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		    Irp->IoStatus.Status = status = STATUS_INSUFFICIENT_RESOURCES;
 		    Irp->IoStatus.Information = 0;
             IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            return Irp->IoStatus.Status;
-        }
-        RtlZeroMemory(irpSp->FileObject->SectionObjectPointer, sizeof(SECTION_OBJECT_POINTERS));
+            return status;
+		}
+		irpSp->FileObject->SectionObjectPointer = MiniSOP_GetSOP(sopIndex);
     }
     
     // デフォルトのステータス設定
-    Irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
+    Irp->IoStatus.Status = status = STATUS_NOT_IMPLEMENTED;
     Irp->IoStatus.Information = 0;
     
     // エミュレータ側に渡すデータ設定
+#ifdef USE_FAST_IRPSTACKLOCK
+	// ページアウトしないようにロック
+    irpLockInfo = LockIrpStack(irpSp);
+    if(!irpLockInfo.isValid){
+        Irp->IoStatus.Status = status = STATUS_INSUFFICIENT_RESOURCES;
+        Irp->IoStatus.Information = 0;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return status;
+    }
+#else
+	// ページアウトしない領域へコピー
+    irpSpNPP = CreateNonPagedPoolIrpStack(irpSp); // NonPagedコピー作成
+    if(irpSpNPP == NULL){
+        Irp->IoStatus.Status = status = STATUS_INSUFFICIENT_RESOURCES;
+        Irp->IoStatus.Information = 0;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return status;
+	}
+	irpSpNPPBefore = irpSp;
+	irpSp = irpSpNPP; // ポインタ書き換え
+#endif
     lpHostdrvInfo = &hostdrvInfo;
     lpHostdrvInfo->stack = irpSp;
     lpHostdrvInfo->status = &(Irp->IoStatus);
     lpHostdrvInfo->systemBuffer = Irp->AssociatedIrp.SystemBuffer;
     lpHostdrvInfo->deviceFlags = irpSp->DeviceObject->Flags;
-    if (Irp->AssociatedIrp.SystemBuffer != NULL) {
-        // システムバッファ経由での間接的な転送
-        lpHostdrvInfo->outBuffer = Irp->AssociatedIrp.SystemBuffer;
-    } else if (Irp->MdlAddress != NULL) {
+    if (Irp->MdlAddress != NULL) {
         // MdlAddressを使った直接的な転送
         lpHostdrvInfo->outBuffer = MmGetSystemAddressForMdl(Irp->MdlAddress); // 古いOS対応用
         //lpHostdrvInfo->outBuffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority); // 最近のOSならこれも可能（より安全？）
+        if(lpHostdrvInfo->systemBuffer == NULL){
+        	lpHostdrvInfo->systemBuffer = lpHostdrvInfo->outBuffer;
+        }
+    } else if (Irp->AssociatedIrp.SystemBuffer != NULL) {
+        // システムバッファ経由での間接的な転送
+        lpHostdrvInfo->outBuffer = Irp->AssociatedIrp.SystemBuffer;
     } else {
         // ユーザー指定バッファへの転送
         lpHostdrvInfo->outBuffer = Irp->UserBuffer;
@@ -470,30 +603,34 @@ NTSTATUS HostdrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp) {
     } else {
         lpHostdrvInfo->sectionObjectPointer = NULL;
     }
-    lpHostdrvInfo->version = 3;
+    lpHostdrvInfo->version = HOSTDRVNT_VERSION;
     lpHostdrvInfo->pendingListCount = PENDING_IRP_MAX;
     lpHostdrvInfo->pendingIrpList = g_pendingIrpList;
     lpHostdrvInfo->pendingAliveList = g_pendingAliveList;
     lpHostdrvInfo->pending.pendingIndex = -1;
     lpHostdrvInfo->hostdrvNTOptions = g_hostdrvNTOptions;
     
+    if(irpSp->MajorFunction == IRP_MJ_SET_INFORMATION) {
+	    MiniSOP_HandlePreMjSetInformationCache(irpSp);
+ 	}
+ 	
     // 排他領域開始
     ExAcquireFastMutex(&g_Mutex);
     
     // 構造体アドレスを書き込んでエミュレータで処理させる（ハイパーバイザーコール）
     // エミュレータ側でステータスやバッファなどの値がセットされる
     hostdrvInfoAddr = (ULONG)lpHostdrvInfo;
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr));
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr >> 8));
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr >> 16));
-    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr >> 24));
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'H');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'D');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'R');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'9');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'8');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'0');
-    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'1');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr));
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr >> 8));
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr >> 16));
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr >> 24));
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'H');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'D');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'R');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'9');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'8');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'0');
+    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'1');
     if(Irp->IoStatus.Status == STATUS_PENDING){
     	// 待機希望
     	if(lpHostdrvInfo->pending.pendingIndex < 0 || PENDING_IRP_MAX <= lpHostdrvInfo->pending.pendingIndex){
@@ -501,14 +638,8 @@ NTSTATUS HostdrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp) {
 		    Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		    Irp->IoStatus.Information = 0;
     	}else{
-    		// 指定された場所へ登録
-    		g_pendingIrpList[lpHostdrvInfo->pending.pendingIndex] = Irp;
+    		// 登録OK　ここではg_pendingIrpListに代入しない（入れると他スレッドに完了されてしまう恐れがある）
     		pending = TRUE;
-			g_pendingCounter++;
-			// 監視タイマーを動かす
-		    if(g_hostdrvNTOptions & HOSTDRVNTOPTIONS_USECHECKNOTIFY){
-		    	HostdrvStartTimer();
-			}
     	}
     }else if(lpHostdrvInfo->pending.pendingCompleteCount > 0){
     	// 待機解除が存在する
@@ -535,23 +666,49 @@ NTSTATUS HostdrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp) {
     // 排他領域終了
     ExReleaseFastMutex(&g_Mutex);
     
+    
+#ifdef USE_FAST_IRPSTACKLOCK
+	// ロック解除
+    UnlockIrpStack(&irpLockInfo);
+#else
+    // NonPagedコピーを書き戻し
+    ReleaseNonPagedPoolIrpStack(irpSpNPP, irpSpNPPBefore);
+	irpSp = irpSpNPPBefore; // ポインタ書き戻し
+    irpSpNPP = NULL;
+#endif
+    
     // ファイルオープン・クローズなどで割り当てたメモリの処理
     if(Irp->IoStatus.Status == STATUS_SUCCESS){
         // ファイルを閉じたので破棄
         if(irpSp->MajorFunction == IRP_MJ_CLOSE) {
             if(irpSp->FileObject->SectionObjectPointer){
-                ExFreePool(irpSp->FileObject->SectionObjectPointer);
+            	PSECTION_OBJECT_POINTERS sop;
+            		
+			    // SOP解放
+			    ExAcquireFastMutex(&g_Mutex);
+    			sop = irpSp->FileObject->SectionObjectPointer;
                 irpSp->FileObject->SectionObjectPointer = NULL;
+                MiniSOP_ReleaseSOP(sop);
+			    ExReleaseFastMutex(&g_Mutex);
+            }
+            if(irpSp->FileObject->FsContext){
                 ExFreePool(irpSp->FileObject->FsContext);
                 irpSp->FileObject->FsContext = NULL;
             }
+        }else if(irpSp->MajorFunction == IRP_MJ_CREATE) {
+			MiniSOP_HandleMjCreateCache(irpSp);
+        }else if(irpSp->MajorFunction == IRP_MJ_CLEANUP) {
+		    MiniSOP_HandleMjCleanupCache(irpSp);
         }
     }else{
         // 上手く行かなかったら破棄
         if(irpSp->MajorFunction == IRP_MJ_CREATE) {
-            if(irpSp->FileObject->SectionObjectPointer){
-                ExFreePool(irpSp->FileObject->SectionObjectPointer);
+            if(sopIndex != -1){
+			    // SOP解放
+			    ExAcquireFastMutex(&g_Mutex);
                 irpSp->FileObject->SectionObjectPointer = NULL;
+                MiniSOP_ReleaseSOPByIndex(sopIndex);
+			    ExReleaseFastMutex(&g_Mutex);
             }
             if(irpSp->FileObject->FsContext){
                 ExFreePool(irpSp->FileObject->FsContext);
@@ -563,8 +720,16 @@ NTSTATUS HostdrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp) {
     // 待機解除が存在する場合、それらを完了させる
     if(completeIrpList){
 	    for (i = 0; i < completeIrpCount; i++) {
+    		KIRQL oldIrql;
         	PIRP Irp = completeIrpList[i];
-	        IoCompleteRequest(Irp, IO_NO_INCREMENT); // 全部猫側でセットされているので完了を呼ぶだけでよい
+        	IoAcquireCancelSpinLock(&oldIrql);
+        	if(Irp->CancelRoutine){
+    			Irp->CancelRoutine = NULL;
+    			IoReleaseCancelSpinLock(Irp->CancelIrql);
+	        	IoCompleteRequest(Irp, IO_NO_INCREMENT); // 全部猫側でセットされているので完了を呼ぶだけでよい
+        	}else{
+    			IoReleaseCancelSpinLock(Irp->CancelIrql); // 何故かキャンセル済み　通常はないはず
+        	}
 	    }
     	ExFreePool(completeIrpList);
     	completeIrpList = NULL;
@@ -582,29 +747,47 @@ NTSTATUS HostdrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp) {
 		if (Irp->Cancel) {
     		IoReleaseCancelSpinLock(oldIrql);  // 保護解除
 	        
+		    // 排他領域開始
+		    ExAcquireFastMutex(&g_Mutex);
+    
+    		// リストに入れる必要なし。解除する
     		g_pendingIrpList[lpHostdrvInfo->pending.pendingIndex] = NULL;
     		g_pendingAliveList[lpHostdrvInfo->pending.pendingIndex] = 0;
 
-	        Irp->IoStatus.Status = STATUS_CANCELLED;
+		    // 排他領域終了
+		    ExReleaseFastMutex(&g_Mutex);
+    
+	        Irp->IoStatus.Status = status = STATUS_CANCELLED;
 	        Irp->IoStatus.Information = 0;
 	        IoCompleteRequest(Irp, IO_NO_INCREMENT);
-	        
-			if(g_pendingCounter > 0) g_pendingCounter--;
-	    	if(g_pendingCounter == 0){
-	    		// 待機中がなければ動かす必要なし
-	    		HostdrvStopTimer();
-	    	}
 	    }else{
 		    // 待機キャンセル要求登録
-		    //IoSetCancelRoutine(Irp, HostdrvCancelRoutine);
+		    //IoSetCancelRoutine(Irp, HostdrvCancelRoutine); // 旧OSで動かないが本当はこちらが推奨
     		Irp->CancelRoutine = HostdrvCancelRoutine;
 		    
     		IoReleaseCancelSpinLock(oldIrql);  // 保護解除
+    		
+		    // 排他領域開始
+		    ExAcquireFastMutex(&g_Mutex);
+		    
+    		// 実際に登録
+    		g_pendingIrpList[lpHostdrvInfo->pending.pendingIndex] = Irp;
+			g_pendingCounter++;
+			// 必要なら監視タイマーを動かす
+		    if(g_hostdrvNTOptions & HOSTDRVNTOPTIONS_USECHECKNOTIFY){
+		    	HostdrvStartTimer();
+			}
+    
+		    // 排他領域終了
+		    ExReleaseFastMutex(&g_Mutex);
+		    
+    		status = Irp->IoStatus.Status;
 	    }
     }else{
+    	status = Irp->IoStatus.Status;
         IoCompleteRequest(Irp, IO_NO_INCREMENT);
     }
-    return Irp->IoStatus.Status;
+    return status;
 }
 
 VOID HostdrvTimerDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
@@ -636,7 +819,7 @@ VOID HostdrvRescheduleTimer(IN PVOID Context)
     
     if(lpHostdrvInfo){
     	// エミュレータ側に渡すデータ設定
-	    lpHostdrvInfo->version = 3;
+	    lpHostdrvInfo->version = HOSTDRVNT_VERSION;
 	    lpHostdrvInfo->pendingListCount = PENDING_IRP_MAX;
 	    lpHostdrvInfo->pendingIrpList = g_pendingIrpList;
 	    lpHostdrvInfo->pendingAliveList = g_pendingAliveList;
@@ -645,16 +828,16 @@ VOID HostdrvRescheduleTimer(IN PVOID Context)
 	    // 構造体アドレスを書き込んでエミュレータで処理させる（ハイパーバイザーコール）
 	    // エミュレータ側でステータスやバッファなどの値がセットされる
 	    hostdrvInfoAddr = (ULONG)lpHostdrvInfo;
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr));
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr >> 8));
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr >> 16));
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EC, (UCHAR)(hostdrvInfoAddr >> 24));
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'H');
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'D');
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'R');
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'9');
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'8');
-	    WRITE_PORT_UCHAR((PUCHAR)0x7EE, (UCHAR)'M');
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr));
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr >> 8));
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr >> 16));
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_ADDR, (UCHAR)(hostdrvInfoAddr >> 24));
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'H');
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'D');
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'R');
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'9');
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'8');
+	    WRITE_PORT_UCHAR((PUCHAR)HOSTDRVNT_IO_CMD, (UCHAR)'M');
 	    if(lpHostdrvInfo->pending.pendingCompleteCount > 0){
 	    	// 待機解除が存在する
 	    	completeIrpCount = lpHostdrvInfo->pending.pendingCompleteCount;
@@ -695,8 +878,16 @@ VOID HostdrvRescheduleTimer(IN PVOID Context)
     // 待機解除が存在する場合、それらを完了させる
     if(completeIrpList){
 	    for (i = 0; i < completeIrpCount; i++) {
+    		KIRQL oldIrql;
         	PIRP Irp = completeIrpList[i];
-	        IoCompleteRequest(Irp, IO_NO_INCREMENT); // 全部猫側でセットされているので完了を呼ぶだけでよい
+        	IoAcquireCancelSpinLock(&oldIrql);
+        	if(Irp->CancelRoutine){
+    			Irp->CancelRoutine = NULL;
+    			IoReleaseCancelSpinLock(Irp->CancelIrql);
+	        	IoCompleteRequest(Irp, IO_NO_INCREMENT); // 全部猫側でセットされているので完了を呼ぶだけでよい
+        	}else{
+    			IoReleaseCancelSpinLock(Irp->CancelIrql); // 何故かキャンセル済み　通常はないはず
+        	}
 	    }
     	ExFreePool(completeIrpList);
     	completeIrpList = NULL;

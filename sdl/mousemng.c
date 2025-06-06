@@ -2,6 +2,7 @@
 #include	"mousemng.h"
 
 MOUSEMNG	mousemng;
+MOUSEMNGSTAT mousemngstat;
 #if defined(EMSCRIPTEN) && !defined(__LIBRETRO__)
 int captured=0;
 #endif
@@ -213,3 +214,34 @@ void mousemng_onmove(int x, int y) {
 }
 #endif	/* __LIBRETRO__ */
 
+void mousemng_updateclip(void)
+{
+#if defined(EMSCRIPTEN) && !defined(__LIBRETRO__)
+	if (captured) {
+		mousecapture(FALSE);
+		mousecapture(TRUE); // キャプチャし直し
+	}
+#endif
+}
+UINT8 mousemng_getabspos(int* x, int* y)
+{
+	//NOT IMPLEMENTED YET
+	return 0;
+}
+void mousemng_reset(void)
+{
+	//NOT IMPLEMENTED YET
+}
+void mousemng_setautohidecursor(int autohide)
+{
+	//NOT IMPLEMENTED YET
+}
+int mousemng_getautohidecursor(void)
+{
+	//NOT IMPLEMENTED YET
+	return 0;
+}
+void mousemng_updateautohidecursor(void)
+{
+	//NOT IMPLEMENTED YET
+}

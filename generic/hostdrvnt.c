@@ -76,11 +76,17 @@ static HANDLE s_hThreadChangeFS = NULL;
 static HANDLE s_hChangeFSStopEvent = NULL;
 static int s_FSChanged = 0;
 
+static int s_fsContextUserDataOffset = 0;
+
 #define HOSTDRVNTOPTIONS_NONE				0x0
 #define HOSTDRVNTOPTIONS_REMOVABLEDEVICE	0x1
 #define HOSTDRVNTOPTIONS_USEREALCAPACITY	0x2
 #define HOSTDRVNTOPTIONS_USECHECKNOTIFY		0x4
 #define HOSTDRVNTOPTIONS_AUTOMOUNTDRIVE		0x8
+#define HOSTDRVNTOPTIONS_DISKDEVICE			0x10
+
+// FSCONTEXTで固有データが格納されている位置オフセット（ver4以降）
+#define HOSTDRVNT_FSCONTEXT_USERDATA_OFFSET	40
 
 // おぷしょん
 static UINT32 s_hostdrvNTOptions = HOSTDRVNTOPTIONS_NONE;
@@ -168,7 +174,7 @@ void hostdrvNT_invokeMonitorChangeFS()
 	else
 	{
 		// 無効
-		if (s_hChangeFSStopEvent != NULL || s_hChangeFSStopEvent != INVALID_HANDLE_VALUE)
+		if (s_hChangeFSStopEvent != NULL && s_hChangeFSStopEvent != INVALID_HANDLE_VALUE)
 		{
 			hostdrvNT_stopMonitorChangeFS();
 		}
@@ -230,7 +236,7 @@ static int hostdrvNT_getEmptyFile()
 	int i;
 	for (i = 1; i < NP2HOSTDRVNT_FILES_MAX; i++)
 	{ // 0は使わないことにする
-		if (hostdrvNT.files[i].fileName == 0) return i;
+		if (!hostdrvNT.files[i].fileName) return i;
 	}
 	return -1;
 }
@@ -303,12 +309,27 @@ static int hostdrvNT_reopenFile(int index)
 	if (!fh || fh == INVALID_HANDLE_VALUE)
 	{
 		TRACEOUTW((L"REPOEN: %d %s", index, fi->hostFileName));
-		if ((fi->hFile = CreateFileW(fi->hostFileName, fi->hostdrvWinAPIDesiredAccess, fi->hostdrvShareAccess, NULL, fi->hostdrvWinAPICreateDisposition, fi->hostdrvFileAttributes, NULL)) == INVALID_HANDLE_VALUE)
+		if (fi->isDirectory)
 		{
-			DWORD error = GetLastError();
-			TRACEOUTW((L"OPEN FILE ERROR (code %d): %d %s", error, index, fi->hostFileName));
-			fi->hFile = NULL;
-			return 0;
+			// ディレクトリの場合の特例（実質的にディレクトリ日付変更専用）
+			if ((fi->hFile = CreateFileW(fi->hostFileName, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
+			{
+				DWORD error = GetLastError();
+				TRACEOUTW((L"OPEN FILE ERROR (code %d): %d %s", error, index, fi->hostFileName));
+				fi->hFile = NULL;
+				return 0;
+			}
+		}
+		else
+		{
+			// ファイルの場合
+			if ((fi->hFile = CreateFileW(fi->hostFileName, fi->hostdrvWinAPIDesiredAccess, fi->hostdrvShareAccess, NULL, fi->hostdrvWinAPICreateDisposition, fi->hostdrvFileAttributes, NULL)) == INVALID_HANDLE_VALUE)
+			{
+				DWORD error = GetLastError();
+				TRACEOUTW((L"OPEN FILE ERROR (code %d): %d %s", error, index, fi->hostFileName));
+				fi->hFile = NULL;
+				return 0;
+			}
 		}
 	}
 	return 1;
@@ -518,7 +539,7 @@ static int hostdrvNT_readSetInformationData(HOSTDRVNT_INVOKEINFO* invokeInfo, vo
 
 static NP2HOSTDRVNT_FILEINFO* hostdrvNT_getFileInfo(NP2_FILE_OBJECT* fileObject)
 {
-	UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject->FsContext);
+	UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject->FsContext + s_fsContextUserDataOffset);
 	if (fsContextFileIndex == 0 || NP2HOSTDRVNT_FILES_MAX <= fsContextFileIndex || hostdrvNT.files[fsContextFileIndex].fileName == NULL)
 	{
 		return NULL;
@@ -768,6 +789,8 @@ static int hostdrvNT_getOneEntry(NP2HOSTDRVNT_FILEINFO* fi, NP2_FILE_BOTH_DIR_IN
 	if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
 		// ディレクトリ
+		//WCHAR longPath[MAX_PATH];
+		//WCHAR shortPath[MAX_PATH];
 		dirInfo->FileNameLength = wcslen(findFileData.cFileName) * sizeof(WCHAR);
 		wcscpy(dirInfo->FileName, findFileData.cFileName);
 		dirInfo->FileAttributes = findFileData.dwFileAttributes;
@@ -775,10 +798,35 @@ static int hostdrvNT_getOneEntry(NP2HOSTDRVNT_FILEINFO* fi, NP2_FILE_BOTH_DIR_IN
 		dirInfo->LastAccessTime = *((UINT64*)&findFileData.ftLastAccessTime);
 		dirInfo->LastWriteTime = *((UINT64*)&findFileData.ftLastWriteTime);
 		dirInfo->ChangeTime = *((UINT64*)&findFileData.ftLastWriteTime);
+
+		//PathCombineW(longPath, fi->hostFileName, findFileData.cFileName);
+		//if (GetShortPathNameW(longPath, shortPath, MAX_PATH))
+		//{
+		//	WCHAR *shortFileName;
+		//	UINT32 shortLen;
+		//	// 最後の区切り文字以降を採用
+		//	shortFileName = wcsrchr(shortPath, '\\');
+		//	if (shortFileName == NULL)
+		//	{
+		//		shortFileName = shortPath;
+		//	}
+		//	else
+		//	{
+		//		shortFileName++; // \は消す
+		//	}
+		//	shortLen = wcslen(shortFileName);
+		//	if (shortLen <= sizeof(dirInfo->ShortName) / sizeof(WCHAR))
+		//	{
+		//		memcpy(dirInfo->ShortName, shortFileName, shortLen * sizeof(WCHAR));
+		//		dirInfo->ShortNameLength = shortLen * sizeof(WCHAR);
+		//	}
+		//}
 	}
 	else
 	{
 		// ファイル
+		//WCHAR longPath[MAX_PATH];
+		//WCHAR shortPath[MAX_PATH];
 		dirInfo->CreationTime = *((UINT64*)&findFileData.ftCreationTime);
 		dirInfo->LastAccessTime = *((UINT64*)&findFileData.ftLastAccessTime);
 		dirInfo->LastWriteTime = *((UINT64*)&findFileData.ftLastWriteTime);
@@ -788,10 +836,65 @@ static int hostdrvNT_getOneEntry(NP2HOSTDRVNT_FILEINFO* fi, NP2_FILE_BOTH_DIR_IN
 		dirInfo->FileAttributes = findFileData.dwFileAttributes;
 		dirInfo->FileNameLength = wcslen(findFileData.cFileName) * sizeof(WCHAR);
 		wcscpy(dirInfo->FileName, findFileData.cFileName);
+
+		//PathCombineW(longPath, fi->hostFileName, findFileData.cFileName);
+		//if (GetShortPathNameW(longPath, shortPath, MAX_PATH))
+		//{
+		//	WCHAR* shortFileName;
+		//	UINT32 shortLen;
+		//	// 最後の区切り文字以降を採用
+		//	shortFileName = wcsrchr(shortPath, '\\');
+		//	if (shortFileName == NULL)
+		//	{
+		//		shortFileName = shortPath;
+		//	}
+		//	else
+		//	{
+		//		shortFileName++; // \は消す
+		//	}
+		//	shortLen = wcslen(shortFileName);
+		//	if (shortLen <= sizeof(dirInfo->ShortName) / sizeof(WCHAR))
+		//	{
+		//		memcpy(dirInfo->ShortName, shortFileName, shortLen * sizeof(WCHAR));
+		//		dirInfo->ShortNameLength = shortLen * sizeof(WCHAR);
+		//	}
+		//}
 	}
 	TRACEOUTW((L"FIND: %s", findFileData.cFileName));
 
 	return bytesReturned;
+}
+
+int hostdrvNT_dirHasFiles(LPCWSTR hostPath)
+{
+	int hasFile = 0;
+	WCHAR searchPath[MAX_PATH];
+	WIN32_FIND_DATAW findData;
+	HANDLE hFind;
+
+	if (!PathCombineW(searchPath, hostPath, L"*"))
+	{
+		return 1;
+	}
+
+	hFind = FindFirstFileW(searchPath, &findData);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		return 0;
+	}
+
+	do
+	{
+		if (wcscmp(findData.cFileName, L".") != 0 && wcscmp(findData.cFileName, L"..") != 0)
+		{
+			hasFile = 1;
+			break;
+		}
+	} while (FindNextFileW(hFind, &findData));
+
+	FindClose(hFind);
+
+	return hasFile;
 }
 
 // ---------- Major Functions
@@ -847,7 +950,7 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 		cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 		return;
 	}
-	fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+	fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 
 	// 対象ファイル名を取得
 	fileName = hostdrvNT_readUnicodeString(fileObject.FileName.Buffer, fileObject.FileName.Length);
@@ -973,7 +1076,7 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 
 	// DesiredAccessをユーザーモードWinAPIのものに変換
 	hostdrvWinAPIDesiredAccess = 0;
-	if (hostdrvDesiredAccess & FILE_ALL_ACCESS) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
+	if ((hostdrvDesiredAccess & FILE_ALL_ACCESS) == FILE_ALL_ACCESS) hostdrvWinAPIDesiredAccess |= GENERIC_READ | GENERIC_WRITE | DELETE;
 	if (hostdrvDesiredAccess & FILE_ADD_FILE) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
 	if (hostdrvDesiredAccess & FILE_ADD_SUBDIRECTORY) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
 	if (hostdrvDesiredAccess & FILE_APPEND_DATA) hostdrvWinAPIDesiredAccess |= GENERIC_READ | GENERIC_WRITE;
@@ -986,13 +1089,12 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 		if (hostdrvDesiredAccess & FILE_READ_ATTRIBUTES) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
 		if (hostdrvDesiredAccess & FILE_READ_EA) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
 		if (hostdrvDesiredAccess & FILE_TRAVERSE) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
-		if (hostdrvDesiredAccess & STANDARD_RIGHTS_READ) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
+		if (hostdrvDesiredAccess & READ_CONTROL) hostdrvWinAPIDesiredAccess |= GENERIC_READ;
 		if (hostdrvDesiredAccess & FILE_WRITE_ATTRIBUTES) hostdrvWinAPIDesiredAccess |= GENERIC_WRITE;
 		if (hostdrvDesiredAccess & FILE_WRITE_EA) hostdrvWinAPIDesiredAccess |= GENERIC_WRITE;
-		if (hostdrvDesiredAccess & FILE_TRAVERSE) hostdrvWinAPIDesiredAccess |= GENERIC_WRITE;
 		if (hostdrvDesiredAccess & FILE_WRITE_DATA) hostdrvWinAPIDesiredAccess |= GENERIC_WRITE;
-		if (hostdrvDesiredAccess & STANDARD_RIGHTS_WRITE) hostdrvWinAPIDesiredAccess |= GENERIC_WRITE;
 	}
+	if (hostdrvDesiredAccess & DELETE) hostdrvWinAPIDesiredAccess |= DELETE;
 
 	// リードオンリーならCeateやWriteフラグはエラー
 	if (!(s_hdrvAcc & HDFMODE_WRITE) && 
@@ -1024,8 +1126,18 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 		UINT32 hostPathLength;
 		DWORD attrs;
 
+		// パスに無効な文字が含まれる場合はSTATUS_OBJECT_NAME_INVALID　ここでSTATUS_OBJECT_NAME_NOT_FOUNDを返すとワイルドカード付きcopyコマンドなどがうまく動かない
+		if (wcschr(fileName, '?') || wcschr(fileName, '*') || wcschr(fileName, '\"') || wcschr(fileName, '|') || wcschr(fileName, '<') || wcschr(fileName, '>'))
+		{
+			TRACEOUTW((L"INVALID PATH", fileName));
+			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID); // Status STATUS_OBJECT_NAME_INVALID
+			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+			free(fileName);
+			return;
+		}
+
 		// バッファを溢れるくらいパスが長いときは無効
-		if (wcslen(fileName) > MAX_PATH || wcslen(hostPath) > MAX_PATH)
+		if (wcslen(fileName) > MAX_PATH || wcslen(s_hdrvRoot) > MAX_PATH)
 		{
 			TRACEOUTW((L"TOO LONG PATH", fileName));
 			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID); // Status STATUS_OBJECT_NAME_INVALID
@@ -1086,6 +1198,8 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 						free(fileName);
 						return;
 					}
+					// 初期属性も設定　失敗しても気にしない
+					SetFileAttributesW(hostPath, hostdrvFileAttributes);
 				}
 				else
 				{
@@ -1221,9 +1335,10 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 		{
 			fi->isRoot = 0;
 		}
-		if ((hostdrvShareAccess & FILE_SHARE_DELETE) && hostdrvDeleteOnClose)
+		fi->allowDeleteChild = (hostdrvDesiredAccess & FILE_DELETE_CHILD) ? 1 : 0; // TODO: 効果が分かっていない。無視してもとりあえず動く
+		if (hostdrvDeleteOnClose)
 		{
-			if (isRoot)
+			if (isRoot || (!(hostdrvDesiredAccess & DELETE) && !fi->isDirectory))
 			{
 				cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_CANNOT_DELETE); // Status STATUS_CANNOT_DELETE
 				cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
@@ -1239,6 +1354,14 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 					cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 					free(fileName);
 					return; 
+				}
+				if (fi->isDirectory && hostdrvNT_dirHasFiles(fi->hostFileName))
+				{
+					TRACEOUTW((L"ERROR: STATUS_DIRECTORY_NOT_EMPTY."));
+					cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_DIRECTORY_NOT_EMPTY);
+					cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+					free(fileName);
+					return;
 				}
 				fi->deleteOnClose = 1;
 			}
@@ -1259,7 +1382,7 @@ static void hostdrvNT_IRP_MJ_CREATE(HOSTDRVNT_INVOKEINFO *invokeInfo)
 
 		// ホスト側のファイル管理番号をメモリに書き込み
 		fsContextFileIndex = fileIndex;
-		cpu_kmemorywrite_d(fileObject.FsContext, fsContextFileIndex);
+		cpu_kmemorywrite_d(fileObject.FsContext + s_fsContextUserDataOffset, fsContextFileIndex);
 		
 		// OK
 		cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_SUCCESS); // Status 0=STATUS_SUCCESS
@@ -1378,10 +1501,21 @@ static void hostdrvNT_IRP_MJ_QUERY_VOLUME_INFORMATION(HOSTDRVNT_INVOKEINFO* invo
 	}
 	else if (fsInfoClass == FileFsDeviceInformation)
 	{
-		FILE_FS_DEVICE_INFORMATION info = { 0 };
+		NP2_FILE_FS_DEVICE_INFORMATION info = { 0 };
 
-		info.DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM; // XXX: FILE_DEVICE_NETWORK_FILE_SYSTEMを返すとCOPY CONとかがおかしくなる・・・
-		info.Characteristics = 0x00000010 | 0x00000020;
+		info.DeviceType = NP2_FILE_DEVICE_DISK_FILE_SYSTEM; // XXX: FILE_DEVICE_NETWORK_FILE_SYSTEMを返すとCOPY CONとかがおかしくなる・・・
+		if (s_hostdrvNTOptions & HOSTDRVNTOPTIONS_REMOVABLEDEVICE)
+		{
+			info.Characteristics = NP2_FILE_REMOVABLE_MEDIA | NP2_FILE_DEVICE_IS_MOUNTED;
+		}
+		else if (s_hostdrvNTOptions & HOSTDRVNTOPTIONS_DISKDEVICE)
+		{
+			info.Characteristics = NP2_FILE_DEVICE_IS_MOUNTED;
+		}
+		else
+		{
+			info.Characteristics = NP2_FILE_REMOTE_DEVICE | NP2_FILE_DEVICE_IS_MOUNTED;
+		}
 
 		dataLen = sizeof(info);
 		returnData = &info;
@@ -1485,9 +1619,20 @@ static void hostdrvNT_IRP_MJ_DIRECTORY_CONTROL(HOSTDRVNT_INVOKEINFO* invokeInfo)
 				// ディレクトリの読み取り
 				if (!hostdrvNT_getOneEntry(fi, &dirInfo, filePattern))
 				{
-					cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NO_MORE_FILES);
-					cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
-					return;
+					if (fi->hFindFile == NULL)
+					{
+						// 該当が1個もない場合
+						cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_NOT_FOUND);
+						cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+						return;
+					}
+					else
+					{
+						// 該当が1個以上あるがもう返すものがない場合
+						cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NO_MORE_FILES);
+						cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+						return;
+					}
 				}
 
 				// バッファが足りているか確認
@@ -1555,9 +1700,21 @@ static void hostdrvNT_IRP_MJ_DIRECTORY_CONTROL(HOSTDRVNT_INVOKEINFO* invokeInfo)
 
 				if (wLength == 0)
 				{
-					// 1つも返すものがない
-					cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NO_MORE_FILES);
-					cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+					// 今回1つも返すものがない
+					if (fi->hFindFile == NULL)
+					{
+						// 該当が1個もない場合
+						cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_NOT_FOUND);
+						cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+						return;
+					}
+					else
+					{
+						// 該当が1個以上あるがもう返すものがない場合
+						cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NO_MORE_FILES);
+						cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+						return;
+					}
 				}
 				else
 				{
@@ -1634,7 +1791,7 @@ static void hostdrvNT_IRP_MJ_DIRECTORY_CONTROL(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			{
 				// 監視開始
 				TRACEOUTW((L"IRP_MN_NOTIFY_CHANGE_DIRECTORY: Start pending idx=%d", i));
-				cpu_kmemorywrite_d(fileIdxListAddr, cpu_kmemoryread_d(fileObject.FsContext)); // ファイルインデックスを記憶
+				cpu_kmemorywrite_d(fileIdxListAddr, cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset)); // ファイルインデックスを記憶
 				s_pendingIndexOrCompleteCount = i; // 待機開始対象のインデックスをセット
 				cpu_kmemorywrite_d(invokeInfo->outBufferAddr, invokeInfo->stack.parameters.notifyDirectory.length); // XXX: 出力用バッファを借りてlengthを無理やり記憶
 				cpu_kmemorywrite_d(invokeInfo->outBufferAddr + 4, invokeInfo->stack.parameters.notifyDirectory.completionFilter); // XXX: 出力用バッファを借りてcompletionFilterを無理やり記憶
@@ -1720,7 +1877,7 @@ static void hostdrvNT_IRP_MJ_QUERY_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			stdInfo.EndOfFile = ((UINT64)fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
 			stdInfo.AllocationSize = stdInfo.EndOfFile;
 			stdInfo.NumberOfLinks = 1;
-			stdInfo.DeletePending = 0;
+			stdInfo.DeletePending = fi->deleteOnClose ? 1 : 0;
 			stdInfo.Directory = (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
 
 			dataLen = sizeof(stdInfo);
@@ -1961,6 +2118,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 	NP2HOSTDRVNT_FILEINFO* fi;
 	UINT32 allowOverflow = 1;
 	UINT32 length = invokeInfo->stack.parameters.queryFile.Length;
+	int reopenIndex = 0;
 
 	// リードオンリーなら拒否
 	if (!(s_hdrvAcc & HDFMODE_WRITE))
@@ -2042,7 +2200,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		fileInfo.dwFileAttributes = basicInfo.FileAttributes;
 		if (fi->isDirectory)
 		{
-			fileInfo.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+			fileInfo.dwFileAttributes &= ~FILE_ATTRIBUTE_DIRECTORY; // エラーになるので付けない
 		}
 		else if (fileInfo.dwFileAttributes == 0)
 		{
@@ -2059,7 +2217,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			if (!fh || fh == INVALID_HANDLE_VALUE)
 			{
 				// ファイルハンドルが閉じていたら再オープン
-				UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+				UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 				if (!hostdrvNT_reopenFile(fsContextFileIndex))
 				{
 					cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID);
@@ -2073,6 +2231,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 					cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 					return;
 				}
+				reopenIndex = fsContextFileIndex;
 			}
 			if (!SetFileTime(fh, &fileInfo.ftCreationTime, &fileInfo.ftLastAccessTime, &fileInfo.ftLastWriteTime))
 			{
@@ -2087,6 +2246,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 	{
 		NP2_FILE_END_OF_FILE_INFORMATION eofInfo = { 0 };
 		WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+		LARGE_INTEGER liAllocationSize;
 		HANDLE fh;
 
 		// 入力データサイズが期待通りか確認
@@ -2105,7 +2265,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		if (!fh || fh == INVALID_HANDLE_VALUE)
 		{
 			// ファイルハンドルが閉じていたら再オープン
-			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 			if (!hostdrvNT_reopenFile(fsContextFileIndex))
 			{
 				cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID);
@@ -2119,6 +2279,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 				cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 				return;
 			}
+			reopenIndex = fsContextFileIndex;
 		}
 		if (eofInfo.EndOfFile > UINT_MAX)
 		{
@@ -2127,7 +2288,8 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 			return;
 		}
-		SetFilePointer(fh, eofInfo.EndOfFile, NULL, FILE_BEGIN);
+		liAllocationSize.QuadPart = eofInfo.EndOfFile;
+		SetFilePointerEx(fh, liAllocationSize, NULL, FILE_BEGIN);
 		if (!SetEndOfFile(fh))
 		{
 			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_INVALID_PARAMETER);
@@ -2141,6 +2303,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 	{
 		NP2_FILE_ALLOCATION_INFORMATION allocInfo = { 0 };
 		WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+		LARGE_INTEGER currentFileSize;
 		HANDLE fh;
 
 		// 入力データサイズが期待通りか確認
@@ -2159,7 +2322,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		if (!fh || fh == INVALID_HANDLE_VALUE)
 		{
 			// ファイルハンドルが閉じていたら再オープン
-			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 			if (!hostdrvNT_reopenFile(fsContextFileIndex))
 			{
 				cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID);
@@ -2173,6 +2336,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 				cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 				return;
 			}
+			reopenIndex = fsContextFileIndex;
 		}
 		if (allocInfo.AllocationSize > UINT_MAX)
 		{
@@ -2181,14 +2345,22 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 			return;
 		}
-		// 実際のサイズは変えない
-		//SetFilePointer(fh, allocInfo.AllocationSize, NULL, FILE_BEGIN);
-		//if (!SetEndOfFile(fh))
-		//{
-		//	cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_INVALID_PARAMETER);
-		//	cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
-		//	return;
-		//}
+		// 実際のサイズは縮小する場合のみ変える
+		if (GetFileSizeEx(fh, &currentFileSize))
+		{
+			if (allocInfo.AllocationSize < currentFileSize.QuadPart)
+			{
+				LARGE_INTEGER liAllocationSize;
+				liAllocationSize.QuadPart = allocInfo.AllocationSize;
+				SetFilePointerEx(fh, liAllocationSize, NULL, FILE_BEGIN);
+				if (!SetEndOfFile(fh))
+				{
+					cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_INVALID_PARAMETER);
+					cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+					return;
+				}
+			}
+		}
 
 		hostdrvNT_notifyChange(fi->hostFileName, NP2_FILE_ACTION_MODIFIED, 0);
 	}
@@ -2205,15 +2377,6 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			return;
 		}
 
-		// DELETEフラグがないなら拒否
-		if (!(fi->hostdrvShareAccess & FILE_SHARE_DELETE))
-		{
-			TRACEOUTW((L"ERROR: no FILE_SHARE_DELETE."));
-			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_ACCESS_DENIED);
-			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
-			return;
-		}
-
 		// 削除不可なら拒否
 		if (!(s_hdrvAcc & HDFMODE_DELETE))
 		{
@@ -2223,10 +2386,43 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			return;
 		}
 
+		// ファイルオープン時にDELETE権限がなければ拒否（ディレクトリはOK）
+		if (!(fi->hostdrvWinAPIDesiredAccess & DELETE) && !fi->isDirectory)
+		{
+			TRACEOUTW((L"ERROR: no DELETE flag."));
+			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_ACCESS_DENIED);
+			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+			return;
+		}
+
+		// ディレクトリの場合、空でないならエラー
+		if (fi->isDirectory && hostdrvNT_dirHasFiles(fi->hostFileName))
+		{
+			TRACEOUTW((L"ERROR: STATUS_DIRECTORY_NOT_EMPTY."));
+			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_DIRECTORY_NOT_EMPTY);
+			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+			return;
+		}
+
+		// ファイル属性が読み取り専用なら拒否
+		if (!GetFileAttributesEx(fi->hostFileName, GetFileExInfoStandard, &fileInfo))
+		{
+			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_INVALID_PARAMETER);
+			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+			return;
+		}
+		if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+		{
+			TRACEOUTW((L"ERROR: file is readonly."));
+			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_CANNOT_DELETE);
+			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+			return;
+		}
+
 		// 読み込み
 		hostdrvNT_memread(invokeInfo->inBufferAddr, &disposeInfo, sizeof(disposeInfo));
 
-		// ファイル長さを設定
+		// 削除フラグをセット
 		if (disposeInfo.DeleteFileOnClose)
 		{
 			fi->deleteOnClose = 1;
@@ -2333,6 +2529,32 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 				return;
 			}
 		}
+		// 新ファイルパスを\DosDevices\z:\の形式で指定された場合、特例
+		if (wcslen(newPath) >= 15 && _wcsnicmp(newPath, L"\\DosDevices\\", 12) == 0 && newPath[13]==':')
+		{
+			// \DosDevices\Z:\の形式のパスを前提に、ドライブ文字部分を適当にzに書き換え
+			newPath[12] = 'z';
+
+			// \DosDevices\Z:\の形式のパスが来た場合、特例で\DosDevices\Z:\をカットして新ファイルパスとする
+			if (_wcsnicmp(newPath, L"\\DosDevices\\z:\\", 15) == 0)
+			{
+				WCHAR* pathTmp = newPath;
+				while (*(pathTmp + 15))
+				{
+					*pathTmp = *(pathTmp + 15);
+					pathTmp++;
+				}
+				*pathTmp = *(pathTmp + 15);
+			}
+			else
+			{
+				// その他の形式なら不可
+				free(newPath);
+				cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NOT_SAME_DEVICE);
+				cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+				return;
+			}
+		}
 
 		// 長すぎるファイル名は不可
 		if (wcslen(newPath) >= MAX_PATH)
@@ -2363,7 +2585,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		}
 
 		// 一旦ファイルを閉じてから移動させる
-		fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+		fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 		hostdrvNT_preCloseFile(fsContextFileIndex);
 		if (!MoveFileExW(fi->hostFileName, newHostPath, (renameInfo.ReplaceIfExists ? MOVEFILE_REPLACE_EXISTING : 0) | MOVEFILE_COPY_ALLOWED))
 		{
@@ -2384,6 +2606,7 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			free(newPath);
 			return;
 		}
+		TRACEOUTW((L"MOVE %s -> %s", fi->hostFileName, newHostPath));
 
 		// ファイルオブジェクトのパスを新パスに変えておく
 		oldFileName = fi->fileName;
@@ -2404,6 +2627,9 @@ static void hostdrvNT_IRP_MJ_SET_INFORMATION(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		return;
 	}
 
+	if (reopenIndex)
+		hostdrvNT_preCloseFile(reopenIndex);
+
 	// 結果（成功）をセット
 	cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_SUCCESS);
 	cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
@@ -2415,7 +2641,7 @@ static void hostdrvNT_IRP_MJ_CLEANUP(HOSTDRVNT_INVOKEINFO* invokeInfo)
 	NP2_FILE_OBJECT fileObject = { 0 };
 	UINT32 fsContextFileIndex;
 	hostdrvNT_memread(invokeInfo->stack.fileObject, &fileObject, sizeof(fileObject));
-	fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+	fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 
 	if (1 <= fsContextFileIndex && fsContextFileIndex < NP2HOSTDRVNT_FILES_MAX && hostdrvNT.files[fsContextFileIndex].fileName != NULL)
 	{
@@ -2428,6 +2654,8 @@ static void hostdrvNT_IRP_MJ_CLEANUP(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			TRACEOUTW((L"CLEANUP FILE: FILE %d %s", fsContextFileIndex, hostdrvNT.files[fsContextFileIndex].hostFileName));
 		}
 		hostdrvNT_preCloseFile(fsContextFileIndex);
+		hostdrvNT.files[fsContextFileIndex].hostdrvShareAccess = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE; // XXX: CLEANUP後の再オープン時にはALL許可にする
+		//hostdrvNT.files[fsContextFileIndex].hostdrvWinAPIDesiredAccess = GENERIC_READ; // XXX: CLEANUP後の再オープン時にはGENERIC_READにする
 	}
 
 	cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_SUCCESS);
@@ -2440,7 +2668,7 @@ static void hostdrvNT_IRP_MJ_CLOSE(HOSTDRVNT_INVOKEINFO* invokeInfo)
 	NP2_FILE_OBJECT fileObject = { 0 };
 	UINT32 fsContextFileIndex;
 	hostdrvNT_memread(invokeInfo->stack.fileObject, &fileObject, sizeof(fileObject));
-	fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+	fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 
 	if (1 <= fsContextFileIndex && fsContextFileIndex < NP2HOSTDRVNT_FILES_MAX && hostdrvNT.files[fsContextFileIndex].fileName != NULL)
 	{
@@ -2502,6 +2730,7 @@ static void hostdrvNT_IRP_MJ_READ(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		UINT64 copySize;
 		BYTE* fileReadBuffer;
 		DWORD bytesRead;
+		int reopenIndex = 0;
 
 		TRACEOUTW((L"READ FILE: %s", fi->hostFileName));
 
@@ -2528,7 +2757,7 @@ static void hostdrvNT_IRP_MJ_READ(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		if (!fh || fh == INVALID_HANDLE_VALUE)
 		{
 			// ファイルハンドルが閉じていたら再オープン
-			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 			if (!hostdrvNT_reopenFile(fsContextFileIndex))
 			{
 				cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID);
@@ -2542,6 +2771,7 @@ static void hostdrvNT_IRP_MJ_READ(HOSTDRVNT_INVOKEINFO* invokeInfo)
 				cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 				return;
 			}
+			reopenIndex = fsContextFileIndex;
 		}
 
 		// ファイル終端ならSTATUS_END_OF_FILE
@@ -2605,6 +2835,9 @@ static void hostdrvNT_IRP_MJ_READ(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			cpu_kmemorywrite_d(invokeInfo->stack.fileObject + offsetof(NP2_FILE_OBJECT, CurrentByteOffset) + 4, (UINT32)(fileObject.CurrentByteOffset >> 32));
 		}
 
+		if (reopenIndex)
+			hostdrvNT_preCloseFile(reopenIndex);
+
 		cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_SUCCESS);
 		cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, copySize); // Information
 	}
@@ -2661,6 +2894,7 @@ static void hostdrvNT_IRP_MJ_WRITE(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		UINT64 copySize;
 		BYTE* fileWriteBuffer;
 		DWORD bytesWrite;
+		int reopenIndex = 0;
 
 		TRACEOUTW((L"WRITE FILE: %s", fi->hostFileName));
 
@@ -2687,7 +2921,7 @@ static void hostdrvNT_IRP_MJ_WRITE(HOSTDRVNT_INVOKEINFO* invokeInfo)
 		if (!fh || fh == INVALID_HANDLE_VALUE)
 		{
 			// ファイルハンドルが閉じていたら再オープン
-			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext);
+			UINT32 fsContextFileIndex = cpu_kmemoryread_d(fileObject.FsContext + s_fsContextUserDataOffset);
 			if (!hostdrvNT_reopenFile(fsContextFileIndex))
 			{
 				cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_OBJECT_NAME_INVALID);
@@ -2701,6 +2935,7 @@ static void hostdrvNT_IRP_MJ_WRITE(HOSTDRVNT_INVOKEINFO* invokeInfo)
 				cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 				return;
 			}
+			reopenIndex = fsContextFileIndex;
 		}
 
 		// ファイル書き込み位置の設定
@@ -2758,6 +2993,9 @@ static void hostdrvNT_IRP_MJ_WRITE(HOSTDRVNT_INVOKEINFO* invokeInfo)
 			cpu_kmemorywrite_d(invokeInfo->stack.fileObject + offsetof(NP2_FILE_OBJECT, CurrentByteOffset) + 4, (UINT32)(fileObject.CurrentByteOffset >> 32));
 		}
 
+		if (reopenIndex)
+			hostdrvNT_preCloseFile(reopenIndex);
+
 		cpu_kmemorywrite_d(invokeInfo->statusAddr, 0); // Status STATUS_SUCCESS
 		cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, copySize); // Information
 	}
@@ -2801,10 +3039,10 @@ static void hostdrvNT_IRP_MJ_FILE_SYSTEM_CONTROL(HOSTDRVNT_INVOKEINFO* invokeInf
 		else if (invokeInfo->stack.parameters.fileSystemControl.FsControlCode == FSCTL_IS_VOLUME_MOUNTED)
 		{
 			TRACEOUTW((L"FSCTL_IS_VOLUME_MOUNTED"));
-			//cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NOT_SUPPORTED); // Status STATUS_NOT_SUPPORTED
-			//cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
-			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_SUCCESS);
+			cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NOT_SUPPORTED); // Status STATUS_NOT_SUPPORTED
 			cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
+			//cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_SUCCESS);
+			//cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 		}
 		else if (invokeInfo->stack.parameters.fileSystemControl.FsControlCode == FSCTL_DISMOUNT_VOLUME)
 		{
@@ -2830,6 +3068,14 @@ static void hostdrvNT_IRP_MJ_FILE_SYSTEM_CONTROL(HOSTDRVNT_INVOKEINFO* invokeInf
 		cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NOT_IMPLEMENTED);
 		cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 	}
+}
+
+static void hostdrvNT_IRP_MJ_DEVICE_CONTROL(HOSTDRVNT_INVOKEINFO* invokeInfo)
+{
+	UINT32 ioControlCode = invokeInfo->stack.parameters.deviceIoControl.IoControlCode;
+	TRACEOUTW((L"IoControlCode: %d(0x%08x)", ioControlCode, ioControlCode));
+	cpu_kmemorywrite_d(invokeInfo->statusAddr, NP2_STATUS_NOT_IMPLEMENTED);
+	cpu_kmemorywrite_d(invokeInfo->statusAddr + 4, 0); // Information
 }
 
 // ---------- Entry Function
@@ -2862,6 +3108,18 @@ static void hostdrvNT_invoke()
 	if (hostdrvNT.cmdBaseVersion >= 1)
 	{
 		hostdrvNT.version = cpu_kmemoryread_d(hostdrvNT.dataAddr + 24);
+	}
+	else
+	{
+		hostdrvNT.version = 0;
+	}
+	if (hostdrvNT.version >= 4)
+	{
+		s_fsContextUserDataOffset = HOSTDRVNT_FSCONTEXT_USERDATA_OFFSET;
+	}
+	else
+	{
+		s_fsContextUserDataOffset = 0;
 	}
 	if (hostdrvNT.version >= 2)
 	{
@@ -2956,8 +3214,7 @@ static void hostdrvNT_invoke()
 	case NP2_IRP_MJ_DEVICE_CONTROL:
 	{
 		TRACEOUTW((L"IRP_MJ_DEVICE_CONTROL: %d (0x%02x)", invokeInfo.stack.majorFunction, invokeInfo.stack.majorFunction));
-		cpu_kmemorywrite_d(invokeInfo.statusAddr, NP2_STATUS_NOT_IMPLEMENTED);
-		cpu_kmemorywrite_d(invokeInfo.statusAddr + 4, 0); // Information
+		hostdrvNT_IRP_MJ_DEVICE_CONTROL(&invokeInfo);
 		break;
 	}
 	case NP2_IRP_MJ_LOCK_CONTROL:
@@ -3016,6 +3273,15 @@ static void hostdrvNT_invokeNotify()
 	s_pendingIrpListAddr = cpu_kmemoryread_d(hostdrvNT.dataAddr + 8);
 	s_pendingAliveListAddr = cpu_kmemoryread_d(hostdrvNT.dataAddr + 12);
 	s_pendingIndexOrCompleteCount = cpu_kmemoryread_d(hostdrvNT.dataAddr + 16);
+
+	if (hostdrvNT.version >= 4)
+	{
+		s_fsContextUserDataOffset = HOSTDRVNT_FSCONTEXT_USERDATA_OFFSET;
+	}
+	else
+	{
+		s_fsContextUserDataOffset = 0;
+	}
 
 	// ホストファイルシステム監視
 	hostdrvNT_invokeMonitorChangeFS();
@@ -3113,8 +3379,8 @@ void hostdrvNT_initialize(void)
 
 void hostdrvNT_deinitialize(void)
 {
-	hostdrvNT_closeAllFiles();
 	hostdrvNT_stopMonitorChangeFS();
+	hostdrvNT_closeAllFiles();
 
 	TRACEOUT(("hostdrv_deinitialize"));
 }
@@ -3187,6 +3453,9 @@ int hostdrvNT_sfsave(STFLAGH sfh, const SFENTRY* tbl)
 			statflag_write(sfh, &fi->hostdrvWinAPICreateDisposition, sizeof(fi->hostdrvWinAPICreateDisposition));
 			statflag_write(sfh, &fi->hostdrvFileAttributes, sizeof(fi->hostdrvFileAttributes));
 			statflag_write(sfh, &fi->deleteOnClose, sizeof(fi->deleteOnClose));
+			statflag_write(sfh, &fi->allowDeleteChild, sizeof(fi->allowDeleteChild));
+			fi->extendLength = 0;
+			statflag_write(sfh, &fi->extendLength, sizeof(fi->extendLength));
 
 			fi->deleteOnClose = 0; // XXX: ステートセーブ後の終了処理でファイル削除が行われないようにする。本当はレジュームではない普通のステートセーブの時はそのままにしなければならない。
 
@@ -3244,6 +3513,15 @@ int hostdrvNT_sfload(STFLAGH sfh, const SFENTRY* tbl)
 			statflag_read(sfh, &fi->hostdrvWinAPICreateDisposition, sizeof(fi->hostdrvWinAPICreateDisposition));
 			statflag_read(sfh, &fi->hostdrvFileAttributes, sizeof(fi->hostdrvFileAttributes));
 			statflag_read(sfh, &fi->deleteOnClose, sizeof(fi->deleteOnClose));
+			statflag_read(sfh, &fi->allowDeleteChild, sizeof(fi->allowDeleteChild));
+			statflag_read(sfh, &fi->extendLength, sizeof(fi->extendLength));
+			if (fi->extendLength > 0)
+			{
+				// ダミーリード
+				char* dummyBuffer = malloc(fi->extendLength);
+				statflag_read(sfh, dummyBuffer, fi->extendLength);
+				free(dummyBuffer);
+			}
 			// ファイルロックがかかると不味いのでここで再オープンはしない
 		}
 	}
