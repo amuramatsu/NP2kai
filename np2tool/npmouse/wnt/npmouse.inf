@@ -1,7 +1,6 @@
 [Version]
 Signature="$Windows NT$"
-Class=Mouse
-ClassGuid={4D36E96F-E325-11CE-BFC1-08002BE10318}
+Class=LegacyDriver
 Provider=%ProviderName%
 DriverVer=05/03/2025,0.1.0.0
 
@@ -17,11 +16,11 @@ npmouse.sys
 
 [NP2Mouse.AddReg]
 HKLM,"System\CurrentControlSet\Services\npmouse","Type",0x00010001,1
-HKLM,"System\CurrentControlSet\Services\npmouse","Start",0x00010001,3
+HKLM,"System\CurrentControlSet\Services\npmouse","Start",0x00010001,2
 HKLM,"System\CurrentControlSet\Services\npmouse","ErrorControl",0x00010001,0
 HKLM,"System\CurrentControlSet\Services\npmouse","ImagePath",0x00020000,"system32\drivers\npmouse.sys"
 HKLM,"System\CurrentControlSet\Services\npmouse","DisplayName",0x00000000,"Neko Project II Seamless Mouse"
-HKLM,"System\CurrentControlSet\Services\npmouse","Group",0x00000000,"Pointer Port"
+HKLM,"System\CurrentControlSet\Services\npmouse","Group",0x00000000,"Pointer Class"
 HKLM,"System\CurrentControlSet\Services\npmouse","Tag",0x00010001,0
 
 [SourceDisksNames]
