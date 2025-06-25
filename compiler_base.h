@@ -386,6 +386,14 @@ typedef union {
   SINT64 QuadPart;
 } LARGE_INTEGER;
 
+typedef union {
+  struct {
+    UINT32 LowPart;
+    UINT32 HighPart;
+  } u;
+  UINT64 QuadPart;
+} ULARGE_INTEGER;
+
 #define _T(string) string
 #define _tcscpy    OEMSTRCPY
 #define	_tcsicmp   milstr_cmp

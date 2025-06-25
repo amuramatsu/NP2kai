@@ -11,14 +11,27 @@
 
 #define NP2HOSTDRVNT_FILES_MAX	65536
 
+#ifdef _WINDOWS
+typedef WCHAR WCHAR_HOST;
+typedef WCHAR WCHAR_GUEST;
+typedef HANDLE HANDLE_DIR;
+typedef HANDLE HANDLE_FILE;
+#else
+#include <stdio.h>
+typedef unsigned char WCHAR_HOST;
+typedef UINT16 WCHAR_GUEST;
+struct _handle_dir;
+typedef struct _handle_dir *HANDLE_DIR;
+typedef FILE *HANDLE_FILE;
+#endif
 typedef struct
 {
-	WCHAR* fileName;
-	WCHAR* hostFileName;
+	WCHAR_GUEST* fileName;
+	WCHAR_HOST* hostFileName;
 	UINT8 isRoot;
 	UINT8 isDirectory;
-	HANDLE hFindFile;
-	HANDLE hFile;
+	HANDLE_DIR hFindFile;
+	HANDLE_FILE hFile;
 
 	UINT32 hostdrvWinAPIDesiredAccess;
 	UINT32 hostdrvShareAccess;

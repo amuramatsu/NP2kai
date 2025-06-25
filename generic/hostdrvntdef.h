@@ -6,6 +6,13 @@
 #pragma once
 
 #if defined(SUPPORT_HOSTDRVNT)
+#ifdef _WINDOWS
+#define MAX_PATH_GUEST MAX_PATH
+#else
+#define MAX_PATH_GUEST 260
+typedef UINT32 ULONG;
+typedef UINT16 WCHAR;
+#endif
 
 typedef enum
 {
@@ -128,9 +135,17 @@ typedef enum
 
 #define NP2_FO_SYNCHRONOUS_IO				0x00000002
 
-
+#ifdef _WINDOWS
 #define NP2HOSTDRVNT_VOLUMELABEL	L"HOSTDRV"
 #define NP2HOSTDRVNT_FILESYSTEM		L"HOSTFS"
+#define NP2HOSTDRVNT_VOLUMELABEL_LEN	(sizeof(NP2HOSTDRVNT_VOLUMELABEL) / sizeof(WCHAR))
+#define NP2HOSTDRVNT_FILESYSTEM_LEN		(sizeof(NP2HOSTDRVNT_FILESYSTEM) / sizeof(WCHAR))
+#else
+#define NP2HOSTDRVNT_VOLUMELABEL	{ 0x48, 0x4F, 0x53, 0x54, 0x44, 0x52, 0x56, 0x00 }
+#define NP2HOSTDRVNT_FILESYSTEM		{ 0x48, 0x4F, 0x53, 0x54, 0x46, 0x53, 0x00 }
+#define NP2HOSTDRVNT_VOLUMELABEL_LEN	8
+#define NP2HOSTDRVNT_FILESYSTEM_LEN		7
+#endif
 
 #define NP2_FILE_SUPERSEDE                  0x00000000
 #define NP2_FILE_OPEN                       0x00000001
@@ -350,14 +365,14 @@ typedef struct
 	UINT32 volumeSerialNumber;
 	UINT32 volumeLabelLength;
 	UINT8 supportsObjects;
-	WCHAR volumeLabel[sizeof(NP2HOSTDRVNT_VOLUMELABEL) / sizeof(WCHAR)];
+	WCHAR volumeLabel[NP2HOSTDRVNT_VOLUMELABEL_LEN];
 } NP2_FILE_FS_VOLUME_INFORMATION;
 typedef struct
 {
 	UINT32 fileSystemAttributes;
 	SINT32  maximumComponentNameLength;
 	UINT32 fileSystemNameLength;
-	WCHAR fileSystemName[sizeof(NP2HOSTDRVNT_FILESYSTEM) / sizeof(WCHAR)];
+	WCHAR fileSystemName[NP2HOSTDRVNT_FILESYSTEM_LEN];
 } NP2_FILE_FS_ATTRIBUTE_INFORMATION;
 typedef struct
 {
