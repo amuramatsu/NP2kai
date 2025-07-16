@@ -1201,6 +1201,7 @@ static int flagload_fm(STFLAGH sfh, const SFENTRY *tbl)
 	if (nSaveFlags & FLAG_SB16)
 	{
 		g_sb16.dsp_info.dma.chan = dmac.dmach + g_sb16.dmach; // DMAチャネル復元
+		dmac_attach(DMADEV_CT1741, g_sb16.dmach); // 再割り当て
 	}
 #endif
 	return(ret);

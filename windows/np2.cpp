@@ -248,6 +248,7 @@ static	int			np2quitmsg = 0;
 static	WINLOCEX	smwlex;
 static	HMODULE		s_hModResource;
 static  UINT		lateframecount; // フレーム遅れ数
+static  int			mousecapturemode = 0;
 
 static void np2_SetUserPause(UINT8 pause){
 	if(np2userpause && !pause){
@@ -1225,40 +1226,48 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 			winuienter();
 			dialog_changehdd(hWnd, 0x20);
 			winuileave();
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI0EJECT:
 			diskdrv_setsxsi(0x20, NULL);
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI1OPEN:
 			winuienter();
 			dialog_changehdd(hWnd, 0x21);
 			winuileave();
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI1EJECT:
 			diskdrv_setsxsi(0x21, NULL);
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI2OPEN:
 			winuienter();
 			dialog_changehdd(hWnd, 0x22);
 			winuileave();
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI2EJECT:
 			diskdrv_setsxsi(0x22, NULL);
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI3OPEN:
 			winuienter();
 			dialog_changehdd(hWnd, 0x23);
 			winuileave();
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 
 		case IDM_SCSI3EJECT:
 			diskdrv_setsxsi(0x23, NULL);
+			sysmng_updatecaption(SYS_UPDATECAPTION_FDD);
 			break;
 			
 		case IDM_SCSI0STATE:
@@ -2811,8 +2820,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				int mouseon = 1;
 				static int mousebufX = 0; // マウス移動バッファ(X)
 				static int mousebufY = 0; // マウス移動バッファ(Y)
-				int x = LOWORD(lParam);
-				int y = HIWORD(lParam);
+				int x = (short)LOWORD(lParam);
+				int y = (short)HIWORD(lParam);
 
 				SINT16 dx, dy;
 				UINT8 btn;
@@ -2929,6 +2938,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				np2_multithread_LeaveCriticalSection();
 				return(DefWindowProc(hWnd, msg, wParam, lParam));
 			}
+			if (!mousecapturemode && !np2oscfg.MOUSE_SW && np2oscfg.mouse_nc)
+			{
+				SetCapture(hWnd);
+				mousecapturemode = 1;
+			}
+			if (mousecapturemode)
+			{
+				ReleaseCapture();
+				mousecapturemode = 0;
+			}
+			if (!mousecapturemode && !np2oscfg.MOUSE_SW && np2oscfg.mouse_nc)
+			{
+				SetCapture(hWnd);
+				mousecapturemode = 1;
+			}
 			np2_multithread_LeaveCriticalSection();
 			break;
 
@@ -2937,6 +2961,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			if (!mousemng_buttonevent(MOUSEMNG_LEFTUP)) {
 				np2_multithread_LeaveCriticalSection();
 				return(DefWindowProc(hWnd, msg, wParam, lParam));
+			}
+			if (mousecapturemode)
+			{
+				ReleaseCapture();
+				mousecapturemode = 0;
 			}
 			np2_multithread_LeaveCriticalSection();
 			break;
@@ -3135,6 +3164,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				}
 			}
 			break;
+
+		case WM_CAPTURECHANGED:
+			mousecapturemode = 0;
+			return 0;
+
 			
 #if defined(SUPPORT_SCRN_DIRECT3D)
 		case WM_SETFOCUS:

@@ -326,7 +326,9 @@ struct tagNP2Config
 	UINT8	nbeepofs; // BEEPの出力オフセットを消す
 
 	SINT64	cal_vofs; // 仮想カレンダ時刻オフセット(秒)
-
+#if defined(SUPPORT_NP2SCSI)
+	UINT8	usenp2stor; // np2 SCSIを使用する
+#endif
 #if defined(SUPPORT_DEBUGSS)
 	UINT8	debugss;
 #endif
