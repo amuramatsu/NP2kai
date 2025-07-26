@@ -58,6 +58,13 @@ WINBASEAPI BOOL WINAPI SetFilePointerEx(HANDLE, LARGE_INTEGER, PLARGE_INTEGER, D
 #define SUPPORT_WASAPI
 #endif	/* (_MSC_VER >= 1500) */
 
+#define SUPPORT_TEXTCNV
+
+#if (_MSC_VER + 0) <= 1600
+// VS2017 より古い場合
+#define SUPPORT_WIN2000HOST
+#endif
+
 #if defined(CPUCORE_IA32)
 #pragma warning(disable: 4819)
 #endif
