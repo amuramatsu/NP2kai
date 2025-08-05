@@ -4,12 +4,10 @@
  */
 
 #include <compiler.h>
-#include <codecnv/codecnv.h>
 #include <dosio.h>
 
 //! カレント パス バッファ
 static OEMCHAR curpath[MAX_PATH];
-static wchar_t wcurpath[MAX_PATH];
 
 //! ファイル名ポインタ
 static OEMCHAR *curfilep = curpath;
@@ -35,12 +33,10 @@ void dosio_term(void)
  */
 FILEH DOSIOCALL file_open(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	FILEH hFile = ::CreateFileW(wPathName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	FILEH hFile = ::CreateFile(lpPathName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		hFile = ::CreateFileW(wPathName, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		hFile = ::CreateFile(lpPathName, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	}
 	return hFile;
 }
@@ -52,9 +48,7 @@ FILEH DOSIOCALL file_open(const OEMCHAR* lpPathName)
  */
 FILEH DOSIOCALL file_open_rb(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	return ::CreateFileW(wPathName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	return ::CreateFile(lpPathName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
 /**
@@ -64,9 +58,7 @@ FILEH DOSIOCALL file_open_rb(const OEMCHAR* lpPathName)
  */
 FILEH DOSIOCALL file_create(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	return ::CreateFileW(wPathName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	return ::CreateFile(lpPathName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
 /**
@@ -219,9 +211,7 @@ short DOSIOCALL file_getdatetime(FILEH hFile, DOSDATE* dosdate, DOSTIME* dostime
  */
 short DOSIOCALL file_delete(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	return (::DeleteFileW(wPathName)) ? 0 : -1;
+	return (::DeleteFile(lpPathName)) ? 0 : -1;
 }
 
 /**
@@ -231,9 +221,19 @@ short DOSIOCALL file_delete(const OEMCHAR* lpPathName)
  */
 short DOSIOCALL file_attr(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	return static_cast<short>(::GetFileAttributesW(wPathName));
+	return static_cast<short>(::GetFileAttributes(lpPathName));
+}
+
+/**
+ * ファイルの属性を設定
+ * @param[in] lpPathName ファイル名
+ * @param[in] attr ファイル属性
+ * @retval 0 成功
+ * @retval -1 失敗
+ */
+short DOSIOCALL file_setattr(const OEMCHAR* lpPathName, short attr)
+{
+	return (::SetFileAttributes(lpPathName, attr) ? 0 : -1);
 }
 
 /**
@@ -245,11 +245,7 @@ short DOSIOCALL file_attr(const OEMCHAR* lpPathName)
  */
 short DOSIOCALL file_rename(const OEMCHAR* lpExistFile, const OEMCHAR* lpNewFile)
 {
-	wchar_t wExistFile[MAX_PATH];
-	wchar_t wNewFile[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wExistFile, MAX_PATH, lpExistFile, -1);
-	codecnv_utf8toucs2((UINT16*)wNewFile, MAX_PATH, lpNewFile, -1);
-	return (::MoveFileW(wExistFile, wNewFile)) ? 0 : -1;
+	return (::MoveFile(lpExistFile, lpNewFile)) ? 0 : -1;
 }
 
 /**
@@ -260,9 +256,7 @@ short DOSIOCALL file_rename(const OEMCHAR* lpExistFile, const OEMCHAR* lpNewFile
  */
 short DOSIOCALL file_dircreate(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	return (::CreateDirectoryW(wPathName, NULL)) ? 0 : -1;
+	return (::CreateDirectory(lpPathName, NULL)) ? 0 : -1;
 }
 
 /**
@@ -273,9 +267,7 @@ short DOSIOCALL file_dircreate(const OEMCHAR* lpPathName)
  */
 short DOSIOCALL file_dirdelete(const OEMCHAR* lpPathName)
 {
-	wchar_t wPathName[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPathName, MAX_PATH, lpPathName, -1);
-	return (::RemoveDirectoryW(wPathName)) ? 0 : -1;
+	return (::RemoveDirectory(lpPathName)) ? 0 : -1;
 }
 
 
@@ -367,7 +359,7 @@ short DOSIOCALL file_attr_c(const OEMCHAR* lpFilename)
  * @retval true 成功
  * @retval false 失敗
  */
-static bool DOSIOCALL setFLInfo(const WIN32_FIND_DATAW& w32fd, FLINFO *fli)
+static bool DOSIOCALL setFLInfo(const WIN32_FIND_DATA& w32fd, FLINFO *fli)
 {
 #if !defined(_WIN32_WCE)
 	if ((w32fd.dwFileAttributes & FILEATTR_DIRECTORY) && (w32fd.cFileName[0] == '.'))
@@ -382,7 +374,7 @@ static bool DOSIOCALL setFLInfo(const WIN32_FIND_DATAW& w32fd, FLINFO *fli)
 		fli->size = w32fd.nFileSizeLow;
 		fli->attr = w32fd.dwFileAttributes;
 		convertDateTime(w32fd.ftLastWriteTime, &fli->date, &fli->time);
-		codecnv_ucs2toutf8(fli->path, MAX_PATH, (UINT16*)w32fd.cFileName, -1);
+		file_cpyname(fli->path, w32fd.cFileName, NELEMENTS(fli->path));
 	}
 	return true;
 }
@@ -401,10 +393,9 @@ FLISTH DOSIOCALL file_list1st(const OEMCHAR* lpPathName, FLINFO* fli)
 	file_cpyname(szPath, lpPathName, NELEMENTS(szPath));
 	file_setseparator(szPath, NELEMENTS(szPath));
 	file_catname(szPath, s_szWildCard, NELEMENTS(szPath));
-	WIN32_FIND_DATAW w32fd;
-	wchar_t wPath[MAX_PATH];
-	codecnv_utf8toucs2((UINT16*)wPath, MAX_PATH, szPath, -1);
-	HANDLE hFile = ::FindFirstFileW(wPath, &w32fd);
+
+	WIN32_FIND_DATA w32fd;
+	HANDLE hFile = ::FindFirstFile(szPath, &w32fd);
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -413,7 +404,7 @@ FLISTH DOSIOCALL file_list1st(const OEMCHAR* lpPathName, FLINFO* fli)
 			{
 				return hFile;
 			}
-		} while(::FindNextFileW(hFile, &w32fd));
+		} while(::FindNextFile(hFile, &w32fd));
 		::FindClose(hFile);
 	}
 	return FLISTH_INVALID;
@@ -428,8 +419,8 @@ FLISTH DOSIOCALL file_list1st(const OEMCHAR* lpPathName, FLINFO* fli)
  */
 BRESULT DOSIOCALL file_listnext(FLISTH hList, FLINFO* fli)
 {
-	WIN32_FIND_DATAW w32fd;
-	while (::FindNextFileW(hList, &w32fd))
+	WIN32_FIND_DATA w32fd;
+	while (::FindNextFile(hList, &w32fd))
 	{
 		if (setFLInfo(w32fd, fli))
 		{

@@ -11,10 +11,15 @@
 #if defined(OSLANG_EUC) || defined(OSLANG_UTF8) || defined(OSLANG_UCS2)
 #include "oemtext.h"
 #endif
-#include <pccore.h>
+#include "pccore.h"
 #include "ini.h"
 
-//#include <shlwapi.h>
+#ifdef _WINDOWS
+#include <shlwapi.h>
+#endif
+
+ // 性能上最適化で優先しない方がいいコードなのでわざと別セグメントに置く
+#pragma code_seg(".MISCCODE")
 
 /*! ルート情報 */
 static const HDRVFILE s_hddroot = {{' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}, 0, 0, 0x10, {0}, {0}};
@@ -197,6 +202,11 @@ LISTARRAY hostdrvs_getpathlist(const HDRVPATH *phdp, const char *lpMask, UINT nA
 	HDRVLST hdd;
 	FLISTH flh;
 	FLINFO fli;
+#ifdef _WINDOWS
+	int isRoot = phdp->szPath[0] && (_tcsicmp(phdp->szPath, np2cfg.hdrvroot) == 0);
+#else
+	int isRoot = phdp->szPath[0] && (strcmp(phdp->szPath, np2cfg.hdrvroot) == 0);
+#endif
 
 	ret = listarray_new(sizeof(_HDRVLST), 64);
 	if (ret != NULL)
@@ -208,7 +218,7 @@ LISTARRAY hostdrvs_getpathlist(const HDRVPATH *phdp, const char *lpMask, UINT nA
 			file = phdp->file;
 			memcpy(file.fcbname, s_self, 11);
 			listarray_append(lst, &file);
-			if (IsMatchFcb(&file, lpMask, nAttr))
+			if (!isRoot && IsMatchFcb(&file, lpMask, nAttr))
 			{
 				hdd = (HDRVLST)listarray_append(ret, NULL);
 				if (hdd != NULL)
@@ -221,7 +231,7 @@ LISTARRAY hostdrvs_getpathlist(const HDRVPATH *phdp, const char *lpMask, UINT nA
 			file = phdp->file;
 			memcpy(file.fcbname, s_parent, 11);
 			listarray_append(lst, &file);
-			if (IsMatchFcb(&file, lpMask, nAttr))
+			if (!isRoot && IsMatchFcb(&file, lpMask, nAttr))
 			{
 				hdd = (HDRVLST)listarray_append(ret, NULL);
 				if (hdd != NULL)
@@ -381,38 +391,29 @@ static BRESULT FindSinglePath(HDRVPATH *phdp, const char *lpFcbname)
  * @param[in] lpDosPath DOS パス
  * @return DOS エラー コード
  */
-BOOL PathIsRelative(char *path) {
-	if(path[0] == '/') {
-		return TRUE;
-	}
-	return FALSE;
-}
-
-#define _countof(array) (sizeof(array) / sizeof(array[0]))
-
 UINT hostdrvs_getrealdir(HDRVPATH *phdp, char *lpFcbname, const char *lpDosPath)
 {
 	phdp->file = s_hddroot;
+#ifdef _WINDOWS
 	if(PathIsRelative(np2cfg.hdrvroot)){
 		TCHAR pathbuf[MAX_PATH+1];
 		TCHAR *pathtmp;
 		initgetfile(pathbuf, _countof(pathbuf));
-#if defined(_WIN32)
-		pathtmp = strrchr(pathbuf, '\\');
-#else	/* _WIN32 */
-		pathtmp = strrchr(pathbuf, '/');
-#endif	/* _WIN32 */
+		pathtmp = _tcsrchr(pathbuf, '\\');
 		if(pathtmp){
 			*(pathtmp+1) = 0;
 		}else{
 			pathbuf[0] = 0;
 		}
-		strcat(pathbuf, np2cfg.hdrvroot);
+		_tcscat(pathbuf, np2cfg.hdrvroot);
 		file_cpyname(phdp->szPath, pathbuf, NELEMENTS(phdp->szPath));
 	}else{
 		file_cpyname(phdp->szPath, np2cfg.hdrvroot, NELEMENTS(phdp->szPath));
 	}
-	
+#else /* not _WINDOWS */
+	file_cpyname(phdp->szPath, np2cfg.hdrvroot, NELEMENTS(phdp->szPath));
+#endif
+
 	if (lpDosPath[0] == '\\')
 	{
 		lpDosPath++;
@@ -501,8 +502,9 @@ UINT hostdrvs_getrealpath(HDRVPATH *phdp, const char *lpDosPath)
 	char fcbname[11];
 	UINT nResult;
 	
-	if (lpDosPath[0] == '\0') // root check
+	if (lpDosPath[0] == '\0' || (lpDosPath[0] == '\\' && lpDosPath[1] == '\0')) // root check
 	{
+		file_cpyname(phdp->szPath, np2cfg.hdrvroot, NELEMENTS(phdp->szPath)); // copy root path
 		return ERR_NOERROR;
 	}
 	nResult = hostdrvs_getrealdir(phdp, fcbname, lpDosPath);
@@ -585,5 +587,7 @@ HDRVHANDLE hostdrvs_fhdlsea(LISTARRAY fileArray)
 	}
 	return ret;
 }
+
+#pragma code_seg()
 
 #endif

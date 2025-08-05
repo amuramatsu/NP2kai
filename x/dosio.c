@@ -112,6 +112,22 @@ file_attr(const OEMCHAR *path)
 	return -1;
 }
 
+short
+file_setattr(const OEMCHAR *path, short attr)
+{
+	struct stat sb;
+	if (stat(path, &sb) != 0) {
+		return -1;
+	}
+
+	if ((attr & FILEATTR_READONLY) != 0) {
+		return (short)chmod(path, sb.st_mode & ~0222);
+	}
+	else {
+		return (short)chmod(path, sb.st_mode | 0222);
+	}
+}
+
 static BRESULT
 cnvdatetime(struct stat *sb, DOSDATE *dosdate, DOSTIME *dostime)
 {

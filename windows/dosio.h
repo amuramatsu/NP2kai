@@ -36,7 +36,7 @@ enum
 	FILEATTR_VOLUME		= 0x08,		/*!< ヴォリューム */
 	FILEATTR_DIRECTORY	= 0x10,		/*!< ディレクトリ */
 	FILEATTR_ARCHIVE	= 0x20,		/*!< アーカイブ ファイル */
-	FILEATTR_NORMAL	= 0x80
+	FILEATTR_NORMAL		= 0x80		/*!< 他の属性無し */
 };
 
 /**
@@ -107,6 +107,7 @@ FILELEN DOSIOCALL file_getsize(FILEH hFile);
 short DOSIOCALL file_getdatetime(FILEH hFile, DOSDATE* dosdate, DOSTIME* dostime);
 short DOSIOCALL file_delete(const OEMCHAR* lpPathName);
 short DOSIOCALL file_attr(const OEMCHAR* lpPathName);
+short DOSIOCALL file_setattr(const OEMCHAR* lpPathName, short attr);
 short DOSIOCALL file_rename(const OEMCHAR* lpExistFile, const OEMCHAR* lpNewFile);
 short DOSIOCALL file_dircreate(const OEMCHAR* lpPathName);
 short DOSIOCALL file_dirdelete(const OEMCHAR* lpPathName);

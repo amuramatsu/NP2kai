@@ -888,6 +888,7 @@ target_compile_definitions(NP2kai_X_SDL2_base INTERFACE ${NP2kai_X_definitions} 
 		#add_subdirectory(windows/resources/950)
 		add_subdirectory(windows/resources/1252)
 
+		add_link_options("/ORDER:@${CMAKE_SOURCE_DIR}/windows/funcorder.txt")
 		add_library(NP2kai_Windows_base INTERFACE)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 			target_compile_options(NP2kai_Windows_base INTERFACE /utf-8 /GS /MTd)

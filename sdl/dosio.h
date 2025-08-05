@@ -34,7 +34,8 @@ enum {
 	FILEATTR_SYSTEM		= 0x04,
 	FILEATTR_VOLUME		= 0x08,
 	FILEATTR_DIRECTORY	= 0x10,
-	FILEATTR_ARCHIVE	= 0x20
+	FILEATTR_ARCHIVE	= 0x20,
+	FILEATTR_NORMAL		= 0x80
 };
 
 enum {
@@ -85,6 +86,7 @@ FILELEN file_getsize(FILEH handle);
 short file_getdatetime(FILEH handle, DOSDATE *dosdate, DOSTIME *dostime);
 short file_delete(const OEMCHAR *path);
 short file_attr(const OEMCHAR *path);
+short file_setattr(const OEMCHAR *path, short attr);
 short file_rename(const OEMCHAR *existpath, const OEMCHAR *newpath);
 short file_dircreate(const OEMCHAR *path);
 short file_dirdelete(const OEMCHAR *path);

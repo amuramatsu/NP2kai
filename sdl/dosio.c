@@ -5,6 +5,7 @@
 #if defined(_WINDOWS)
 #include "oemtext.h"
 #include <codecnv/codecnv.h>
+#include <fileapi.h>
 #endif
 #include <dosio.h>
 #if defined(__LIBRETRO__)
@@ -268,6 +269,28 @@ short file_attr(const OEMCHAR *path) {
 #endif
 
 	return(attr);
+}
+
+short file_setattr(const OEMCHAR *path, short attr) {
+
+#if defined(__LIBRETRO__)
+  return -1;
+#elif defined(_WINDOWS) && defined(OSLANG_UTF8)
+  wchar_t	wpath[MAX_PATH];
+  codecnv_utf8toucs2(wpath, MAX_PATH, path, -1);
+  return (::SetFileAttributesW(wpath, attr) ? 0 : -1);
+#else
+  struct stat sb;
+  if(stat(path, &sb) != 0) {
+    return -1;
+  }
+  if((attr & FILEATTR_READONLY) != 0) {
+    return (short)chmod(path, sb.st_mode & ~0222);
+  }
+  else {
+    return (short)chmod(path, sb.st_mode | 0222);
+  }
+#endif
 }
 
 static BRESULT cnv_sttime(time_t *t, DOSDATE *dosdate, DOSTIME *dostime) {
