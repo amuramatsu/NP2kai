@@ -1,9 +1,20 @@
-# Neko Project II 0.86 kai
-Nov 3, 2024<br>
+# Neko Project II 0.86 kai (mod)
+Sep 23, 2025<br>
 
 NP2kai is PC-9801 series emulator<br>
 
 ![](https://img.shields.io/github/tag/AZO234/NP2kai.svg)
+
+## Modifications from AZO234's original
+
+* Sync to NP21/W update rapidly (now synced with NP21/W rev.95)
+* Use softfloat 3e and some FPU code is improved
+* Bugfixes for SDL port and X11 port
+* Some feature is added for macOS SDL port
+  * App wrapper
+  * [NativeFileDialog-Extended](https://github.com/btzy/nativefiledialog-extended)
+  * Keyboard mappging for mac US keyboard
+* Sometimes, this repository is used testbed for bugfix of NP21/W.
 
 ## Build and Install
 
@@ -1223,14 +1234,34 @@ Next boot computer, you command from 4.
 </div></details>
 
 ## Release
+- Aug 22, 2025
+  - (mod) merge NP21/W rev.95
+- Jun 20, 2025
+  - (mod) merge NP21/W rev.94
+- Apr 10, 2025
+  - (mod) merge NP21/W rev.93
+  - (mod) small fix by j-mattsson
+- Nov 16, 2024
+  - (mod) add NativeFileDialog-Extended for SDL port
+  - (mod) add app wrapper and keyboard configuration for macOS (SDL port)
 - Nov 3, 2024
   - merge NP21/W rev.92
+- Aug 20, 2024
+  - (mod) fix about fgets for SDL port
+  - (mod) softfloat handling is improved
 - Oct 30, 2023
   - merge NP21/W rev.91
 - Oct 24, 2023
   - merge NP21/W rev.90
 - Feb 10, 2023
   - merge NP21/W rev.87,88
+- Jan 30, 2023
+  - (mod) save FDD/HDD path for SDL port
+  - (mod) fix SDL font rendering on UN*X/mac
+  - (mod) fix X11 font rendering
+  - (mod) small fix for SDL port
+  - (mod) fix softfloat 3e exception handling
+  - (mod) build errors on windows are fixed
 - Jly 31, 2022
   - merge NP21/W rev.85,86
     - (Exclusion is_nan, is_inf)
