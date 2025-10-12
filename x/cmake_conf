@@ -1,0 +1,17 @@
+#! /bin/sh
+
+LOCAL_LIB=$1
+if [ ! -d "$LOCAL_LIB" ]; then
+  LOCAL_LIB=
+fi
+
+CMAKE_OPT=
+if [ x"$LOCAL_LIB" != x"" ]; then
+  CMAKE_OPT="-D \"CMAKE_EXE_LINKER_FLAGS=-L${LOCAL_LIB} -Wl,-rpath,${LOCAL_LIB}\""
+fi
+
+cmake .. \
+  -D BUILD_X=ON \
+  -D BUILD_I286=ON \
+  -D USE_ASYNCCPU=ON \
+  $CMAKE_OPT
