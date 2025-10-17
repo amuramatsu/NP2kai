@@ -783,12 +783,18 @@ static INITBL iniitem[] = {
 	{"USEMOVCS", INIRO_BOOL,	&np2cfg.allowMOVCS,	0},
 	{"NBEEPOFS", INITYPE_BOOL,	&np2cfg.nbeepofs,	0},
 	{"CAL_VOFS", INITYPE_SINT64,	&np2cfg.cal_vofs,	0},
+#if defined(SUPPORT_NP2SCSI)
+	{"USENP2ST", INIRO_BOOL,	&np2cfg.usenp2stor,	0},
+#endif
+	{"CPUSPEED", INITYPE_UINT32,	&np2cfg.emuspeed,	100},
+	{"fontface", INITYPE_STR,		np2cfg.fontface,	256},
 
 	{"keyboard", INITYPE_KB,	&np2oscfg.KEYBOARD,	0},
 	{"F12_COPY", INITYPE_UINT8,	&np2oscfg.F12KEY,	0},
 	{"Joystick", INITYPE_BOOL,	&np2oscfg.JOYPAD1,	0},
 	{"Joy1_btn", INITYPE_ARGH8,	np2oscfg.JOY1BTN,	JOY_NBUTTON},
 	{"Joy1_dev", INITYPE_STR,	&np2oscfg.JOYDEV[0],	MAX_PATH},
+	{"Joy1POVC", INITYPE_BOOL,	&np2oscfg.JOYPAD1POVXY, 0},
 	{"Joy1amap", INITYPE_ARGH8,	np2oscfg.JOYAXISMAP[0],	JOY_NAXIS},
 	{"Joy1bmap", INITYPE_ARGH8,	np2oscfg.JOYBTNMAP[0],	JOY_NBUTTON},
 

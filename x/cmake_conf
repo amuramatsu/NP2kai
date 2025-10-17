@@ -7,7 +7,7 @@ fi
 
 CMAKE_OPT=
 if [ x"$LOCAL_LIB" != x"" ]; then
-  CMAKE_OPT="-D \"CMAKE_EXE_LINKER_FLAGS=-L${LOCAL_LIB} -Wl,-rpath,${LOCAL_LIB}\""
+  CMAKE_OPT="-D CMAKE_EXE_LINKER_FLAGS=-Wl,-L${LOCAL_LIB},-rpath,${LOCAL_LIB}"
 fi
 
 cmake .. \

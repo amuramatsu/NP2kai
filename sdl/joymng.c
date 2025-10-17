@@ -103,6 +103,7 @@ static struct {
 typedef struct {
 	SINT16	axis[JOY_NAXIS];
 	UINT8	button[JOY_NBUTTON];
+	UINT8	hat[JOY_NHAT];
 } JOYINFO_T;
 
 static joymng_devinfo_t **joydrv_initialize(void);
@@ -185,6 +186,51 @@ joymng_getstat(void)
 			np2oscfg.JOYPAD1 |= 0x80;
 			joyinfo.flag = 0xff;
 
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+			if (np2oscfg.JOYPAD1POVXY)
+			{
+				case (ji.hat[0])
+				{
+					case SDL_HAT_UP:
+						ji.axis[0]  = 0;
+						ji.axis[1]  = -32767;
+						break;
+					case SDL_HAT_RIGHT:
+						ji.axis[0]  = 32767;
+						ji.axis[1]  = 0;
+						break;
+					case SDL_HAT_DOWN:
+						ji.axis[0]  = 0;
+						ji.axis[1]  = 32767;
+						break;
+					case SDL_HAT_LEFT:
+						ji.axis[0]  = -32767;
+						ji.axis[1]  = 0;
+						break;
+					case SDL_HAT_RIGHTUP:
+						ji.axis[0]  = 32767;
+						ji.axis[1]  = -32767;
+						break;
+					case SDL_HAT_RIGHTDOWN:
+						ji.axis[0]  = 32767;
+						ji.axis[1]  = 32767;
+						break;
+					case SDL_HAT_LEFTUP:
+						ji.axis[0]  = -32767;
+						ji.axis[1]  = -32767;
+						break;
+					case SDL_HAT_LEFTDOWN:
+						ji.axis[0]  = -32767;
+						ji.axis[1]  = 32767;
+						break;
+					case SDL_HAT_CENTERED:
+					default:
+						ji.axis[0]  = 0;
+						ji.axis[1]  = 0;
+						break;
+				}
+			}
+#endif
 			/* X */
 			joyAnalogX = ji.axis[0];
 			if (ji.axis[0] > 0x4000) {
@@ -348,7 +394,6 @@ joydrv_open(const char *dvname)
 	if (nbutton < 2 || nbutton >= 255) {
 		goto sdl_err;
 	}
-
 	allocsize = sizeof(joydrv_sdl_hdl_t);
 	shdl = _MALLOC(allocsize, "SDL joystick handle");
 	if (shdl == NULL) {
@@ -381,6 +426,17 @@ joydrv_open(const char *dvname)
 			dev->button[i] = JOY_BUTTON_INVALID;
 		}
 	}
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	dev->nhat = SDL_JoystickNumHats(dev);
+	for (i = 0; i < JOY_NHAT; ++i) {
+		dev->hat[i] = i;
+	}
+#else
+	dev->nhat = 0;
+	for (i = 0; i < JOY_NHAT; ++i) {
+		dev->hat[i] = JOY_HAT_INVALID;
+	}
+#endif
 
 	return shdl;
 
@@ -425,6 +481,12 @@ joydrv_getstat(void *hdl, JOYINFO_T *ji)
 
 	SDL_JoystickUpdate();
 
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	for (i = 0; i < JOY_NHAT; ++i) {
+		ji->hat[i] = (dev->hat[i] == JOY_HAT_INVALID) ? 0 :
+			 SDL_JoystickGetHat(joy, dev->hat[i]);
+	}
+#endif
 	for (i = 0; i < JOY_NAXIS; ++i) {
 		ji->axis[i] = (dev->axis[i] == JOY_AXIS_INVALID) ? 0 :
 		    SDL_JoystickGetAxis(joy, dev->axis[i]);

@@ -158,7 +158,7 @@ static	TCHAR		szClassName[] = _T("NP2-MainWindow");
 						OEMTEXT("NP2"),
 						CW_USEDEFAULT, CW_USEDEFAULT, 1, 1, 0, 0, 0, 1, 0, 1,
 						0, 1, KEY_UNKNOWN, 0, 0,
-						0, 0, 0, {1, 2, 2, 1}, {1, 2, 2, 1}, 0, 1,
+						0, 0, 0, {1, 2, 2, 1}, {1, 2, 2, 1}, 0, 1, 0, 0,
 						{5, 0, 0x3e, 19200,
 						 OEMTEXT(""), OEMTEXT(""), OEMTEXT(""), OEMTEXT(""), 0, 1,
 #if defined(SUPPORT_NAMED_PIPE)
@@ -228,6 +228,7 @@ static	TCHAR		szClassName[] = _T("NP2-MainWindow");
 						1,
 #endif	// defined(SUPPORT_MULTITHREAD)
 						0, 200,
+						1
 					};
 
 		OEMCHAR		fddfolder[MAX_PATH];
@@ -1028,6 +1029,42 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 				np2_multithread_requestswitch = 1;
 			}
 #endif
+			break;
+
+		case IDM_EMULSPEED_50:
+			np2cfg.emuspeed = 50;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_EMULSPEED_75:
+			np2cfg.emuspeed = 75;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_EMULSPEED_100:
+			np2cfg.emuspeed = 100;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_EMULSPEED_150:
+			np2cfg.emuspeed = 150;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_EMULSPEED_200:
+			np2cfg.emuspeed = 200;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_EMULSPEED_400:
+			np2cfg.emuspeed = 400;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+		case IDM_EMULSPEED_800:
+			np2cfg.emuspeed = 800;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
 			break;
 
 		case IDM_CHANGECLK_X2:
@@ -3497,7 +3534,7 @@ void autoSendKey(){
 						}
 					}else if(0x80 <= sendchar){
 						// 多分2byte文字
-						if (autokey_kanjimode)
+						if (np2oscfg.knjpaste)
 						{
 							isKanji = 1;
 							if ((capslock ^ shift))
@@ -3522,7 +3559,7 @@ void autoSendKey(){
 							}
 							UINT8 sendchar2 = ((UINT8*)autokey_sendbuffer)[autokey_sendbufferpos + 1];
 							unsigned short jiscode = sjis_to_jis(((unsigned short)sendchar << 8) | (unsigned short)sendchar2);
-							UINT8 hexToAsc[] = { '0','1' ,'2' ,'3' ,'4' ,'5' ,'6' ,'7' ,'8' ,'9' ,'a' ,'b' ,'c' ,'d' ,'e' ,'f' };
+							UINT8 hexToAsc[] = { '0', '1' ,'2' ,'3' ,'4' ,'5' ,'6' ,'7' ,'8' ,'9' ,'a' ,'b' ,'c' ,'d' ,'e' ,'f' };
 							keystat_senddata(0x00 | vkeylist[hexToAsc[((jiscode >> 12) & 0xf)]]);
 							keystat_senddata(0x80 | vkeylist[hexToAsc[((jiscode >> 12) & 0xf)]]);
 							keystat_senddata(0x00 | vkeylist[hexToAsc[((jiscode >> 8) & 0xf)]]);
@@ -3531,7 +3568,7 @@ void autoSendKey(){
 							keystat_senddata(0x80 | vkeylist[hexToAsc[((jiscode >> 4) & 0xf)]]);
 							keystat_senddata(0x00 | vkeylist[hexToAsc[((jiscode) & 0xf)]]);
 							keystat_senddata(0x80 | vkeylist[hexToAsc[((jiscode) & 0xf)]]);
-							if (autokey_kanjimode == 2)
+							if (np2oscfg.knjpaste == 2)
 							{
 								// DOSは1文字毎に解除される
 								kanjimode = 0;

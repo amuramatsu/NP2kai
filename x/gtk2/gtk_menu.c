@@ -56,6 +56,7 @@
 #include <mousemng.h>
 #include <scrnmng.h>
 #include <sysmng.h>
+#include <timing.h>
 
 #if defined(SUPPORT_DEBUGSS)
 #include "debugsnapshot.h"
@@ -143,6 +144,7 @@ static GtkActionEntry menu_entries[] = {
 
 /* Submenu */
 { "NewDiskMenu",  NULL, "_New disk", NULL, NULL, NULL },
+{ "EmuSpeedMenu", NULL, "Emulation _Speed", NULL, NULL, NULL},
 { "Drive1Menu",   NULL, "Drive_1",   NULL, NULL, NULL },
 { "Drive2Menu",   NULL, "Drive_2",   NULL, NULL, NULL },
 { "Drive3Menu",   NULL, "Drive_3",   NULL, NULL, NULL },
@@ -260,6 +262,7 @@ static void cb_framedisp(GtkToggleAction *action, gpointer user_data);
 static void cb_jastsound(GtkToggleAction *action, gpointer user_data);
 static void cb_joyrapid(GtkToggleAction *action, gpointer user_data);
 static void cb_joyreverse(GtkToggleAction *action, gpointer user_data);
+static void cb_joypovxy(GtkToggleAction *action, gpointer user_data);
 static void cb_keydisplay(GtkToggleAction *action, gpointer user_data);
 static void cb_mousemode(GtkToggleAction *action, gpointer user_data);
 static void cb_mouserapid(GtkToggleAction *action, gpointer user_data);
@@ -300,6 +303,7 @@ static GtkToggleActionEntry togglemenu_entries[] = {
 { "jastsound",    NULL, "_Jast sound",        NULL, NULL, G_CALLBACK(cb_jastsound), FALSE },
 { "joyrapid",     NULL, "Joy _rapid",         NULL, NULL, G_CALLBACK(cb_joyrapid), FALSE },
 { "joyreverse",   NULL, "Joy re_verse",       NULL, NULL, G_CALLBACK(cb_joyreverse), FALSE },
+{ "joypovxy",     NULL, "Joy _POV -> X-Y",    NULL, NULL, G_CALLBACK(cb_joypovxy), FALSE },
 { "keydisplay",   NULL, "Key display",        NULL, NULL, G_CALLBACK(cb_keydisplay), FALSE },
 { "mousemode",    NULL, "_Mouse mode",        NULL, NULL, G_CALLBACK(cb_mousemode), FALSE },
 { "mouserapid",   NULL, "_Mouse rapid",       NULL, NULL, G_CALLBACK(cb_mouserapid), FALSE },
@@ -337,6 +341,17 @@ static GtkToggleActionEntry togglemenu_entries[] = {
 static const guint n_togglemenu_entries = G_N_ELEMENTS(togglemenu_entries);
 
 /* Radio */
+static GtkRadioActionEntry emuspeed_entries[] = {
+{ "emuspd050",	 NULL, "x0.5",				NULL, NULL, 50 },
+{ "emuspd075",	 NULL, "x0.75",				NULL, NULL, 75 },
+{ "emuspd100",	 NULL, "x1.0",				NULL, NULL, 100 },
+{ "emuspd150",	 NULL, "x1.5",				NULL, NULL, 150 },
+{ "emuspd200",	 NULL, "x2.0",				NULL, NULL, 200 },
+{ "emuspd400",	 NULL, "x4.0",				NULL, NULL, 400 },
+{ "emuspd800",	 NULL, "x8.0",				NULL, NULL, 800 },
+};
+static const guint n_emuspeed_entries = G_N_ELEMENTS(emuspeed_entries);
+
 static GtkRadioActionEntry framerate_entries[] = {
 { "autoframe", NULL, "_Auto frame", NULL, NULL, 0 },
 { "fullframe", NULL, "_Full frame", NULL, NULL, 1 },
@@ -478,6 +493,7 @@ static GtkRadioActionEntry fpu_entries[] = {
 };
 static const guint n_fpu_entries = G_N_ELEMENTS(fpu_entries);
 
+static void cb_emuspeed(gint idx);
 static void cb_beepvol(gint idx);
 static void cb_kbtype(gint idx);
 static void cb_f11key(gint idx);
@@ -506,6 +522,7 @@ static const struct {
 #if defined(SUPPORT_VIDEOFILTER)
 	{ vf1p_entries, G_N_ELEMENTS(vf1p_entries), cb_vf1p },
 #endif
+	{ emuspeed_entries, G_N_ELEMENTS(emuspeed_entries), cb_emuspeed },
 	{ framerate_entries, G_N_ELEMENTS(framerate_entries), cb_framerate },
 	{ joykey_entries, G_N_ELEMENTS(joykey_entries), cb_joykey },
 	{ memory_entries, G_N_ELEMENTS(memory_entries), cb_memory },
@@ -525,6 +542,15 @@ static const gchar *ui_info =
 "   <menuitem action='reset'/>\n"
 "   <separator/>\n"
 "   <menuitem action='configure'/>\n"
+"   <menu name='EmuSpeed' action='EmuSpeedMenu'>\n"
+"    <menuitem action='emuspd050'/>\n"
+"    <menuitem action='emuspd075'/>\n"
+"    <menuitem action='emuspd100'/>\n"
+"    <menuitem action='emuspd150'/>\n"
+"    <menuitem action='emuspd200'/>\n"
+"    <menuitem action='emuspd400'/>\n"
+"    <menuitem action='emuspd800'/>\n"
+"   </menu>\n"
 "   <menu name='NewDisk' action='NewDiskMenu'>\n"
 "    <menuitem action='newfdisk'/>\n"
 "    <menuitem action='newhdisk'/>\n"
@@ -742,6 +768,7 @@ static const gchar *ui_info =
 "   <menuitem action='framedisp'/>\n"
 "   <menuitem action='joyreverse'/>\n"
 "   <menuitem action='joyrapid'/>\n"
+"   <menuitem action='joypovxy'/>\n"
 "   <menuitem action='mouserapid'/>\n"
 "   <menuitem action='itfwork'/>\n"
 //"   <menuitem action='fixmmtimer'/>\n"
@@ -856,6 +883,8 @@ xmenu_select_item_by_index(MENU_HDL hdl, GtkRadioActionEntry *entry, guint nentr
 #define	xmenu_select_vf1p(v) \
 	xmenu_select_item_by_index(NULL, vf1p_entries, n_vf1p_entries, v);
 #endif
+#define	xmenu_select_emuspeed(v) \
+	xmenu_select_item_by_index(NULL, emuspeed_entries, n_emuspeed_entries, v);
 #define	xmenu_select_framerate(v) \
 	xmenu_select_item_by_index(NULL, framerate_entries, n_framerate_entries, v);
 #define	xmenu_select_joykey(v) \
@@ -1014,7 +1043,7 @@ cb_change_font(GtkAction *action, gpointer user_data)
 		path = g_filename_from_utf8(utf8, -1, NULL, NULL, NULL);
 		if (path) {
 			if ((stat(path, &sb) == 0) && S_ISREG(sb.st_mode) && (sb.st_mode & S_IRUSR)) {
-				if (font_load(path, FALSE)) {
+				if (font_load(path, FALSE, np2cfg.fontface)) {
 					gdcs.textdisp |= GDCSCRN_ALLDRAW2;
 					file_cpyname(np2cfg.fontfile, path, sizeof(np2cfg.fontfile));
 					sysmng_update(SYS_UPDATECFG);
@@ -2024,6 +2053,19 @@ cb_joyreverse(GtkToggleAction *action, gpointer user_data)
 }
 
 static void
+cb_joypovxy(GtkToggleAction *action, gpointer user_data)
+{
+	gboolean b = gtk_toggle_action_get_active(action);
+	gboolean f;
+
+	f = (np2oscfg.JOYPAD1POVXY ? 1 : 0) ^ (b ? 1 : 0);
+	if (f) {
+		np2oscfg.JOYPAD1POVXY = !np2oscfg.JOYPAD1POVXY;
+		sysmng_update(SYS_UPDATECFG);
+	}
+}
+
+static void
 cb_keydisplay(GtkToggleAction *action, gpointer user_data)
 {
 	gboolean b = gtk_toggle_action_get_active(action);
@@ -2359,6 +2401,23 @@ cb_sndcad(GtkToggleAction *action, gpointer user_data)
 /*
  * radio item
  */
+static void
+cb_emuspeed(gint idx)
+{
+	guint value;
+
+	if (idx >= 0) {
+		value = emuspeed_entries[idx].value;
+	} else {
+		value = 100;
+	}
+	if (np2cfg.emuspeed != value) {
+		np2cfg.emuspeed = value;
+		timing_setspeed(np2cfg.emuspeed * 128 / 100);
+		sysmng_update(SYS_UPDATECFG);
+	}
+}
+
 static void
 cb_beepvol(gint idx)
 {
@@ -2824,6 +2883,7 @@ create_menu(void)
 	xmenu_toggle_item(NULL, "en_dbss", np2cfg.debugss);
 #endif
 
+	xmenu_select_emuspeed(np2cfg.emuspeed);
 	xmenu_select_beepvol(np2cfg.BEEP_VOL);
 	xmenu_select_kbtype(np2oscfg.KEYBOARD);
 	xmenu_select_f11key(np2oscfg.F11KEY);

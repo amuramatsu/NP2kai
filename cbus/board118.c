@@ -374,11 +374,12 @@ static REG8 IOINPCALL gameport_i1480(UINT port)
 	LARGE_INTEGER li = {0};
 	QueryPerformanceCounter(&li);
 #endif
-	if(!joymng_available()){
+	{
 		REG8 joyflag = joymng_getstat();
-		if(!joymng_available()){
-			return 0xff;
-		}
+		gameport_joyflag = ((joyflag >> 2) & 0x30) | ((joyflag << 2) & 0xc0) | (gameport_joyflag & 0x0f);
+	}
+	if(!joymng_available()){
+		return 0xff;
 	}
 	joyAnalogX = joymng_getAnalogX();
 	joyAnalogY = joymng_getAnalogY();
@@ -741,8 +742,6 @@ void board118_reset(const NP2CFG *pConfig)
  */
 void board118_bind(void)
 {
-	int i;
-
 	// CS4231バインド（I/Oポート割り当てとか）
 	cs4231io_bind();
 	
@@ -780,6 +779,7 @@ void board118_bind(void)
 #if defined(SUPPORT_GAMEPORT)
 		// ゲームポート割り当て 1480h～1487hどこでも良いらしい
 		if(np2cfg.gameport){
+			int i;
 			for(i=0;i<=7;i++){
 				iocore_attachout(0x1480+i, gameport_o1480);
 				iocore_attachinp(0x1480+i, gameport_i1480);

@@ -2,9 +2,18 @@
 static const char str_emulate[] = "Emulate";
 static const char str_reset[] = "Reset";
 static const char str_config[] = "Configure...";
+static const char str_emuspeed[] = "Emulation Speed...";
 static const char str_newdisk[] = "NewDisk...";
 static const char str_font[] = "Font...";
 static const char str_exit[] = "Exit";
+
+static const char str_emuspeed_050[] = "x0.5";
+static const char str_emuspeed_075[] = "x0.75";
+static const char str_emuspeed_100[] = "x1.0";
+static const char str_emuspeed_150[] = "x1.5";
+static const char str_emuspeed_200[]  = "x2.0";
+static const char str_emuspeed_400[]  = "x4.0";
+static const char str_emuspeed_800[]  = "x8.0";
 
 static const char str_stat[] = "Stat";
 static const char str_save0[] = "Save 0";
@@ -161,8 +170,10 @@ static const char str_mem326[] = "32.6MB";
 static const char str_mem646[] = "64.6MB";
 static const char str_mem1206[] = "120.6MB";
 static const char str_mem2306[] = "230.6MB";
+#if defined(SUPPORT_LARGE_MEMORY)
 static const char str_mem5126[] = "512.6MB";
 static const char str_mem10246[] = "10240.6MB";
+#endif
 
 static const char str_seropt[] = "Serial option...";
 static const char str_midiopt[] = "MIDI option...";
@@ -193,6 +204,7 @@ static const char str_clockdisp[] = "Clock Disp";
 static const char str_framedisp[] = "Frame Disp";
 static const char str_joyrev[] = "Joy Reverse";
 static const char str_joyrapid[] = "Joy Rapid";
+static const char str_joypovxy[] = "Joy POV -> X-Y axis";
 static const char str_mouserapid[] = "Mouse Rapid";
 static const char str_itfwork[] = "ITF work";
 static const char str_fixmmtimer[] = "Fix MMTimer";
@@ -225,6 +237,15 @@ static const char str_key_Nfer[] = "Send NFER";
 static const char str_key_Caps[] = "Send Caps";
 static const char str_key_Stop[] = "Send STOP";
 
+static const MSYSITEM s_emuspeed[] = {
+		{str_emuspeed_050,	NULL,		MID_EMUSPD050,		0},
+		{str_emuspeed_075,	NULL,		MID_EMUSPD075,		0},
+		{str_emuspeed_100,	NULL,		MID_EMUSPD100,		0},
+		{str_emuspeed_150,	NULL,		MID_EMUSPD150,		0},
+		{str_emuspeed_200,	NULL,		MID_EMUSPD200,		0},
+		{str_emuspeed_400,	NULL,		MID_EMUSPD400,		0},
+		{str_emuspeed_800,	NULL,		MID_EMUSPD800,		MENU_DELETED}};
+
 static const MSYSITEM s_emu[] = {
 		{str_reset,			NULL,		MID_RESET,			0},
 		{NULL,				NULL,		MID_STATIC,			MENU_SEPARATOR},
@@ -233,6 +254,7 @@ static const MSYSITEM s_emu[] = {
 #else	/* __LIBRETRO__ */
 		{str_config,		NULL,		MID_CONFIG,			0},
 #endif	/* __LIBRETRO__ */
+		{str_emuspeed,		s_emuspeed,	MID_STATIC,			0},
 		{str_newdisk,		NULL,		MID_NEWDISK,		MENU_GRAY},
 		{str_font,			NULL,		MID_CHANGEFONT,		MENU_GRAY},
 		{NULL,				NULL,		MID_STATIC,			MENU_SEPARATOR},
@@ -537,9 +559,13 @@ static const MSYSITEM s_mem[] = {
 		{str_mem326,			NULL,		MID_MEM326,			0},
 		{str_mem646,			NULL,		MID_MEM646,			0},
 		{str_mem1206,			NULL,		MID_MEM1206,			0},
+#if defined(SUPPORT_LARGE_MEMORY)
 		{str_mem2306,			NULL,		MID_MEM2306,			0},
 		{str_mem5126,			NULL,		MID_MEM5126,			0},
 		{str_mem10246,		NULL,		MID_MEM10246,			MENU_DELETED}};
+#else
+		{str_mem2306,			NULL,		MID_MEM2306,		MENU_DELETED}};
+#endif
 #else
 		{str_mem166,			NULL,		MID_MEM166,			MENU_DELETED}};
 #endif
@@ -582,6 +608,7 @@ static const MSYSITEM s_other[] = {
 		{str_framedisp,		NULL,		MID_DISPFRAME,		MENU_GRAY},
 		{str_joyrev,		NULL,		MID_JOYX,			0},
 		{str_joyrapid,		NULL,		MID_RAPID,			0},
+		{str_joypovxy,		NULL,		MID_JOYPOVXY,		0},
 		{str_mouserapid,	NULL,		MID_MSRAPID,		MENU_GRAY},
 		{str_itfwork,		NULL,		MID_ITFWORK,			0},
 		{str_fixmmtimer,	NULL,		MID_FIXMMTIMER,			0},

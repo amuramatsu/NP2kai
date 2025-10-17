@@ -281,8 +281,17 @@ static void bios_reinitbyswitch(void) {
 			if(sxsi_getdevtype(i)==SXSIDEV_HDD){
 				sxsi_unittbl[idx] = i;
 				idx++;
+			}else if (sxsi_getdevtype(i) == SXSIDEV_CDROM){
+				// skip
 			}else{
 				ncidx = i;
+			}
+		}
+		// CD-ROMはHDDの後ろに追加
+		for(i=0;i<4;i++){
+			if(sxsi_getdevtype(i)==SXSIDEV_CDROM){
+				sxsi_unittbl[idx] = i;
+				idx++;
 			}
 		}
 		for(;idx<4;idx++){

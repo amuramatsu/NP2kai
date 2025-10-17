@@ -329,6 +329,10 @@ struct tagNP2Config
 #if defined(SUPPORT_NP2SCSI)
 	UINT8	usenp2stor; // np2 SCSIを使用する
 #endif
+
+	UINT32	emuspeed; // emulation speed(%)
+
+	OEMCHAR	fontface[256];
 #if defined(SUPPORT_DEBUGSS)
 	UINT8	debugss;
 #endif

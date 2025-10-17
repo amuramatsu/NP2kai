@@ -219,6 +219,8 @@ const OEMCHAR np2version[] = OEMTEXT(NP2KAI_GIT_TAG " " NP2KAI_GIT_HASH);
 #if defined(SUPPORT_NP2SCSI)
 				1,
 #endif
+				100,
+				OEMTEXT(""),
 #if defined(SUPPORT_DEBUGSS)
 				0,
 #endif
@@ -517,7 +519,7 @@ void pccore_init(void) {
 	sxsi_initialize();
 
 	font_initialize();
-	font_load(np2cfg.fontfile, TRUE);
+	font_load(np2cfg.fontfile, TRUE, np2cfg.fontface);
 	maketext_initialize();
 	makegrph_initialize();
 	gdcsub_initialize();
@@ -986,6 +988,10 @@ void pccore_reset(void) {
 	}
 #endif
 #endif
+
+	// エミュレーション速度セット
+	if (np2cfg.emuspeed < 1) np2cfg.emuspeed = 1;
+	timing_setspeed(np2cfg.emuspeed * 128 / 100);
 
 	// マウスリセット
 	mousemng_reset();

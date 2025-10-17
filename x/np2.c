@@ -75,6 +75,7 @@ NP2OSCFG np2oscfg = {
 
 	0,			/* JOYPAD1 */
 	0,			/* JOYPAD2 */
+	0,			/* JOYPAD1POVXY */
 	{ 1, 2, 5, 6 },		/* JOY1BTN */
 	{
 		{ 0, 1 },		/* JOYAXISMAP[0] */

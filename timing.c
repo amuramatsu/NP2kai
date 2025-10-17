@@ -16,6 +16,7 @@ typedef struct {
 
 static	TIMING	timing;
 
+static	UINT32 timimg_speed = 128;
 
 void timing_reset(void) {
 
@@ -38,6 +39,11 @@ void timing_setcount(UINT value) {
 void wabrly_callback(UINT nowtime);
 #endif
 
+void timing_setspeed(UINT32 value)
+{
+	timimg_speed = value;
+}
+
 UINT32 timing_getmsstep(void)
 {
 	return(timing.msstep);
@@ -52,6 +58,7 @@ UINT timing_getcount(void) {
 
 	ticknow = GETTICK();
 	span = ticknow - timing.tick;
+	span = span * timimg_speed / 128;
 	if (span) {
 		timing.tick = ticknow;
 		fddmtr_callback(ticknow);
@@ -78,6 +85,7 @@ UINT timing_getcount_baseclock(void) {
 
 	ticknow = GETTICK();
 	span = ticknow - timing.tick;
+	span = span * timimg_speed / 128;
 	if (span) {
 		if (span >= 1000) {
 			span = 1000;
@@ -96,6 +104,7 @@ UINT32 timing_getcount_raw(void) {
 
 	ticknow = GETTICK();
 	span = ticknow - timing.tick;
+	span = span * timimg_speed / 128;
 	if (span >= 1000) {
 		span = 1000;
 	}

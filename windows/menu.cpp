@@ -9,16 +9,17 @@
 #include <np2.h>
 #include <scrnmng.h>
 #include <sysmng.h>
-#include "misc\tstring.h"
-#include "misc\WndProc.h"
+#include "misc/tstring.h"
+#include "misc/WndProc.h"
 #include <pccore.h>
 #if defined(SUPPORT_WAVEREC)
-#include "sound\sound.h"
+#include "sound/sound.h"
 #endif
 #if defined(SUPPORT_S98)
-#include "sound\s98.h"
+#include "sound/s98.h"
 #endif
 #include <mousemng.h>
+#include <timing.h>
 #include <font/font.h>
 
 extern UINT8	np2userpause;
@@ -236,6 +237,8 @@ void sysmenu_update(HMENU hMenu)
 	CheckMenuItem(hMenu, IDM_SCRNMUL10, MF_BYCOMMAND | MFCHECK(scrnmul == 10));
 	CheckMenuItem(hMenu, IDM_SCRNMUL12, MF_BYCOMMAND | MFCHECK(scrnmul == 12));
 	CheckMenuItem(hMenu, IDM_SCRNMUL16, MF_BYCOMMAND | MFCHECK(scrnmul == 16));
+	CheckMenuItem(hMenu, IDM_SCRNMUL24, MF_BYCOMMAND | MFCHECK(scrnmul == 24));
+	CheckMenuItem(hMenu, IDM_SCRNMUL32, MF_BYCOMMAND | MFCHECK(scrnmul == 32));
 }
 
 
@@ -326,6 +329,13 @@ void xmenu_update(HMENU hMenu)
 	
 	// Emulate
 	CheckMenuItem(hMenu, IDM_PAUSE, MF_BYCOMMAND | MFCHECK(np2userpause));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_50, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 50));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_75, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 75));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_100, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 100));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_150, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 150));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_200, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 200));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_400, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 400));
+	CheckMenuItem(hMenu, IDM_EMULSPEED_800, MF_BYCOMMAND | MFCHECK(np2cfg.emuspeed == 800));
 	
 	// Screen
 	const bool bFullScreen = ((g_scrnmode & SCRNMODE_FULLSCREEN) != 0);

@@ -34,7 +34,7 @@ void dialog_font(HWND hWnd)
 	}
 
 	LPCTSTR lpFilename = szPath;
-	if (font_load(lpFilename, FALSE))
+	if (font_load(lpFilename, FALSE, np2cfg.fontface))
 	{
 		gdcs.textdisp |= GDCSCRN_ALLDRAW2;
 		milstr_ncpy(np2cfg.fontfile, lpFilename, _countof(np2cfg.fontfile));

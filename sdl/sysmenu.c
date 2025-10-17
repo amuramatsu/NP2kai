@@ -92,6 +92,48 @@ static void sys_cmd(MENUID id) {
 											(char *)mstr_cfg, dlgcfg_cmd);
 			break;
 
+		case MID_EMUSPD050:
+			np2cfg.emuspeed = 50;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_EMUSPD075:
+			np2cfg.emuspeed = 75;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_EMUSPD100:
+			np2cfg.emuspeed = 100;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_EMUSPD150:
+			np2cfg.emuspeed = 150;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_EMUSPD200:
+			np2cfg.emuspeed = 200;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_EMUSPD400:
+			np2cfg.emuspeed = 400;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
+		case MID_EMUSPD800:
+			np2cfg.emuspeed = 800;
+			timing_setspeed(np2cfg.emuspeed * 128 / 100);
+			update |= SYS_UPDATECFG;
+			break;
+
 #if defined(SUPPORT_STATSAVE)
 		case MID_SAVESTAT0:
 			flagsave("s00");
@@ -1020,6 +1062,11 @@ static void sys_cmd(MENUID id) {
 			update |= SYS_UPDATECFG;
 			break;
 
+		case MID_JOYPOVXY:
+			np2oscfg.JOYPAD1POVXY ^= 1;
+			update |= SYS_UPDATECFG;
+			break;
+
 		case MID_MSRAPID:
 			np2cfg.MOUSERAPID ^= 1;
 			update |= SYS_UPDATECFG;
@@ -1156,6 +1203,13 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 
 	UINT8	b;
 
+	menusys_setcheck(MID_EMUSPD050, (np2cfg.emuspeed <= 50));
+	menusys_setcheck(MID_EMUSPD075, (np2cfg.emuspeed > 50 && np2cfg.emuspeed <= 75));
+	menusys_setcheck(MID_EMUSPD100, (np2cfg.emuspeed > 75 && np2cfg.emuspeed <= 100));
+	menusys_setcheck(MID_EMUSPD150, (np2cfg.emuspeed > 100 && np2cfg.emuspeed <= 150));
+	menusys_setcheck(MID_EMUSPD200, (np2cfg.emuspeed > 1500 && np2cfg.emuspeed <= 200));
+	menusys_setcheck(MID_EMUSPD400, (np2cfg.emuspeed > 200 && np2cfg.emuspeed <= 400));
+	menusys_setcheck(MID_EMUSPD800, (np2cfg.emuspeed > 400));
 	menusys_setcheck(MID_DISPSYNC, (np2cfg.DISPSYNC & 1));
 	menusys_setcheck(MID_RASTER, (np2cfg.RASTER & 1));
 	menusys_setcheck(MID_NOWAIT, (np2oscfg.NOWAIT & 1));
@@ -1241,10 +1295,13 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_setcheck(MID_MEM646, (np2cfg.EXTMEM == 64));
 	menusys_setcheck(MID_MEM1206, (np2cfg.EXTMEM == 120));
 	menusys_setcheck(MID_MEM2306, (np2cfg.EXTMEM == 230));
+#if defined(SUPPORT_LARGE_MEMORY)
 	menusys_setcheck(MID_MEM5126, (np2cfg.EXTMEM == 512));
 	menusys_setcheck(MID_MEM10246, (np2cfg.EXTMEM == 1024));
+#endif
 	menusys_setcheck(MID_JOYX, (np2cfg.BTN_MODE & 1));
 	menusys_setcheck(MID_RAPID, (np2cfg.BTN_RAPID & 1));
+	menusys_setcheck(MID_JOYPOVXY, (np2oscfg.JOYPAD1POVXY & 1));
 	menusys_setcheck(MID_MSRAPID, (np2cfg.MOUSERAPID & 1));
 	menusys_setcheck(MID_ITFWORK, (np2cfg.ITF_WORK & 1));
 	menusys_setcheck(MID_FIXMMTIMER, (np2cfg.timerfix & 1));

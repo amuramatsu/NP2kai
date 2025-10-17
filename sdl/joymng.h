@@ -48,10 +48,13 @@ UINT8 joymng_getstat(void);
 
 #define	JOY_NAXIS		2
 #define	JOY_NBUTTON		4
+#define	JOY_NHAT		1
 #define	JOY_AXIS_INVALID	0xff
 #define	JOY_BUTTON_INVALID	0xff
+#define	JOY_HAT_INVALID		0xff
 #define	JOY_NAXIS_MAX		(JOY_AXIS_INVALID-1)
 #define	JOY_NBUTTON_MAX		(JOY_BUTTON_INVALID-1)
+#define	JOY_NHAT_MAX		(JOY_HAT_INVALID-1)
 
 enum {
 	JOY_UP_BIT		= (1 << 0),
@@ -73,6 +76,9 @@ typedef struct {
 
 	int nbutton;
 	int button[JOY_NBUTTON];
+
+	int nhat;
+	int hat[JOY_NHAT];
 } joymng_devinfo_t;
 
 #if defined(SUPPORT_JOYSTICK)
