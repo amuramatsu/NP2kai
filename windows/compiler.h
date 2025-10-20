@@ -11,6 +11,12 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
+#ifdef UNICODE
+#define SUPPORT_ANK 1
+#define OSLANG_UCS2 1
+#else
+#define OSLANG_UTF8 1
+#endif
 #include "compiler_base.h"
 
 #include "targetver.h"
@@ -41,8 +47,8 @@ WINBASEAPI BOOL WINAPI SetFilePointerEx(HANDLE, LARGE_INTEGER, PLARGE_INTEGER, D
 #endif	// !defined(__GNUC__)
 #define	msgbox(title, msg)		MessageBoxA(NULL, msg, title, MB_OK)
 
-#include "misc\tickcounter.h"
-#include "misc\vc6macros.h"
+#include "misc/tickcounter.h"
+#include "misc/vc6macros.h"
 
 #define	GETTICK()			GetTickCounter()
 #if defined(TRACE)

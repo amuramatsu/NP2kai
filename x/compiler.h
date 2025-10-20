@@ -26,6 +26,7 @@
 #ifndef	NP2_X_COMPILER_H__
 #define	NP2_X_COMPILER_H__
 
+#define OSLANG_UTF8 1
 #include "compiler_base.h"
 
 #include <SDL.h>

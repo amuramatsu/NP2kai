@@ -1,6 +1,7 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
+#define OSLANG_UTF8 1
 #include "compiler_base.h"
 
 #include	<sys/param.h>

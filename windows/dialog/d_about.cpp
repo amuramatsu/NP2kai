@@ -60,10 +60,10 @@ BOOL CAboutDlg::OnInitDialog()
 	milstr_ncat(szWork, "\n", _countof(szWork));
 	milstr_ncat(szWork, NP2VER_WIN9X, _countof(szWork));
 #endif
-	milstr_ncat(szWork, "\n", _countof(szWork));
-	milstr_ncat(szWork, NP2KAI_GIT_TAG, _countof(szWork));
-	milstr_ncat(szWork, " ", _countof(szWork));
-	milstr_ncat(szWork, NP2KAI_GIT_HASH, _countof(szWork));
+	milstr_ncat(szWork, OEMTEXT("\n"), _countof(szWork));
+	milstr_ncat(szWork, OEMTEXT(NP2KAI_GIT_TAG), _countof(szWork));
+	milstr_ncat(szWork, OEMTEXT(" "), _countof(szWork));
+	milstr_ncat(szWork, OEMTEXT(NP2KAI_GIT_HASH), _countof(szWork));
 	SetDlgItemText(IDC_NP2VER, szWork);
 
 	RECT rect;

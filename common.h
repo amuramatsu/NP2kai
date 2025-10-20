@@ -164,11 +164,21 @@ typedef  UINT32	PF_UINT32;
 #endif
 
 
+#ifdef WINDOWS
+#include <tchar.h>
+#ifndef OEMCHAR
+#define	OEMCHAR					TCHAR
+#endif
+#ifndef OEMTEXT
+#define	OEMTEXT(string)			_T(string)
+#endif
+#else
 #ifndef OEMCHAR
 #define	OEMCHAR					char
 #endif
 #ifndef OEMTEXT
 #define	OEMTEXT(string)			string
+#endif
 #endif
 
 

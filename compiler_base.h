@@ -54,7 +54,6 @@
 #if defined(_WINDOWS)
 #include <windows.h>
 #include <tchar.h>
-// not define _UNICODE, UNICODE now
 #endif
 #if defined(__cplusplus)
 #include <cstdio>
@@ -289,6 +288,35 @@ typedef int  BOOL;
 #define	OEMSLASH   "/"
 #define	OEMSLASHC  '/'
 
+#if defined(_WINDOWS)
+#if defined(UNICODE)
+#define	OEMSTRNLENS       wcsnlen_s
+#define	OEMSTRNLEN        wcsnlen_s
+#define	OEMSTRLEN         wcslen
+#define	OEMSNPRINTF       _snwprintf
+#define	OEMSPRINTF        wsprintf
+#define	OEMSTRCPY(s1, s2) wcscpy(s1, s2)
+#define	OEMPRINTFSTR(s)   wcsprintf(OEMTEXT("%s"), s)
+#else
+#define	OEMSTRNLENS       strnlen_s
+#define	OEMSTRNLEN        strnlen_s
+#define	OEMSTRLEN         strlen
+#define	OEMSNPRINTF       snprintf
+#define	OEMSPRINTF        sprintf
+#define	OEMSTRCPY(s1, s2) strcpy(s1, s2)
+#define	OEMPRINTFSTR(s)   printf(OEMTEXT("%s"), s)
+#endif
+#define	STRNLENS          strnlen_s
+#define	STRNLEN           strnlen_s
+#define	STRLEN            strlen
+#define	SNPRINTF          snprintf
+#define	SPRINTF           sprintf
+// future depracted maybe
+#define	OEMCHAR         TCHAR
+#define	OEMTEXT(string) _T(string)
+
+#else // !_WINDOWS
+
 #if defined(SUPPORT_STRNLENS)
 #define	OEMSTRNLENS       strnlen_s
 #define	OEMSTRNLEN        strnlen_s
@@ -323,6 +351,8 @@ typedef int  BOOL;
 // future depracted maybe
 #define	OEMCHAR         char
 #define	OEMTEXT(string) string
+
+#endif // _WINDOWS
 
 #define STRCALL
 // <-- milstr OEMCHAR

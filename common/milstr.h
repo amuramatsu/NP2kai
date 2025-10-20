@@ -6,9 +6,9 @@
 #endif
 
 #ifdef MILSTR_TEST
-#include "compiler_base.h"
+#include <compiler_base.h>
 #else
-#include "compiler.h"
+#include <compiler.h>
 #endif
 
 // Must use milstr macros only.
@@ -25,28 +25,28 @@ int STRCALL milutf8_charsize(const char *str);
 
 // 大文字小文字を同一視して比較
 // ret 0:一致
-int STRCALL milank_cmp(const char *str, const char *cmp);
-int STRCALL milsjis_cmp(const OEMCHAR *str, const OEMCHAR *cmp);
-int STRCALL mileuc_cmp(const OEMCHAR *str, const OEMCHAR *cmp);
-int STRCALL milutf8_cmp(const OEMCHAR *str, const OEMCHAR *cmp);
+int STRCALL milank_cmp(const OEMCHAR *str, const OEMCHAR *cmp);
+int STRCALL milsjis_cmp(const char *str, const char *cmp);
+int STRCALL mileuc_cmp(const char *str, const char*cmp);
+int STRCALL milutf8_cmp(const char *str, const char *cmp);
 
 // 大文字小文字を同一視してmaxlen分比較
 // ret 0:一致
-int STRCALL milank_ncmp(const char *str, const char *cmp, unsigned int maxlen);
-int STRCALL milsjis_ncmp(const OEMCHAR *str, const OEMCHAR *cmp, unsigned int maxlen);
-int STRCALL mileuc_ncmp(const OEMCHAR *str, const OEMCHAR *cmp, unsigned int maxlen);
-int STRCALL milutf8_ncmp(const OEMCHAR *str, const OEMCHAR *cmp, unsigned int maxlen);
+int STRCALL milank_ncmp(const OEMCHAR *str, const OEMCHAR *cmp, unsigned int maxlen);
+int STRCALL milsjis_ncmp(const char *str, const char *cmp, unsigned int maxlen);
+int STRCALL mileuc_ncmp(const char *str, const char *cmp, unsigned int maxlen);
+int STRCALL milutf8_ncmp(const char *str, const char *cmp, unsigned int maxlen);
 
 // 大文字小文字を 同一視してcmpのヌルまで比較
 // ret 0:一致
-int STRCALL milank_memcmp(const char *str, const char *cmp);
+int STRCALL milank_memcmp(const OEMCHAR *str, const OEMCHAR *cmp);
 int STRCALL milsjis_memcmp(const char *str, const char *cmp);
 int STRCALL mileuc_memcmp(const char *str, const char *cmp);
 int STRCALL milutf8_memcmp(const char *str, const char *cmp);
 
 // 大文字小文字を 同一視してmaxlen分またはcmpのヌルまで比較
 // ret 0:一致
-int STRCALL milank_memncmp(const char *str, const char *cmp, unsigned int maxlen);
+int STRCALL milank_memncmp(const OEMCHAR *str, const OEMCHAR *cmp, unsigned int maxlen);
 int STRCALL milsjis_memncmp(const char *str, const char *cmp, unsigned int maxlen);
 int STRCALL mileuc_memncmp(const char *str, const char *cmp, unsigned int maxlen);
 int STRCALL milutf8_memncmp(const char *str, const char *cmp, unsigned int maxlen);
@@ -62,22 +62,22 @@ int STRCALL mileuc_kanji2nd(const char *str, unsigned int pos);
 int STRCALL milutf8_kanji2nd(const char *str, unsigned int pos);
 
 // maxlen分だけ文字列をコピー
-void STRCALL milank_ncpy(char *dst, const char *src, unsigned int maxlen);
-void STRCALL milsjis_ncpy(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
-void STRCALL mileuc_ncpy(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
-void STRCALL milutf8_ncpy(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
+void STRCALL milank_ncpy(OEMCHAR *dst, const OEMCHAR*src, unsigned int maxlen);
+void STRCALL milsjis_ncpy(char *dst, const char *src, unsigned int maxlen);
+void STRCALL mileuc_ncpy(char *dst, const char *src, unsigned int maxlen);
+void STRCALL milutf8_ncpy(char *dst, const char *src, unsigned int maxlen);
 
 // maxlen分だけ文字列をキャット
-void STRCALL milank_ncat(char *dst, const char *src, unsigned int maxlen);
-void STRCALL milsjis_ncat(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
-void STRCALL mileuc_ncat(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
-void STRCALL milutf8_ncat(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
+void STRCALL milank_ncat(OEMCHAR *dst, const OEMCHAR *src, unsigned int maxlen);
+void STRCALL milsjis_ncat(char *dst, const char *src, unsigned int maxlen);
+void STRCALL mileuc_ncat(char *dst, const char *src, unsigned int maxlen);
+void STRCALL milutf8_ncat(char *dst, const char *src, unsigned int maxlen);
 
 // 文字を検索
-OEMCHAR * STRCALL milank_chr(const char *str, char c);
-char * STRCALL milsjis_chr(const OEMCHAR *str, OEMCHAR c);
-char * STRCALL mileuc_chr(const OEMCHAR *str, OEMCHAR c);
-char * STRCALL milutf8_chr(const OEMCHAR *str, OEMCHAR c);
+OEMCHAR * STRCALL milank_chr(const OEMCHAR *str, OEMCHAR c);
+char * STRCALL milsjis_chr(const char *str, char c);
+char * STRCALL mileuc_chr(const char *str, char c);
+char * STRCALL milutf8_chr(const char *str, char c);
 
 
 // 0~9, A~Z のみを大文字小文字を同一視して比較

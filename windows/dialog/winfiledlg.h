@@ -5,7 +5,11 @@
 
 #include <compiler.h>
 
+#ifdef UNICODE
+#define WinFileDialogW(h, o, m, p, n, d, t, f, i) WinFileDialogW_WW(h, o, m, p, n, d, t, f, i)
+#else
 #define WinFileDialogW(h, o, m, p, n, d, t, f, i) WinFileDialogW_MM(h, o, m, p, n, d, t, f, i)
+#endif
 
 typedef enum {
   WINFILEDIALOGW_MODE_GET1 = 0,
