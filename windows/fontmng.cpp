@@ -300,12 +300,14 @@ static void fontmng_getchar(FNTMNG fhdl, FNTDAT fdat, const OEMCHAR *string) {
 		if (gm.gmBlackBoxX > fdat->width) {
 			// 幅が大きいなら強制スケール
 			XFORM xForm;
-			xForm.eM11 = (float)(fdat->width - 1) / gm.gmBlackBoxX;
+			xForm.eM11 = 1.0f;
 			xForm.eM12 = 0.0f;
 			xForm.eM21 = 0.0f;
 			xForm.eM22 = 1.0f;
 			xForm.eDx = 0.0f;
 			xForm.eDy = 0.0f;
+
+			xForm.eM11 = (float)(fdat->width - 1) / gm.gmBlackBoxX;
 			ofsx = (int)(ofsx * xForm.eM11);
 
 			SetGraphicsMode(fhdl->hdcimage, GM_ADVANCED);

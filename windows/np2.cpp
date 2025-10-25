@@ -3855,7 +3855,7 @@ static void processwait(UINT cnt) {
 	{
 		UINT32 rawTiming = timing_getcount_raw();
 		int waitTime = (TIMING_MSSHIFT_VALUE - (rawTiming & TIMING_MSSHIFT_MASK)) / timing_getmsstep();
-		waitTime--; // 少し減らす
+		waitTime-=2; // 少し減らす
 		if (waitTime > 0)
 		{
 			if (waitTime > 1000) waitTime = 1000;
@@ -3863,7 +3863,7 @@ static void processwait(UINT cnt) {
 		}
 		else if (waitTime == 0)
 		{
-			Sleep(0);
+			//Sleep(0);
 		}
 		frameSleep = 1;
 	}
