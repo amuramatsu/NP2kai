@@ -10,6 +10,7 @@ if [ -z "$BUILDDIR" ] || [ ! -d "$BUILDDIR" ] ; then
 fi
 
 if [ -f "$BUILDDIR/sdlnp2kai" ]; then
+    mkdir -p "$APPDIR/Neko Project II kai.app/Contents/MacOS/"
     cp "$BUILDDIR/sdlnp2kai" "$APPDIR/Neko Project II kai.app/Contents/MacOS/"
     cd "$APPDIR/Neko Project II kai.app/Contents/MacOS/"
     ln -sf sdlnp2kai "Neko Project II kai"
@@ -19,6 +20,7 @@ else
 fi
 
 if [ -f "$BUILDDIR/sdlnp21kai" ]; then
+    mkdir -p "$APPDIR/Neko Project 21 kai.app/Contents/MacOS/"
     cp "$BUILDDIR/sdlnp21kai" "$APPDIR/Neko Project 21 kai.app/Contents/MacOS/"
     cd "$APPDIR/Neko Project 21 kai.app/Contents/MacOS/"
     ln -sf sdlnp21kai "Neko Project 21 kai"
