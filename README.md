@@ -1235,11 +1235,8 @@ Next boot computer, you command from 4.
 
 ## Release
 - Oct 26, 2025
-  - (mod) merge NP21/W rev.96beta5
+  - (mod) merge NP21/W rev.96beta6
   - (mod) UNICODE build is suppoted at windows port
-  - (mod) fix BCD arithmetic opcode (i286 and IA32 core)
-  - (mod) fix FIST/FISTP opcode (IA32 core)
-  - (mod) fix some undefined behaviour (IA32 CPU core)
 - Aug 22, 2025
   - (mod) merge NP21/W rev.95
 - Jun 20, 2025
