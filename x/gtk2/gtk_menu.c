@@ -144,6 +144,9 @@ static GtkActionEntry menu_entries[] = {
 
 /* Submenu */
 { "NewDiskMenu",  NULL, "_New disk", NULL, NULL, NULL },
+#if defined(SUPPORT_ASYNC_CPU)
+{ "AsyncCPUMenu", NULL, "Dynamic CPU clk priority", NULL, NULL, NULL},
+#endif
 { "EmuSpeedMenu", NULL, "Emulation _Speed", NULL, NULL, NULL},
 { "Drive1Menu",   NULL, "Drive_1",   NULL, NULL, NULL },
 { "Drive2Menu",   NULL, "Drive_2",   NULL, NULL, NULL },
@@ -267,7 +270,9 @@ static void cb_keydisplay(GtkToggleAction *action, gpointer user_data);
 static void cb_mousemode(GtkToggleAction *action, gpointer user_data);
 static void cb_mouserapid(GtkToggleAction *action, gpointer user_data);
 static void cb_nowait(GtkToggleAction *action, gpointer user_data);
+#if defined(SUPPORT_ASYNC_CPU)
 static void cb_asynccpu(GtkToggleAction *action, gpointer user_data);
+#endif
 #if defined(SUPPORT_VIDEOFILTER)
 static void cb_vf1en(GtkToggleAction *action, gpointer user_data);
 static void cb_vf1bo(GtkToggleAction *action, gpointer user_data);
@@ -351,6 +356,14 @@ static GtkRadioActionEntry emuspeed_entries[] = {
 { "emuspd800",	 NULL, "x8.0",				NULL, NULL, 800 },
 };
 static const guint n_emuspeed_entries = G_N_ELEMENTS(emuspeed_entries);
+
+#if defined(SUPPORT_ASYNC_CPU)
+static GtkRadioActionEntry asynccpu_lvl_entries[] = {
+{ "asynccpu_lvl_max", NULL, "_Performance",			NULL, NULL, 100 },
+{ "asynccpu_lvl_min", NULL, "_Timing stability",	NULL, NULL, 0 },
+};
+static const guint n_asynccpu_lvl_entries = G_N_ELEMENTS(asynccpu_lvl_entries);
+#endif
 
 static GtkRadioActionEntry framerate_entries[] = {
 { "autoframe", NULL, "_Auto frame", NULL, NULL, 0 },
@@ -494,6 +507,9 @@ static GtkRadioActionEntry fpu_entries[] = {
 static const guint n_fpu_entries = G_N_ELEMENTS(fpu_entries);
 
 static void cb_emuspeed(gint idx);
+#if defined(SUPPORT_ASYNC_CPU)
+static void cb_asynccpu_lvl(gint idx);
+#endif
 static void cb_beepvol(gint idx);
 static void cb_kbtype(gint idx);
 static void cb_f11key(gint idx);
@@ -521,6 +537,9 @@ static const struct {
 	{ f12key_entries, G_N_ELEMENTS(f12key_entries), cb_f12key },
 #if defined(SUPPORT_VIDEOFILTER)
 	{ vf1p_entries, G_N_ELEMENTS(vf1p_entries), cb_vf1p },
+#endif
+#if defined(SUPPORT_ASYNC_CPU)
+	{ asynccpu_lvl_entries, G_N_ELEMENTS(asynccpu_lvl_entries), cb_asynccpu_lvl },
 #endif
 	{ emuspeed_entries, G_N_ELEMENTS(emuspeed_entries), cb_emuspeed },
 	{ framerate_entries, G_N_ELEMENTS(framerate_entries), cb_framerate },
@@ -605,6 +624,10 @@ static const gchar *ui_info =
 "   <menuitem action='nowait'/>\n"
 #if defined(SUPPORT_ASYNC_CPU)
 "   <menuitem action='asynccpu'/>\n"
+"   <menu name='AsyncCPUThr' action='AsyncCPUMenu'>\n"
+"    <menuitem action='asynccpu_lvl_max'/>\n"
+"    <menuitem action='asynccpu_lvl_min'/>\n"
+"   </menu>\n"
 #endif
 "   <menuitem action='autoframe'/>\n"
 "   <menuitem action='fullframe'/>\n"
@@ -725,8 +748,10 @@ static const gchar *ui_info =
 "    <menuitem action='64.6mb'/>\n"
 "    <menuitem action='120.6mb'/>\n"
 "    <menuitem action='230.6mb'/>\n"
+#if defined(SUPPORT_LARGE_MEMORY)
 "    <menuitem action='512.6mb'/>\n"
 "    <menuitem action='1024.6mb'/>\n"
+#endif
 #endif
 "   </menu>\n"
 "   <menu name='FPU' action='FPUMenu'>\n"
@@ -885,6 +910,10 @@ xmenu_select_item_by_index(MENU_HDL hdl, GtkRadioActionEntry *entry, guint nentr
 #endif
 #define	xmenu_select_emuspeed(v) \
 	xmenu_select_item_by_index(NULL, emuspeed_entries, n_emuspeed_entries, v);
+#if defined(SUPPORT_ASYNC_CPU)
+#define	xmenu_select_asynclvl(v) \
+	xmenu_select_item_by_index(NULL, asynccpu_lvl_entries, n_asynccpu_lvl_entries, v);
+#endif
 #define	xmenu_select_framerate(v) \
 	xmenu_select_item_by_index(NULL, framerate_entries, n_framerate_entries, v);
 #define	xmenu_select_joykey(v) \
@@ -2136,6 +2165,22 @@ cb_asynccpu(GtkToggleAction *action, gpointer user_data)
 		sysmng_update(SYS_UPDATECFG);
 	}
 }
+
+static void
+cb_asynccpu_lvl(gint idx)
+{
+	guint value;
+
+	if (idx >= 0) {
+		value = asynccpu_lvl_entries[idx].value;
+	} else {
+		value = 0;
+	}
+	if (np2cfg.asynclvl != value) {
+		np2cfg.asynclvl = value;
+		sysmng_update(SYS_UPDATECFG);
+	}
+}
 #endif
 
 static void
@@ -2884,6 +2929,9 @@ create_menu(void)
 #endif
 
 	xmenu_select_emuspeed(np2cfg.emuspeed);
+#if defined(SUPPORT_ASYNC_CPU)
+	xmenu_select_asynclvl(np2cfg.asynclvl);
+#endif
 	xmenu_select_beepvol(np2cfg.BEEP_VOL);
 	xmenu_select_kbtype(np2oscfg.KEYBOARD);
 	xmenu_select_f11key(np2oscfg.F11KEY);

@@ -147,6 +147,19 @@ void NP2_Semaphore_Wait(NP2_Semaphore_t* psem) {
 #endif
 }
 
+#ifndef __LIBRETRO__
+/* for caller/callee */
+int NP2_Semaphore_TryWait(NP2_Semaphore_t* psem) {
+#if defined(NP2_THREAD_WIN)
+  return WaitForSingleObject(*psem, 0L) == 0L;
+#elif defined(NP2_THREAD_POSIX)
+  return sem_trywait(psem) == 0;
+#elif defined(NP2_SDL)
+  return SDL_SemTryWait((SDL_sem*)*psem) == 0;
+#endif
+}
+#endif
+
 /* for caller/callee */
 void NP2_Semaphore_Release(NP2_Semaphore_t* psem) {
 #if defined(NP2_THREAD_WIN)

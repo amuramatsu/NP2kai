@@ -803,7 +803,7 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("CDDTSKIP"), INITYPE_BOOL,	&np2cfg.cddtskip,	0},
 #if defined(SUPPORT_ASYNC_CPU)
 	{OEMTEXT("ASYNCCPU"), INITYPE_BOOL,	&np2cfg.asynccpu,	0},
-	{OEMTEXT("ASYNCMAX"), INITYPE_UINT8,	&np2cfg.asynctgt,	0},
+	{OEMTEXT("ASYNCLVL"), INITYPE_UINT8,	&np2cfg.asynclvl,	0},
 #endif
 	{OEMTEXT("CONSTTSC"), INITYPE_BOOL,	&np2cfg.consttsc,	0},
 #if defined(SUPPORT_IDEIO)

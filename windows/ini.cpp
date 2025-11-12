@@ -685,7 +685,7 @@ static const PFTBL s_IniItems[] =
 	
 #if defined(SUPPORT_ASYNC_CPU)
 	PFVAL("ASYNCCPU", PFTYPE_BOOL,		&np2cfg.asynccpu), // 非同期CPUモード有効
-	PFVAL("ASYNCMAX", PFTYPE_UINT8,		&np2cfg.asynctgt), // 非同期CPUモード 目標負荷
+	PFVAL("ASYNCLVL", PFTYPE_UINT8,		&np2cfg.asynclvl), // 非同期CPUモード調整レベル（0:制御最弱～100:アグレッシブ）
 #endif
 	PFVAL("CONSTTSC", PFTYPE_BOOL,		&np2cfg.consttsc), // RDTSCをクロック変更によらず一定間隔にする
 #if defined(SUPPORT_IDEIO)
@@ -850,6 +850,7 @@ static const PFTBL s_IniItems[] =
 	PFVAL("midiaint", PFRO_SINT32,		&np2oscfg.midiaint), // MIDI Active Sensingを送る間隔（ミリ秒）
 
 	PFVAL("knjpaste", PFTYPE_UINT8,		&np2oscfg.knjpaste), // クリップボードからテキスト貼り付けの際の漢字の扱い（0=漢字無視, 1=BASIC, 2=FEPなしDOS）
+	PFVAL("scrscfix", PFRO_UINT8,		&np2oscfg.scrscfix), // 画面拡大転送時の補正（0=自動, 1=通常転送, 2=NVDIA向け）
 
 };
 

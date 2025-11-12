@@ -363,40 +363,50 @@ exec_allstep(void)
 			if (insttable_info[op] & INST_PREFIX)
 			{
 #if defined(USE_CPU_INLINEINST)
-				// ?C?????C?????ߌQ?@?֐??e?[?u?????????Ăяo?????????????A?????u??????????if???????ċt?ɒx???Ȃ??B?Ȃ̂ŌĂяo???p?x???????????D?悵?Ĕz?u
-				if (op == 0x66)
-				{
-					CPU_INST_OP32 = !CPU_STATSAVE.cpu_inst_default.op_32;
-					continue;
-				}
-				else if (op == 0x26)
-				{
-					CPU_INST_SEGUSE = 1;
-					CPU_INST_SEGREG_INDEX = CPU_ES_INDEX;
-					continue;
-				}
-				else if (op == 0x67)
-				{
-					CPU_INST_AS32 = !CPU_STATSAVE.cpu_inst_default.as_32;
-					continue;
-				}
-				else if (op == 0x2E)
-				{
-					CPU_INST_SEGUSE = 1;
-					CPU_INST_SEGREG_INDEX = CPU_CS_INDEX;
-					continue;
-				}
-				else if (op == 0xF3)
-				{
-					CPU_INST_REPUSE = 0xf3;
-					continue;
-				}
-				else
-#endif
-				{
+				// インライン命令群　関数テーブルよりも呼び出しが高速だが、多く置きすぎるとifが増えて逆に遅くなる。なので呼び出し頻度が高い物を優先して配置
+				if (!(op & 0x26)) {
 					(*insttable_1byte[0][op])();
 					continue;
 				}
+				else {
+					if (op == 0x66)
+					{
+						CPU_INST_OP32 = !CPU_STATSAVE.cpu_inst_default.op_32;
+						continue;
+					}
+					else if (op == 0x26)
+					{
+						CPU_INST_SEGUSE = 1;
+						CPU_INST_SEGREG_INDEX = CPU_ES_INDEX;
+						continue;
+					}
+					else if (op == 0x67)
+					{
+						CPU_INST_AS32 = !CPU_STATSAVE.cpu_inst_default.as_32;
+						continue;
+					}
+					else if (op == 0x2E)
+					{
+						CPU_INST_SEGUSE = 1;
+						CPU_INST_SEGREG_INDEX = CPU_CS_INDEX;
+						continue;
+					}
+					//else if (op == 0xF3)
+					//{
+					//	CPU_INST_REPUSE = 0xf3;
+					//	continue;
+					//}
+					else
+					{
+						(*insttable_1byte[0][op])();
+						continue;
+					}
+				}
+#else
+
+				(*insttable_1byte[0][op])();
+				continue;
+#endif
 			}
 			break;
 		}
@@ -418,7 +428,7 @@ exec_allstep(void)
 #if defined(USE_CPU_INLINEINST)
 		if (CPU_INST_OP32)
 		{
-			// ?C?????C?????ߌQ?@?֐??e?[?u?????????Ăяo?????????????A?????u??????????if???????ċt?ɒx???Ȃ??B?Ȃ̂ŌĂяo???p?x???????????D?悵?Ĕz?u
+			// インライン命令群　関数テーブルよりも呼び出しが高速だが、多く置きすぎるとifが増えて逆に遅くなる。なので呼び出し頻度が高い物を優先して配置
 			if (op == 0x8b)
 			{
 				UINT32* out;
@@ -430,7 +440,6 @@ exec_allstep(void)
 			}
 			else if (op == 0x0f)
 			{
-				UINT32 op;
 				UINT8 repuse = CPU_INST_REPUSE;
 
 				GET_MODRM_PCBYTE(op);

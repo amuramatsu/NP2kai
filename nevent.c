@@ -26,10 +26,6 @@ static void trace_fmt_ex(const char* fmt, ...)
 
 	_NEVENT g_nevent;
 
-#if defined(SUPPORT_ASYNC_CPU)
-	extern int pccore_asynccpu_screendisp;
-#endif
-	
 #if defined(SUPPORT_MULTITHREAD)
 static int nevent_cs_initialized = 0;
 static CRITICAL_SECTION nevent_cs;
@@ -175,7 +171,7 @@ void nevent_progress(void)
 			item->flag &= ~(NEVENT_ENABLE);
 //			TRACEOUT(("event = %x", id));
 #if defined(SUPPORT_ASYNC_CPU)
-			pccore_asynccpu_screendisp = (id == NEVENT_FLAMES && g_nevent.item[NEVENT_FLAMES].proc == screendisp);
+			pccore_asynccpustat.screendisp = (id == NEVENT_FLAMES && g_nevent.item[NEVENT_FLAMES].proc == screendisp);
 #endif
 		}
 		fevtchk |= (id==NEVENT_FLAMES ? 1 : 0);
@@ -304,11 +300,11 @@ void nevent_set(NEVENTID id, SINT32 eventclock, NEVENTCB proc, NEVENTPOSITION ab
 	UINT eventId;
 	UINT i;
 	
+//	TRACEOUT(("event %d - %xclocks", id, eventclock));
+
 #if defined(SUPPORT_MULTITHREAD)
 	nevent_enter_criticalsection();
 #endif
-//	TRACEOUT(("event %d - %xclocks", id, eventclock));
-
 	clk = CPU_BASECLOCK - CPU_REMCLOCK;
 	item = &g_nevent.item[id];
 	item->proc = proc;

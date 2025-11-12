@@ -70,12 +70,9 @@ static const char str_realpal[] = "Real Palettes";
 static const char str_nowait[] = "No Wait";
 #if defined(SUPPORT_ASYNC_CPU)
 static const char str_asynccpu[] = "Dynamic CPU clk adj.";
-static const char str_asynccpu_thr[] = "Dynamic CPU clk thr";
-static const char str_asynccpu_max[] = "100%";
-static const char str_asynccpu_70[] = "70%";
-static const char str_asynccpu_50[] = "50%";
-static const char str_asynccpu_30[] = "30%";
-static const char str_asynccpu_20[] = "20%";
+static const char str_asynccpu_thr[] = "Dynamic CPU clk priority";
+static const char str_asynccpu_lvl_max[] = "Performance";
+static const char str_asynccpu_lvl_min[] = "Timing stability";
 #endif
 static const char str_frame[] = "Frame";
 static const char str_autoframe[] = "Auto frame";
@@ -407,11 +404,8 @@ static const MSYSITEM s_vf1[] = {
 
 #if defined(SUPPORT_ASYNC_CPU)
 static const MSYSITEM s_cpu_thr[] = {
-		{str_asynccpu_max,		NULL,		MID_ASYNCCPU_MAX,		0},
-		{str_asynccpu_70,		NULL,		MID_ASYNCCPU_70,		0},
-		{str_asynccpu_50,		NULL,		MID_ASYNCCPU_50,		0},
-		{str_asynccpu_30,		NULL,		MID_ASYNCCPU_30,		0},
-		{str_asynccpu_20,		NULL,		MID_ASYNCCPU_20,		MENU_DELETED},
+		{str_asynccpu_lvl_max,		NULL,		MID_ASYNCCPU_LEVEL_MAX,		0},
+		{str_asynccpu_lvl_min,		NULL,		MID_ASYNCCPU_LEVEL_MIN,		MENU_DELETED},
 };
 #endif
 

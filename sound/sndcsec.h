@@ -18,6 +18,9 @@ extern NP2_Semaphore_t semSoundCritical;
 
 #define	SNDCSEC_INIT	NP2_Semaphore_Create(&semSoundCritical, 1)
 #define	SNDCSEC_TERM	NP2_Semaphore_Destroy(&semSoundCritical)
+#ifndef __LIBRETRO__
+#define	SNDCSEC_TRYENTER	NP2_Semaphore_TryWait(&semSoundCritical)
+#endif
 #define	SNDCSEC_ENTER	NP2_Semaphore_Wait(&semSoundCritical)
 #define	SNDCSEC_LEAVE	NP2_Semaphore_Release(&semSoundCritical)
 
@@ -25,6 +28,7 @@ extern NP2_Semaphore_t semSoundCritical;
 
 #define	SNDCSEC_INIT
 #define	SNDCSEC_TERM
+#define	SNDCSEC_TRYENTER	0
 #define	SNDCSEC_ENTER
 #define	SNDCSEC_LEAVE
 

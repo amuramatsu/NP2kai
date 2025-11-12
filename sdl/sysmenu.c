@@ -58,16 +58,6 @@ extern void filesel_hdd_native(REG8 drv);
 #define	filesel_hdd(n)	filesel_hdd_native(n)
 #endif
 
-extern UINT32 pccore_asynccpu_asyncOffset;
-static void setasyncoffset()
-{
-       UINT32 asynctgt = np2cfg.asynctgt;
-       if (asynctgt > 100) asynctgt = 100;
-       if (asynctgt < 1) asynctgt = 1;
-       pccore_asynccpu_asyncOffset = TIMING_MSSHIFT_VALUE * (100 - asynctgt) /
-100;
-}
-
 static void sys_cmd(MENUID id) {
 
 	UINT	update;
@@ -431,33 +421,13 @@ static void sys_cmd(MENUID id) {
 			update |= SYS_UPDATECFG;
 			break;
 
-		case MID_ASYNCCPU_MAX:
-			np2cfg.asynctgt = 100;
-			setasyncoffset();
+		case MID_ASYNCCPU_LEVEL_MAX:
+			np2cfg.asynclvl = 100;
 			update |= SYS_UPDATECFG;
 			break;
 
-		case MID_ASYNCCPU_70:
-			np2cfg.asynctgt = 100;
-			setasyncoffset();
-			update |= SYS_UPDATECFG;
-			break;
-
-		case MID_ASYNCCPU_50:
-			np2cfg.asynctgt = 100;
-			setasyncoffset();
-			update |= SYS_UPDATECFG;
-			break;
-
-		case MID_ASYNCCPU_30:
-			np2cfg.asynctgt = 100;
-			setasyncoffset();
-			update |= SYS_UPDATECFG;
-			break;
-
-		case MID_ASYNCCPU_20:
-			np2cfg.asynctgt = 20;
-			setasyncoffset();
+		case MID_ASYNCCPU_LEVEL_MIN:
+			np2cfg.asynclvl = 0;
 			update |= SYS_UPDATECFG;
 			break;
 #endif
@@ -1215,11 +1185,8 @@ BRESULT sysmenu_menuopen(UINT menutype, int x, int y) {
 	menusys_setcheck(MID_NOWAIT, (np2oscfg.NOWAIT & 1));
 #if defined(SUPPORT_ASYNC_CPU)
 	menusys_setcheck(MID_ASYNCCPU, (np2cfg.asynccpu & 1));
-	menusys_setcheck(MID_ASYNCCPU_MAX, (np2cfg.asynctgt > 70));
-	menusys_setcheck(MID_ASYNCCPU_70, (np2cfg.asynctgt > 50 && np2cfg.asynctgt <= 70));
-	menusys_setcheck(MID_ASYNCCPU_50, (np2cfg.asynctgt > 30 && np2cfg.asynctgt <= 50));
-	menusys_setcheck(MID_ASYNCCPU_30, (np2cfg.asynctgt > 20 && np2cfg.asynctgt <= 30));
-	menusys_setcheck(MID_ASYNCCPU_20, (np2cfg.asynctgt <= 20));
+	menusys_setcheck(MID_ASYNCCPU_LEVEL_MAX, (np2cfg.asynclvl == 100));
+	menusys_setcheck(MID_ASYNCCPU_LEVEL_MIN, (np2cfg.asynclvl == 0));
 #endif
 	menusys_setcheck(MID_SIZEx1,    ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1));
 	menusys_setcheck(MID_SIZEx1_5,  ((scrnmode & SCRNMODE_SIZEMASK) == SCRNMODE_SIZEx1_5));

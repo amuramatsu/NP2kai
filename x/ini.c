@@ -770,7 +770,7 @@ static INITBL iniitem[] = {
 	{"USERAM_D", INITYPE_BOOL,	&np2cfg.useram_d,	0},
 #if defined(SUPPORT_ASYNC_CPU)
 	{"ASYNCCPU", INITYPE_BOOL,	&np2cfg.asynccpu,	0},
-	{"ASYNCMAX", INITYPE_UINT8,	&np2cfg.asynctgt,	0},
+	{"ASYNCLVL", INITYPE_UINT8,	&np2cfg.asynclvl,	0},
 #endif
 	{"CONSTTSC", INITYPE_BOOL,	&np2cfg.consttsc,	0},
 #if defined(SUPPORT_IDEIO)

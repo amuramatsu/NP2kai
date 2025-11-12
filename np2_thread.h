@@ -71,6 +71,10 @@ extern void NP2_Semaphore_Create(NP2_Semaphore_t* psem, const unsigned int initc
 extern void NP2_Semaphore_Destroy(NP2_Semaphore_t* psem);
 /* for caller/callee */
 extern void NP2_Semaphore_Wait(NP2_Semaphore_t* psem);
+#ifndef __LIBRETRO__
+/* for caller/callee */
+extern int NP2_Semaphore_TryWait(NP2_Semaphore_t* psem);
+#endif
 /* for caller/callee */
 extern void NP2_Semaphore_Release(NP2_Semaphore_t* psem);
 
