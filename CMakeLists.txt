@@ -298,7 +298,7 @@ list(APPEND NP2kai_Windows_definitions "NP2_WIN" "USE_RESOURCE_BMP" "SUPPORT_WAC
 
 # build type
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+	set(CMAKE_BUILD_TYPE "Release")
 endif()
 if(NOT EMSCRIPTEN)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -DDEBUG -DTRACE")

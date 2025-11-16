@@ -11,6 +11,7 @@ if [ x"$LOCAL_LIB" != x"" ]; then
 fi
 
 cmake .. \
+  -D CMAKE_BUILD_TYPE=Release \
   -D BUILD_X=ON \
   -D BUILD_I286=ON \
   -D USE_ASYNCCPU=ON \
