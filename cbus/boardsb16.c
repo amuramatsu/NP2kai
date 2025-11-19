@@ -25,7 +25,7 @@ static void trace_fmt_ex(const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	vsprintf(stmp, fmt, ap);
-	strcat(stmp, "¥n");
+	strcat(stmp, "\n");
 	va_end(ap);
 	OutputDebugStringA(stmp);
 }
@@ -47,13 +47,13 @@ static void trace_fmt_ex(const char *fmt, ...)
 #define G_OPL3_INDEX	1
 
 static const UINT8 sb16base[] = {0xd2,0xd4,0xd6,0xd8,0xda,0xdc,0xde};
-static int samplerate;
 
 static UINT8 seq[] = {0x60, 0x80, 0xff, 0x21}; // XXX: Win2kドライバのチェックを通すためだけの暫定シーケンス
 static int forceopl3mode = 0;
 static int seqpos = 0;
 
 #ifdef USE_MAME
+static int samplerate;
 void *YMF262Init(INT clock, INT rate);
 void YMF262ResetChip(void *chip);
 void YMF262Shutdown(void *chip);
@@ -108,8 +108,8 @@ static void IOOUTCALL sb16_o2000(UINT port, REG8 dat) {
 	(void)port;
 #ifdef USE_MAME
 	YMF262Write(g_mame_opl3[G_OPL3_INDEX], 0, dat);
-	g_opl3[G_OPL3_INDEX].s.addrl = dat; // Key Display用
 #endif
+	g_opl3[G_OPL3_INDEX].s.addrl = dat; // Key Display用
 	//TRACEOUT(("OPL3 PORT=0x%04x, DATA=0x%02x", port, dat));
 }
 
@@ -117,8 +117,8 @@ static void IOOUTCALL sb16_o2100(UINT port, REG8 dat) {
 	(void)port;
 #ifdef USE_MAME
 	YMF262Write(g_mame_opl3[G_OPL3_INDEX], 1, dat);
-	opl3_writeRegister(&g_opl3[G_OPL3_INDEX], g_opl3[G_OPL3_INDEX].s.addrl, dat); // Key Display用
 #endif
+	opl3_writeRegister(&g_opl3[G_OPL3_INDEX], g_opl3[G_OPL3_INDEX].s.addrl, dat); // Key Display用
 	if(g_opl3[G_OPL3_INDEX].s.addrl==2 || g_opl3[G_OPL3_INDEX].s.addrl==4){
 		if(seqpos < sizeof(seq) && seq[seqpos]==dat){
 			seqpos++;
@@ -134,8 +134,8 @@ static void IOOUTCALL sb16_o2200(UINT port, REG8 dat) {
 	(void)port;
 #ifdef USE_MAME
 	YMF262Write(g_mame_opl3[G_OPL3_INDEX], 2, dat);
-	g_opl3[G_OPL3_INDEX].s.addrh = dat; // Key Display用
 #endif
+	g_opl3[G_OPL3_INDEX].s.addrh = dat; // Key Display用
 	//TRACEOUT(("OPL3 PORT=0x%04x, DATA=0x%02x", port, dat));
 }
 
@@ -143,8 +143,8 @@ static void IOOUTCALL sb16_o2300(UINT port, REG8 dat) {
 	(void)port;
 #ifdef USE_MAME
 	YMF262Write(g_mame_opl3[G_OPL3_INDEX], 3, dat);
-	opl3_writeExtendedRegister(&g_opl3[G_OPL3_INDEX], g_opl3[G_OPL3_INDEX].s.addrh, dat); // Key Display用
 #endif
+	opl3_writeExtendedRegister(&g_opl3[G_OPL3_INDEX], g_opl3[G_OPL3_INDEX].s.addrh, dat); // Key Display用
 	//TRACEOUT(("OPL3 PORT=0x%04x, DATA=0x%02x", port, dat));
 }
 
@@ -157,12 +157,14 @@ static void IOOUTCALL sb16_o2800(UINT port, REG8 dat) {
 #ifdef USE_MAME
 	YMF262Write(g_mame_opl3[G_OPL3_INDEX], 0, dat);
 #endif
+	g_opl3[G_OPL3_INDEX].s.addrl = dat; // Key Display用
 }
 static void IOOUTCALL sb16_o2900(UINT port, REG8 dat) {
 	port = dat;
 #ifdef USE_MAME
 	YMF262Write(g_mame_opl3[G_OPL3_INDEX], 1, dat);
 #endif
+	opl3_writeRegister(&g_opl3[G_OPL3_INDEX], g_opl3[G_OPL3_INDEX].s.addrl, dat); // Key Display用
 }
 
 static REG8 IOINPCALL sb16_i0400(UINT port) {
@@ -232,7 +234,6 @@ static REG8 IOINPCALL sb16_i2200(UINT port) {
 
 static REG8 IOINPCALL sb16_i2800(UINT port) {
 	(void)port;
-	//TRACEOUT(("OPL3 PORT=0x%04x", port));
 #ifdef USE_MAME
 	return YMF262Read(g_mame_opl3[G_OPL3_INDEX], 0);
 #else
@@ -358,13 +359,13 @@ static REG8 IOINPCALL gameport_i4d2(UINT port)
 #endif
 	if (np2cfg.analogjoy)
 	{
-		// ?A?i???O???̓^?C?v
+		// アナログ入力タイプ
 		gameport_threshold_x = GAMEPORT_JOYCOUNTER_MGN2 + (UINT32)((UINT64)(gameport_clkmax - GAMEPORT_JOYCOUNTER_MGN2 * 2) * joyAnalogX / 65535);
 		gameport_threshold_y = GAMEPORT_JOYCOUNTER_MGN2 + (UINT32)((UINT64)(gameport_clkmax - GAMEPORT_JOYCOUNTER_MGN2 * 2) * joyAnalogY / 65535);
 	}
 	else
 	{
-		// ON/OFF?^?C?v
+		// ON/OFFタイプ
 		gameport_threshold_x = gameport_clkmax / 2;
 		gameport_threshold_y = gameport_clkmax / 2;
 		if(~gameport_joyflag_base & 0x1){
@@ -393,6 +394,7 @@ static REG8 IOINPCALL gameport_i4d2(UINT port)
 
 // ----
 
+#ifdef USE_MAME
 static void SOUNDCALL opl3gen_getpcm(void* opl3, SINT32 *pcm, UINT count) {
 	UINT i;
 	INT16 *buf[4];
@@ -408,30 +410,40 @@ static void SOUNDCALL opl3gen_getpcm(void* opl3, SINT32 *pcm, UINT count) {
 	buf[3] = &s2r;
 	for (i=0; i < count; i++) {
 		s1l = s1r = s2l = s2r = 0;
-#ifdef USE_MAME
 		YMF262UpdateOne(opl3, buf, 1);
-#endif
 		outbuf[0] += (SINT32)(((s1l << 1) * oplfm_volume * midivolL / 255 * (SINT32)g_sb16.mixregexp[MIXER_MASTER_LEFT] / 255) >> 6);
 		outbuf[1] += (SINT32)(((s1r << 1) * oplfm_volume * midivolR / 255 * (SINT32)g_sb16.mixregexp[MIXER_MASTER_RIGHT] / 255) >> 6);
 		outbuf += 2;
 	}
 }
 
+static void SOUNDCALL opl3gen_getpcm_dummy(void* opl3, SINT32* pcm, UINT count) {
+	UINT i;
+	INT16* buf[4];
+	INT16 s1l, s1r, s2l, s2r;
+	buf[0] = &s1l;
+	buf[1] = &s1r;
+	buf[2] = &s2l;
+	buf[3] = &s2r;
+	for (i = 0; i < count; i++) {
+		YMF262UpdateOne(opl3, buf, 1);
+	}
+}
+#endif
+
 void boardsb16_reset(const NP2CFG *pConfig) {
 	DSP_INFO olddsp;
+#ifdef USE_MAME
 	if (g_mame_opl3[G_OPL3_INDEX]) {
 		if (samplerate != pConfig->samplingrate) {
-#ifdef USE_MAME
 			YMF262Shutdown(g_mame_opl3[G_OPL3_INDEX]);
 			g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, pConfig->samplingrate);
-#endif
 			samplerate = pConfig->samplingrate;
 		} else {
-#ifdef USE_MAME
 			YMF262ResetChip(g_mame_opl3[G_OPL3_INDEX]);
-#endif
 		}
 	}
+#endif
 	olddsp = g_sb16.dsp_info; // dsp_infoだけ初期化しない
 	ZeroMemory(&g_sb16, sizeof(g_sb16));
 	g_sb16.dsp_info = olddsp;
@@ -507,13 +519,6 @@ void boardsb16_bind(void) {
 		iocore_attachout(0x38b, sb16_o2300);	/* Advanced FM Music Data Port */
 	}
 
-	if (!g_mame_opl3[G_OPL3_INDEX]) {
-#ifdef USE_MAME
-		g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, np2cfg.samplingrate);
-#endif
-		samplerate = np2cfg.samplingrate;
-	}
-
 #if defined(SUPPORT_GAMEPORT)
 	// ゲームポート割り当て 4d2h
 	if(np2cfg.gameport){
@@ -522,14 +527,23 @@ void boardsb16_bind(void) {
 	}
 #endif
 
-	if (!g_mame_opl3[G_OPL3_INDEX]) {
 #ifdef USE_MAME
+	if (!g_mame_opl3[G_OPL3_INDEX]) {
 		g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, np2cfg.samplingrate);
-#endif
 		samplerate = np2cfg.samplingrate;
 	}
-	sound_streamregist(g_mame_opl3[G_OPL3_INDEX], (SOUNDCB)opl3gen_getpcm);
+#endif
 	opl3_bind(&g_opl3[G_OPL3_INDEX]); // MAME使用の場合Key Display用
+#ifdef USE_MAME
+	if (g_opl3[G_OPL3_INDEX].userdata) {
+		// 外部音源を使用する場合 ダミー登録
+		sound_streamregist(g_mame_opl3[G_OPL3_INDEX], (SOUNDCB)opl3gen_getpcm_dummy);
+	}
+	else {
+		// 外部音源を使用しない場合 PCM登録
+		sound_streamregist(g_mame_opl3[G_OPL3_INDEX], (SOUNDCB)opl3gen_getpcm);
+	}
+#endif
 }
 void boardsb16_unbind(void) {
 	ct1745io_unbind();

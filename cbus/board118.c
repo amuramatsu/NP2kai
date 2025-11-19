@@ -113,7 +113,7 @@ static void IOOUTCALL ymf_o18a(UINT port, REG8 dat)
 	}
 
 	if (g_opna[opna_idx].s.addrl == 0x27) {
-		/* OPL3-LにCSMモードは無い */
+		/* g_mame_opl3[G_OPL3_INDEX]-LにCSMモードは無い */
 		dat &= ~0x80;
 		g_opna[opna_idx].opngen.opnch[2].extop = dat & 0xc0;
 	}
@@ -412,13 +412,13 @@ static REG8 IOINPCALL gameport_i1480(UINT port)
 #endif
 	if (np2cfg.analogjoy)
 	{
-		// ?A?i???O???̓^?C?v
+		// アナログ入力タイプ
 		gameport_threshold_x = GAMEPORT_JOYCOUNTER_MGN2 + (UINT32)((UINT64)(gameport_clkmax - GAMEPORT_JOYCOUNTER_MGN2 * 2) * joyAnalogX / 65535);
 		gameport_threshold_y = GAMEPORT_JOYCOUNTER_MGN2 + (UINT32)((UINT64)(gameport_clkmax - GAMEPORT_JOYCOUNTER_MGN2 * 2) * joyAnalogY / 65535);
 	}
 	else
 	{
-		// ON/OFF?^?C?v
+		// ON/OFFタイプ
 		gameport_threshold_x = gameport_clkmax / 2;
 		gameport_threshold_y = gameport_clkmax / 2;
 		if(~gameport_joyflag_base & 0x1){
@@ -600,6 +600,18 @@ static void SOUNDCALL opl3gen_getpcm2(void* opl3, SINT32 *pcm, UINT count) {
 		outbuf += 2;
 	}
 }
+static void SOUNDCALL opl3gen_getpcm2_dummy(void* opl3, SINT32* pcm, UINT count) {
+	UINT i;
+	INT16* buf[4];
+	INT16 s1l, s1r, s2l, s2r;
+	buf[0] = &s1l;
+	buf[1] = &s1r;
+	buf[2] = &s2l;
+	buf[3] = &s2r;
+	for (i = 0; i < count; i++) {
+		YMF262UpdateOne(opl3, buf, 1);
+	}
+}
 #endif
 
 static const IOOUT ymf_o[4] = {
@@ -733,6 +745,7 @@ void board118_reset(const NP2CFG *pConfig)
 			opna_fmgen_setallvolumeRhythmTotal_linear(np2cfg.vol_rhythm * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
 		}
 #endif
+		oplgen_setvol(np2cfg.vol_fm * np2cfg.vol_master / 100);
 	}
 	(void)pConfig;
 }
@@ -800,7 +813,14 @@ void board118_bind(void)
 			g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, np2cfg.samplingrate);
 			samplerate = np2cfg.samplingrate;
 		}
-		sound_streamregist(g_mame_opl3[G_OPL3_INDEX], (SOUNDCB)opl3gen_getpcm2);
+		if (g_opl3[G_OPL3_INDEX].userdata) {
+			// 外部音源を使用する場合 ダミー登録
+			sound_streamregist(g_mame_opl3[G_OPL3_INDEX], (SOUNDCB)opl3gen_getpcm2_dummy);
+		}
+		else {
+			// 外部音源を使用しない場合 PCM登録
+			sound_streamregist(g_mame_opl3[G_OPL3_INDEX], (SOUNDCB)opl3gen_getpcm2);
+		}
 #else
 		iocore_attachout(cs4231.port[9], ym_o1488);
 		iocore_attachinp(cs4231.port[9], ym_i1488);

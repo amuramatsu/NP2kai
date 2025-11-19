@@ -501,8 +501,12 @@ static const guint n_screensize_entries = G_N_ELEMENTS(screensize_entries);
 
 static GtkRadioActionEntry fpu_entries[] = {
 { "fpu80",  NULL, "80bit Extended Precision FPU (recommended)",  NULL, NULL, 0 },
+#if defined(SUPPORT_FPU_DOSBOX)
 { "fpu64",  NULL, "64bit Double Precision FPU",  NULL, NULL, 1 },
+#endif
+#if defined(SUPPORT_FPU_DOSBOX2)
 { "fpuINT64",  NULL, "64bit Double Precision FPU + INT64 Load/Save",  NULL, NULL, 2 },
+#endif
 };
 static const guint n_fpu_entries = G_N_ELEMENTS(fpu_entries);
 
@@ -756,8 +760,12 @@ static const gchar *ui_info =
 "   </menu>\n"
 "   <menu name='FPU' action='FPUMenu'>\n"
 "    <menuitem action='fpu80'/>\n"
+#if defined(SUPPORT_FPU_DOSBOX)
 "    <menuitem action='fpu64'/>\n"
+#endif
+#if defined(SUPPORT_FPU_DOSBOX2)
 "    <menuitem action='fpuINT64'/>\n"
+#endif
 "   </menu>\n"
 "   <menuitem action='mousemode'/>\n"
 "   <separator/>\n"
@@ -2657,24 +2665,29 @@ cb_fpu(gint idx)
 		value = 0;
 	}
 	switch(value) {
+	default:
 	case 0:
 		if (np2cfg.fpu_type != FPU_TYPE_SOFTFLOAT) {
 			np2cfg.fpu_type = FPU_TYPE_SOFTFLOAT;
 			sysmng_update(SYS_UPDATECFG);
 		}
 		break;
+#if defined(SUPPORT_FPU_DOSBOX)
 	case 1:
 		if (np2cfg.fpu_type != FPU_TYPE_DOSBOX) {
 			np2cfg.fpu_type = FPU_TYPE_DOSBOX;
 			sysmng_update(SYS_UPDATECFG);
 		}
 		break;
+#endif
+#if defined(SUPPORT_FPU_DOSBOX2)
 	case 2:
 		if (np2cfg.fpu_type != FPU_TYPE_DOSBOX2) {
 			np2cfg.fpu_type = FPU_TYPE_DOSBOX2;
 			sysmng_update(SYS_UPDATECFG);
 		}
 		break;
+#endif
 	}
 }
 

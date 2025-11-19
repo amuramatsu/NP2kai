@@ -256,7 +256,7 @@ typedef int  BOOL;
 #define INLINE __inline
 #elif defined(__BORLANDC__)
 #define INLINE __inline
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
 #define INLINE __inline__ __attribute__((always_inline))
 #else
 #define INLINE
@@ -265,6 +265,19 @@ typedef int  BOOL;
 #else
 #undef  INLINE
 #define INLINE
+#endif
+
+//noinline
+#if !defined(NOINLINE)
+#if defined(_MSC_VER)
+#define NOINLINE __declspec(noinline)
+#elif defined(__BORLANDC__)
+#define NOINLINE
+#elif defined(__GNUC__) || defined(__clang__)
+#define NOINLINE __attribute__((noinline))
+#else
+#define NOINLINE
+#endif
 #endif
 
 // pi

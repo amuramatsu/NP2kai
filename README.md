@@ -1234,10 +1234,10 @@ Next boot computer, you command from 4.
 </div></details>
 
 ## Release
+- Nov 19, 2025
+  - (mod) merge NP21/W rev.96
 - Nov 16, 2025
   - (mod) add IPO/TLO optimization
-- Nov 14, 2025
-  - (mod) merge NP21/W rev.96beta9
 - Oct 26, 2025
   - (mod) UNICODE build is suppoted at windows port
 - Aug 22, 2025
