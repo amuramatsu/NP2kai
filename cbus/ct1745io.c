@@ -19,7 +19,7 @@ static void trace_fmt_ex(const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	vsprintf(stmp, fmt, ap);
-	strcat(stmp, "¥n");
+	strcat(stmp, "\n");
 	va_end(ap);
 	OutputDebugStringA(stmp);
 }
@@ -61,7 +61,7 @@ static void IOOUTCALL sb16_o2400(UINT port, REG8 dat) {
 	g_sb16.mixsel = dat;
 }
 static void IOOUTCALL sb16_o2500(UINT port, REG8 dat) {
-//printf("mixer port write %x %x¥n",dat,g_sb16.mixsel);
+//printf("mixer port write %x %x\n",dat,g_sb16.mixsel);
 	if (g_sb16.mixsel >= MIXER_VOL_START &&
 		g_sb16.mixsel <= MIXER_VOL_END) {
 		g_sb16.mixreg[g_sb16.mixsel] = dat;
@@ -98,11 +98,11 @@ static void IOOUTCALL sb16_o2500(UINT port, REG8 dat) {
 			g_sb16.mixregexp[MIXER_LINE_RIGHT] = g_sb16.mixreg[MIXER_LINE_RIGHT] = (dat & 0xff);
 			
 		case 0x80:			// Write irq num
-			ct1741_set_dma_irq(dat);
+			ct1741_set_dma_irq(dat & ~0xf0); // reservedビットは0扱い
 			TRACEOUT(("CT1745 MIXER SET IRQ ID=0x%02x", dat));
 			break;
 		case 0x81:			// Write dma num
-			ct1741_set_dma_ch(dat);
+			ct1741_set_dma_ch(dat & ~0x14); // reservedビットは0扱い
 			TRACEOUT(("CT1745 MIXER SET DMA ID=0x%02x", dat));
 			break;
 		case 0x83:
@@ -150,7 +150,7 @@ static REG8 IOINPCALL sb16_i2400(UINT port) {
 	return g_sb16.mixsel;
 }
 static REG8 IOINPCALL sb16_i2500(UINT port) {
-//printf("mixer port read %x %x¥n",g_sb16.mixreg[g_sb16.mixsel],g_sb16.mixsel);
+//printf("mixer port read %x %x\n",g_sb16.mixreg[g_sb16.mixsel],g_sb16.mixsel);
 	if (g_sb16.mixsel >= MIXER_VOL_START && g_sb16.mixsel <= MIXER_VOL_END) {
 		return g_sb16.mixreg[g_sb16.mixsel];
 	}
@@ -169,9 +169,9 @@ static REG8 IOINPCALL sb16_i2500(UINT port) {
 		case 0x0a:			// Mic volume(old)
 			return g_sb16.mixreg[MIXER_MIC];
 		case 0x80:			// Read irq num
-			return ct1741_get_dma_irq();
+			return g_sb16.dsp_info.dmairq | 0xf0; // reservedビットは1扱い
 		case 0x81:			// Read dma num
-			return ct1741_get_dma_ch();
+			return g_sb16.dsp_info.dmachnum | 0x14; // reservedビットは1扱い
 		case 0x82:			// Irq pending(98には不要)　diagnose用　他よくわからず 
 			// PC/ATでは割り込み発生元が何かを表している　 bit 0x04 MPU, bit 0x02 DMA16ACK, bit 0x01 AVAIL
 			if(g_sb16.mixreg[0x82] == 0x41)return 0x1;

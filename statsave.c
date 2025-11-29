@@ -78,10 +78,7 @@ uint8_t g_u8ControlState;
 static OEMCHAR m_strStateFilename[MAX_PATH];
 
 #ifdef USE_MAME
-UINT8 YMF262Read(void *chip, INT a);
-INT YMF262Write(void *chip, INT a, INT v);
-int YMF262FlagSave(void *chip, void *dstbuf);
-int YMF262FlagLoad(void *chip, void *srcbuf, int size);
+#include "sound/mame/np2interop.h"
 #endif
 
 extern int sxsi_unittbl[];
@@ -979,21 +976,20 @@ static int flagsave_fm(STFLAGH sfh, const SFENTRY *tbl)
 #ifdef USE_MAME
 		{
 			void* buffer;
-			SINT32 bufsize = 0;
-			bufsize = YMF262FlagSave(NULL, NULL);
-			buffer = malloc(bufsize);
 			for (i = 0; i < NELEMENTS(g_mame_opl3); i++)
 			{
 				if(g_mame_opl3[i]){
+					SINT32 bufsize = YMF262FlagSave(g_mame_opl3[i], NULL);
+					buffer = malloc(bufsize);
 					YMF262FlagSave(g_mame_opl3[i], buffer);
 					ret |= statflag_write(sfh, &bufsize, sizeof(SINT32));
 					ret |= statflag_write(sfh, buffer, bufsize);
+					free(buffer);
 				}else{
 					SINT32 tmpsize = 0;
 					ret |= statflag_write(sfh, &tmpsize, sizeof(SINT32));
 				}
 			}
-			free(buffer);
 		}
 #endif
 	}
@@ -1082,7 +1078,7 @@ static int flagload_fm(STFLAGH sfh, const SFENTRY *tbl)
 				int bufsize = 0;
 				ret |= statflag_read(sfh, &bufsize, sizeof(SINT32));
 				if(bufsize!=0){
-					if(YMF262FlagSave(NULL, NULL) != bufsize){
+					if(YMF262FlagSave(g_mame_opl3[i], NULL) != bufsize){
 						ret = STATFLAG_FAILURE;
 						break;
 					}else{
@@ -1161,7 +1157,7 @@ static int flagload_fm(STFLAGH sfh, const SFENTRY *tbl)
 				int bufsize = 0;
 				ret |= statflag_read(sfh, &bufsize, sizeof(SINT32));
 				if(bufsize!=0){
-					if(YMF262FlagSave(NULL, NULL) != bufsize){
+					if(YMF262FlagSave(g_mame_opl3[i], NULL) != bufsize){
 						ret = STATFLAG_FAILURE;
 						break;
 					}else{
@@ -1179,9 +1175,9 @@ static int flagload_fm(STFLAGH sfh, const SFENTRY *tbl)
 #if defined(SUPPORT_SOUND_SB16)
 		if (nSaveFlags & FLAG_SB16)
 		{
-			ret |= statflag_read(sfh, &g_sb16, sizeof(SB16_OLD));
-			if(sizeof(SB16_OLD) < sizeof(g_sb16)){
-				memset((UINT8*)(&g_sb16) + sizeof(SB16_OLD), 0, sizeof(g_sb16) - sizeof(SB16_OLD)); // ない部分は0埋め
+			ret |= statflag_read(sfh, &g_sb16, SIZEOF_SB16_OLD);
+			if(SIZEOF_SB16_OLD < sizeof(g_sb16)){
+				memset((UINT8*)(&g_sb16) + SIZEOF_SB16_OLD, 0, sizeof(g_sb16) - SIZEOF_SB16_OLD); // ない部分は0埋め
 			}
 		}
 #endif
@@ -1200,8 +1196,8 @@ static int flagload_fm(STFLAGH sfh, const SFENTRY *tbl)
 #if defined(SUPPORT_SOUND_SB16)
 	if (nSaveFlags & FLAG_SB16)
 	{
-		g_sb16.dsp_info.dma.chan = dmac.dmach + g_sb16.dmach; // DMAチャネル復元
-		dmac_attach(DMADEV_CT1741, g_sb16.dmach); // 再割り当て
+		g_sb16.dsp_info.dma.dmach = dmac.dmach + g_sb16.dmachnum; // DMAチャネル復元
+		dmac_attach(DMADEV_CT1741, g_sb16.dmachnum); // 再割り当て
 	}
 #endif
 	return(ret);

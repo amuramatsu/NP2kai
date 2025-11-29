@@ -1237,6 +1237,7 @@ BEGIN
         MENUITEM "&Open...",                    IDM_FDD1OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Eject",                      IDM_FDD1EJECT
+        MENUITEM SEPARATOR
     END
 END
 
@@ -1247,6 +1248,7 @@ BEGIN
         MENUITEM "&Open...",                    IDM_FDD2OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Eject",                      IDM_FDD2EJECT
+        MENUITEM SEPARATOR
     END
 END
 
@@ -1257,6 +1259,7 @@ BEGIN
         MENUITEM "&Open...",                    IDM_FDD3OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Eject",                      IDM_FDD3EJECT
+        MENUITEM SEPARATOR
     END
 END
 
@@ -1267,6 +1270,7 @@ BEGIN
         MENUITEM "&Open...",                    IDM_FDD4OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Eject",                      IDM_FDD4EJECT
+        MENUITEM SEPARATOR
     END
 END
 
