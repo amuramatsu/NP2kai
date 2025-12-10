@@ -283,8 +283,6 @@ else()
   message(STATUS "This machine is LITLE_ENDIAN")
 endif()
 list(APPEND NP2kai_common_definitions "BIOS_IO_EMULATION" "SUPPORT_8BPP" "SUPPORT_16BPP" "SUPPORT_24BPP" "SUPPORT_32BPP" "SUPPORT_CL_GD5430" "SUPPORT_CRT15KHZ" "SUPPORT_FAST_MEMORYCHECK" "SUPPORT_FMGEN" "SUPPORT_GPIB" "SUPPORT_HOSTDRV" "SUPPORT_HRTIMER" "SUPPORT_IDEIO" "SUPPORT_IDEIO_48BIT" "SUPPORT_KAI_IMAGES" "SUPPORT_LARGE_HDD" "SUPPORT_NORMALDISP" "SUPPORT_PC9861K" "SUPPORT_PX" "SUPPORT_RESUME" "SUPPORT_RS232C_FIFO" "SUPPORT_S98" "SUPPORT_SCSI" "SUPPORT_SMPU98" "SUPPORT_SOFTKBD=0" "SUPPORT_SOUND_SB16" "SUPPORT_STATSAVE=10" "SUPPORT_UTF8" "SUPPORT_V30EXT" "SUPPORT_V30ORIGINAL" "SUPPORT_VIDEOFILTER" "SUPPORT_VPCVHD" "SUPPORT_WAB" "USE_MAME" "VAEG_FIX" "VERMOUTH_LIB")
-# Use BSD-licensed OPL3 code instead of GPL'd
-#list(APPEND NP2kai_common_definitions "USE_MAME_BSD")
   
 list(APPEND NP2kai_extra_definitions "SUPPORT_NVL_IMAGES" "SUPPORT_SWSEEKSND" "SUPPORT_SWWABRLYSND")
 
@@ -320,6 +318,33 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # build option
+
+## LICENSE
+option(USE_GPL_LICENSE "Use GPL'd sourcecode" OFF)
+option(USE_FMGEN_LICENSE "Use fmgen sourcecode" ON)
+if(NOT USE_GPL_LICENSE)
+  message("REMOVE GPL'd stuff (dosbox-FPU, GPL'd mame sources).")
+  list(REMOVE_ITEM NP2kai_ia32_sources "i386c/ia32/instructions/fpu/fpemul_dosbox.c")
+  list(REMOVE_ITEM NP2kai_ia32_sources "i386c/ia32/instructions/fpu/fpemul_dosbox2.c")
+  file(GLOB_RECURSE NP2kai_temp "sound/mame/*.c")
+  list(REMOVE_ITEM NP2kai_common_sources ${NP2kai_temp})
+  file(GLOB_RECURSE NP2kai_temp "wab/tgui9680*.c")
+  list(REMOVE_ITEM NP2kai_common_sources ${NP2kai_temp})
+  list(REMOVE_ITEM NP2kai_common_definitions "SUPPORT_TRIDENT_TGUI")
+  list(REMOVE_ITEM NP2kai_ia32_definitions "SUPPORT_FPU_DOSBOX" "SUPPORT_FPU_DOSBOX2")
+  list(APPEND NP2kai_common_definitions "USE_MAME_BSD")
+endif()
+if(NOT USE_FMGEN_LICENSE)
+  message("REMOVE fmgen.")
+  file(GLOB_RECURSE NP2kai_temp "sound/fmgen/*.c" "sound/fmgen/*.cpp")
+  list(REMOVE_ITEM NP2kai_common_sources ${NP2kai_temp})
+  list(REMOVE_ITEM NP2kai_common_definitions "SUPPORT_FMGEN")
+endif()
+if(USE_GPL_LICENSE AND USE_FMGEN_LICENSE)
+  message(WARNING "GPL'd source and fmgen is enabled both, however fmgen's license may be imcompatible with GPL.")
+endif()
+## ESNECIL
+
 option(BUILD_OPENDINGUX_GCW0 "Build OpenDingux GCW0 port" OFF)
 option(BUILD_OPENDINGUX_RG350 "Build OpenDingux RG350 port" OFF)
 option(BUILD_OPENDINGUX_RS90 "Build OpenDingux RS90 port" OFF)
