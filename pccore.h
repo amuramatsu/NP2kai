@@ -333,6 +333,8 @@ struct tagNP2Config
 	UINT32	emuspeed; // emulation speed(%)
 
 	OEMCHAR	fontface[256];
+
+	UINT8   slowmous; // 4ビット切り捨ての低速マウスを使う
 #if defined(SUPPORT_DEBUGSS)
 	UINT8	debugss;
 #endif

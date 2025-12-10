@@ -269,6 +269,7 @@ static void cb_joypovxy(GtkToggleAction *action, gpointer user_data);
 static void cb_keydisplay(GtkToggleAction *action, gpointer user_data);
 static void cb_mousemode(GtkToggleAction *action, gpointer user_data);
 static void cb_mouserapid(GtkToggleAction *action, gpointer user_data);
+static void cb_slowmouse(GtkToggleAction *action, gpointer user_data);
 static void cb_nowait(GtkToggleAction *action, gpointer user_data);
 #if defined(SUPPORT_ASYNC_CPU)
 static void cb_asynccpu(GtkToggleAction *action, gpointer user_data);
@@ -312,6 +313,7 @@ static GtkToggleActionEntry togglemenu_entries[] = {
 { "keydisplay",   NULL, "Key display",        NULL, NULL, G_CALLBACK(cb_keydisplay), FALSE },
 { "mousemode",    NULL, "_Mouse mode",        NULL, NULL, G_CALLBACK(cb_mousemode), FALSE },
 { "mouserapid",   NULL, "_Mouse rapid",       NULL, NULL, G_CALLBACK(cb_mouserapid), FALSE },
+{ "slowmouse",    NULL, "_Limit max mouse spd.",NULL, NULL,G_CALLBACK(cb_slowmouse), FALSE },
 { "nowait",       NULL, "_No wait",           NULL, NULL, G_CALLBACK(cb_nowait), FALSE },
 #if defined(SUPPORT_ASYNC_CPU)
 { "asynccpu",     NULL, "Dyn_amic CPU clk adj.", NULL, NULL, G_CALLBACK(cb_asynccpu), FALSE },
@@ -803,6 +805,7 @@ static const gchar *ui_info =
 "   <menuitem action='joyrapid'/>\n"
 "   <menuitem action='joypovxy'/>\n"
 "   <menuitem action='mouserapid'/>\n"
+"   <menuitem action='slowmouse'/>\n"
 "   <menuitem action='itfwork'/>\n"
 //"   <menuitem action='fixmmtimer'/>\n"
 //"   <menuitem action='16mbmemchk'/>\n"
@@ -2148,6 +2151,19 @@ cb_mouserapid(GtkToggleAction *action, gpointer user_data)
 }
 
 static void
+cb_slowmouse(GtkToggleAction *action, gpointer user_data)
+{
+	gboolean b = gtk_toggle_action_get_active(action);
+	gboolean f;
+
+	f = (np2cfg.slowmous ? 1 : 0) ^ (b ? 1 : 0);
+	if (f) {
+		np2cfg.slowmous = !np2cfg.slowmous;
+		sysmng_update(SYS_UPDATECFG);
+	}
+}
+
+static void
 cb_nowait(GtkToggleAction *action, gpointer user_data)
 {
 	gboolean b = gtk_toggle_action_get_active(action);
@@ -2905,6 +2921,7 @@ create_menu(void)
 	xmenu_toggle_item(NULL, "joyrapid", np2cfg.BTN_RAPID);
 	xmenu_toggle_item(NULL, "joyreverse", np2cfg.BTN_MODE);
 	xmenu_toggle_item(NULL, "mouserapid", np2cfg.MOUSERAPID);
+	xmenu_toggle_item(NULL, "slowmouse", np2cfg.slowmous);
 	xmenu_toggle_item(NULL, "realpalettes", np2cfg.RASTER);
 	xmenu_toggle_item(NULL, "seeksound", np2cfg.MOTOR);
 	xmenu_toggle_item(NULL, "xctrlkey", np2cfg.XSHIFT & 2);

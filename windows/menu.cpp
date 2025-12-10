@@ -1,3 +1,4 @@
+
 /**
  * @file	menu.cpp
  * @brief	メニューの宣言およびインターフェイスの定義をします
@@ -488,6 +489,7 @@ DRAW_SKIP;
 	CheckMenuItem(hMenu, IDM_MOUSERAW, MF_BYCOMMAND | MFCHECK(np2oscfg.rawmouse));
 	CheckMenuItem(hMenu, IDM_MOUSENC,  MF_BYCOMMAND | MFCHECK(np2oscfg.mouse_nc));
 	CheckMenuItem(hMenu, IDM_MOUSEWHEELCTL, MF_BYCOMMAND | MFCHECK(np2oscfg.usewheel));
+	CheckMenuItem(hMenu, IDM_SLOWMOUSE, MF_BYCOMMAND | MFCHECK(np2cfg.slowmous));
 	const UINT8 MMUL = (UINT8)np2oscfg.mousemul;
 	const UINT8 MDIV = (UINT8)np2oscfg.mousediv;
 	CheckMenuItem(hMenu, IDM_MOUSE30X, MF_BYCOMMAND | MFCHECK(MMUL == 3 && MDIV == 1));
@@ -536,6 +538,8 @@ DRAW_SKIP;
 #if defined(SUPPORT_FAST_MEMORYCHECK)
 	CheckMenuItem(hMenu, IDM_FASTMEMCHK, MF_BYCOMMAND | MFCHECK(np2cfg.memcheckspeed != 1));
 #endif
+	CheckMenuItem(hMenu, IDM_ALLOWDRAGDROP, MF_BYCOMMAND | MFCHECK(np2oscfg.dragdrop));
+		
 #if defined(SUPPORT_DEBUGSS)
 	CheckMenuItem(hMenu, IDM_EN_DBSS, MF_BYCOMMAND | MFCHECK(np2cfg.debugss));
 #endif

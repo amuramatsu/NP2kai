@@ -25,7 +25,15 @@ static int a460_soundid = 0x80;
 #define G_OPL3_INDEX	0
 
 #ifdef USE_MAME
+#ifdef USE_MAME_BSD
+#if _MSC_VER < 1900
+#include <sound/mamebsdsub/np2interop.h>
+#else
+#include <sound/mamebsd/np2interop.h>
+#endif
+#else
 #include <sound/mame/np2interop.h>
+#endif
 static int samplerate;
 
 static void IOOUTCALL sb16_o20d2(UINT port, REG8 dat) {
@@ -554,7 +562,7 @@ static SINT32 oplfm_softvolume_L = 0;
 static SINT32 oplfm_softvolume_R = 0;
 static SINT32 oplfm_softvolumereg_L = 0xff;
 static SINT32 oplfm_softvolumereg_R = 0xff;
-#define OPL3_SAMPLE_BUFFER	1024	
+#define OPL3_SAMPLE_BUFFER	4096	
 static INT16 oplfm_s1ls[OPL3_SAMPLE_BUFFER] = { 0 };
 static INT16 oplfm_s1rs[OPL3_SAMPLE_BUFFER] = { 0 };
 static INT16 oplfm_s2ls[OPL3_SAMPLE_BUFFER] = { 0 };
@@ -564,6 +572,7 @@ static void SOUNDCALL opl3gen_getpcm2(void* opl3, SINT32 *pcm, UINT count) {
 	INT16 *buf[4];
 	SINT32 oplfm_volume;
 	SINT32 *outbuf = pcm;
+	SINT32 volL, volR;
 	buf[0] = oplfm_s1ls;
 	buf[1] = oplfm_s1rs;
 	buf[2] = oplfm_s2ls;
@@ -591,12 +600,14 @@ static void SOUNDCALL opl3gen_getpcm2(void* opl3, SINT32 *pcm, UINT count) {
 	}
 
 	// PCMサウンドバッファに送る
+	volL = oplfm_volume * oplfm_softvolume_L;
+	volR = oplfm_volume * oplfm_softvolume_R;
 	while (count > 0) {
 		int cc = MIN(count, OPL3_SAMPLE_BUFFER);
 		YMF262UpdateOne(opl3, buf, cc);
 		for (i = 0; i < cc; i++) {
-			outbuf[0] += ((((SINT32)oplfm_s1ls[i] << 1) * oplfm_volume * oplfm_softvolume_L) >> 10);
-			outbuf[1] += ((((SINT32)oplfm_s1rs[i] << 1) * oplfm_volume * oplfm_softvolume_R) >> 10);
+			outbuf[0] += (((SINT32)oplfm_s1ls[i] * volL) >> 9);
+			outbuf[1] += (((SINT32)oplfm_s1rs[i] * volR) >> 9);
 			outbuf += 2;
 		}
 		count -= cc;

@@ -788,6 +788,7 @@ static INITBL iniitem[] = {
 #endif
 	{"CPUSPEED", INITYPE_UINT32,	&np2cfg.emuspeed,	100},
 	{"fontface", INITYPE_STR,		np2cfg.fontface,	256},
+	{"SLOWMOUS", INITYPE_BOOL,		&np2cfg.slowmous,	0},
 
 	{"keyboard", INITYPE_KB,	&np2oscfg.KEYBOARD,	0},
 	{"F12_COPY", INITYPE_UINT8,	&np2oscfg.F12KEY,	0},

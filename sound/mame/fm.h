@@ -2,6 +2,9 @@
   File: fm.h -- header file for software emulation for FM sound generator
 
 */
+
+#ifndef USE_MAME_BSD
+
 #ifndef _H_FM_FM_
 #define _H_FM_FM_
 
@@ -82,13 +85,13 @@ typedef signed int		INT32;   /* signed 32bit   */
 #if defined(_MSC_VER)
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4245)
-#define INLINE __inline
+#define INLINE __inline static
 #elif defined(__BORLANDC__)
-#define INLINE __inline
+#define INLINE __inline static
 #elif defined(__GNUC__)
-#define INLINE __inline__ __attribute__((always_inline))
+#define INLINE __inline__ __attribute__((always_inline)) static
 #else
-#define INLINE
+#define INLINE static
 #endif
 #endif
 
@@ -222,3 +225,5 @@ void YM2612Postload(void *chip);
 #endif
 
 #endif /* _H_FM_FM_ */
+
+#endif

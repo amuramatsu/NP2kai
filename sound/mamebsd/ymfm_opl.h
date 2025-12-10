@@ -52,7 +52,7 @@ namespace ymfm
 //
 //      System-wide registers:
 //           01 xxxxxxxx Test register
-//              --x----- Enable OPL compatibility mode [OPL2 only] (0 = enable)
+//              --x----- Enable OPL compatibility mode [OPL2 only] (1 = enable)
 //           02 xxxxxxxx Timer A value (4 * OPN)
 //           03 xxxxxxxx Timer B value
 //           04 x------- RST
@@ -243,7 +243,7 @@ public:
 	uint32_t op_decay_rate(uint32_t opoffs) const    { return byte(0x60, 0, 4, opoffs); }
 	uint32_t op_sustain_level(uint32_t opoffs) const { return byte(0x80, 4, 4, opoffs); }
 	uint32_t op_release_rate(uint32_t opoffs) const  { return byte(0x80, 0, 4, opoffs); }
-	uint32_t op_waveform(uint32_t opoffs) const      { return waveform_enable() ? byte(0xe0, 0, newflag() ? 3 : 2, opoffs) : 0; }
+	uint32_t op_waveform(uint32_t opoffs) const      { return IsOpl2Plus ? byte(0xe0, 0, newflag() ? 3 : 2, opoffs) : 0; }
 
 protected:
 	// return a bitfield extracted from a byte
@@ -668,7 +668,7 @@ public:
 	void write(uint32_t offset, uint8_t data);
 
 	// generate samples of sound
-	void generate(output_data *output, uint32_t numsamples = 1);
+	void generate(output_data *output, uint32_t numsamples = 1, int32_t* lpHasdata = nullptr);
 
 protected:
 	// internal state

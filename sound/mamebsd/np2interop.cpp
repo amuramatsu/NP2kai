@@ -3,25 +3,22 @@
  * @brief	Implementation of np2 <-> mame opl 
  */
 
+#ifdef USE_MAME_BSD
+
 #include "compiler.h"
+#include "pccore.h"
+#include "cpucore.h"
 #include "ymfm_opl.h"
 #include "np2interop.h"
+
+#pragma pack(push, 1)
 
 template<typename ChipType>
 class chip_wrapper : public ymfm::ymfm_interface
 {
 public:
-	int m_fmrate;
-	int m_playrate;
-	double m_fmcounter_rem;
-	INT16 m_lastsample[4];
-
 	chip_wrapper() :
-		m_chip(*this),
-		m_fmrate(0),
-		m_playrate(0),
-		m_fmcounter_rem(0),
-		m_lastsample()
+		m_chip(*this)
 	{
 		m_chip.reset();
 	}
@@ -34,116 +31,261 @@ private:
 	ChipType m_chip;
 };
 
+typedef struct {
+	int clock;
+	int fmrate;
+	int playrate;
+	double fmcounter_rem;
+	INT16 lastsample[4];
+
+	// 仮実装タイマー　正式にはNEVENTを使うべき？
+	UINT8 reg_addr;
+	UINT8 reg_timer1;
+	UINT8 reg_timer2;
+	UINT8 reg_timerctrl;
+	bool timer_valid[2];
+	bool timer_intr[2];
+	UINT32 timer_startclock[2];
+
+	UINT8 reserved[128];
+} OPL3BSD_EX;
+
+class opl3bsd {
+public:
+	opl3bsd() :
+		m_chip(new chip_wrapper<ymfm::ymf262>()),
+		m_data(),
+		m_output(nullptr),
+		m_outputlen(0)
+	{
+		m_outputlen = 4096;
+		m_output = new ymfm::ymf262::output_data[m_outputlen];
+	}
+	~opl3bsd()
+	{
+		if (m_output) {
+			delete[] m_output;
+		}
+	}
+
+	std::unique_ptr<chip_wrapper<ymfm::ymf262>> m_chip;
+	ymfm::ymf262::output_data* m_output;
+	int m_outputlen;
+	OPL3BSD_EX m_data;
+};
+
+#pragma pop
 
 void* YMF262Init(int clock, int rate)
 {
-	chip_wrapper<ymfm::ymf262>* chip = new chip_wrapper<ymfm::ymf262>();
-	if (!chip)
+	opl3bsd* chipbsd = new opl3bsd();
+	if (!chipbsd)
 		return NULL;
 
 	/* clear */
-	ymfm::ymf262& chipcore = chip->GetChip();
-	chip->m_fmrate = chipcore.sample_rate(clock);
-	chip->m_playrate = rate;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
+	chipbsd->m_data.clock = clock;
+	chipbsd->m_data.fmrate = chipcore.sample_rate(clock);
+	chipbsd->m_data.playrate = rate;
 
 	// reset
 	chipcore.reset();
 
-	return chip;
+	return chipbsd;
 }
 
 void YMF262Shutdown(void* chipptr)
 {
 	if (!chipptr) return;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
 
-	delete chip;
+	delete chipbsd;
 }
 void YMF262ResetChip(void* chipptr)
 {
 	if (!chipptr) return;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
-	ymfm::ymf262& chipcore = chip->GetChip();
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
 
 	chipcore.reset();
+
+	chipbsd->m_data.reg_addr = 0;
+	chipbsd->m_data.reg_timer1 = 0;
+	chipbsd->m_data.reg_timer2 = 0;
+	chipbsd->m_data.reg_timerctrl = 0;
+	chipbsd->m_data.timer_valid[0] = chipbsd->m_data.timer_valid[1] = false;
+	chipbsd->m_data.timer_intr[0] = chipbsd->m_data.timer_intr[1] = false;
+	chipbsd->m_data.timer_startclock[0] = chipbsd->m_data.timer_startclock[1] = 0;
 }
 
 int YMF262Write(void* chipptr, int a, int v)
 {
 	if (!chipptr) return 0;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
-	ymfm::ymf262& chipcore = chip->GetChip();
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
 
 	chipcore.write(a, v);
+
+	// 仮実装タイマー
+	if (a == 0) 
+	{
+		chipbsd->m_data.reg_addr = v;
+	}
+	else if (a == 1) 
+	{
+		switch (chipbsd->m_data.reg_addr) 
+		{
+		case 2:
+			chipbsd->m_data.reg_timer1 = v;
+			break;
+		case 3:
+			chipbsd->m_data.reg_timer2 = v;
+			break;
+		case 4:
+			if (v & 0x80)
+			{
+				// Timer Reset
+				chipbsd->m_data.timer_valid[0] = false;
+				chipbsd->m_data.timer_valid[1] = false;
+				chipbsd->m_data.timer_intr[0] = false;
+				chipbsd->m_data.timer_intr[1] = false;
+			}
+			else 
+			{
+				if (!(chipbsd->m_data.reg_timerctrl & 0x01) && (v & 0x01))
+				{
+					// Timer1 start
+					chipbsd->m_data.timer_startclock[0] = CPU_CLOCK + CPU_BASECLOCK - CPU_REMCLOCK;
+					chipbsd->m_data.timer_valid[0] = true;
+					chipbsd->m_data.timer_intr[0] = false;
+				}
+				else if ((chipbsd->m_data.reg_timerctrl & 0x01) && !(v & 0x01))
+				{
+					// Timer1 stop
+					chipbsd->m_data.timer_valid[0] = false;
+					chipbsd->m_data.timer_intr[0] = false;
+				}
+				if (!(chipbsd->m_data.reg_timerctrl & 0x02) && (v & 0x02))
+				{
+					// Timer2 start
+					chipbsd->m_data.timer_startclock[1] = CPU_CLOCK + CPU_BASECLOCK - CPU_REMCLOCK;
+					chipbsd->m_data.timer_valid[1] = true;
+					chipbsd->m_data.timer_intr[1] = false;
+				}
+				else if ((chipbsd->m_data.reg_timerctrl & 0x02) && !(v & 0x02))
+				{
+					// Timer2 stop
+					chipbsd->m_data.timer_valid[1] = false;
+					chipbsd->m_data.timer_intr[1] = false;
+				}
+			}
+			chipbsd->m_data.reg_timerctrl = v & ~0x80;
+			break;
+		default:
+			break;
+		}
+	}
 
 	return chipcore.read_status() >> 7;
 }
 
 unsigned char YMF262Read(void* chipptr, int a)
 {
+	UINT8 tmr = 0;
+
 	if (!chipptr) return 0;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
-	ymfm::ymf262& chipcore = chip->GetChip();
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
 
-	return chipcore.read(a);
+	// 仮実装タイマー ポートを呼んだときに判定する（割り込み発生などはしない）
+	if (chipbsd->m_data.timer_valid[0] && !(chipbsd->m_data.reg_timerctrl & 0x40))
+	{
+		if (chipbsd->m_data.timer_intr[0])
+		{
+			// 再判定不要 割り込みも立てておく
+			tmr |= 0xc0;
+		}
+		else if (CPU_CLOCK + CPU_BASECLOCK - CPU_REMCLOCK - chipbsd->m_data.timer_startclock[0] >= pccore.realclock / 1000 * (256 - chipbsd->m_data.reg_timer1) * 808 / 10000)
+		{
+			// 時間経過した　分解能は 80.8 usec
+			chipbsd->m_data.timer_intr[0] = true;
+			tmr |= 0xc0;
+		}
+	}
+	if (chipbsd->m_data.timer_valid[1] && !(chipbsd->m_data.reg_timerctrl & 0x20))
+	{
+		if (chipbsd->m_data.timer_intr[1])
+		{
+			// 再判定不要 割り込みも立てておく
+			tmr |= 0xa0;
+		}
+		else if (CPU_CLOCK + CPU_BASECLOCK - CPU_REMCLOCK - chipbsd->m_data.timer_startclock[1] >= pccore.realclock / 1000 * (256 - chipbsd->m_data.reg_timer1) * 3231 / 10000)
+		{
+			// 時間経過した　分解能は 323.1 usec
+			chipbsd->m_data.timer_intr[1] = true;
+			tmr |= 0xa0;
+		}
+	}
+
+	return (chipcore.read(a) & 0x1f) | tmr;
 }
 
 int YMF262FlagSave(void* chipptr, void* dstbuf)
 {
 	if (!chipptr) return 0;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
-	ymfm::ymf262& chipcore = chip->GetChip();
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
 
-	// �ۑ�
+	// 保存
 	std::vector<uint8_t> buffer;
 	ymfm::ymfm_saved_state saver(buffer, true);
 	chipcore.save_restore(saver);
-	const size_t bufsize = buffer.size();
-	if (dstbuf != NULL){
-		if (bufsize > 0) {
-			memcpy(dstbuf, &(buffer[0]), bufsize);
-		}
-		*((int*)((uint8_t*)dstbuf + bufsize)) = chip->m_fmrate;
-		*((int*)((uint8_t*)dstbuf + bufsize + sizeof(int))) = chip->m_playrate;
+	buffer.insert(buffer.end(), (uint8_t*)&chipbsd->m_data, (uint8_t*)(&chipbsd->m_data + 1));
+
+	if (dstbuf != NULL) {
+		memcpy(dstbuf, &(buffer[0]), buffer.size());
 	}
 
-	return bufsize + sizeof(int) * 2;
+	return buffer.size();
 }
 int YMF262FlagLoad(void* chipptr, void* srcbuf, int size)
 {
 	if (!chipptr) return 0;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
-	ymfm::ymf262& chipcore = chip->GetChip();
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
 
 	if (srcbuf == NULL) return 0;
 
-	// �o�b�t�@�T�C�Y���擾
+	// バッファサイズを取得
 	std::vector<uint8_t> dummybuffer;
 	ymfm::ymfm_saved_state saver(dummybuffer, true);
 	chipcore.save_restore(saver);
-	const size_t bufsize = dummybuffer.size();
+	const int fmbufsize = dummybuffer.size();
+	dummybuffer.insert(dummybuffer.end(), (uint8_t*)&chipbsd->m_data, (uint8_t*)(&chipbsd->m_data + 1));
 
-	// �o�b�t�@�T�C�Y�������Ă��Ȃ��Ȃ�G���[
-	if (size != bufsize + sizeof(int) * 2) return 0;
+	// バッファサイズがあっていなくても復元なしで通す
+	if (size != dummybuffer.size()) {
+		// reset
+		chipcore.reset();
+		return dummybuffer.size();
+	}
 
-	// �������s
-	std::vector<uint8_t> buffer((uint8_t*)srcbuf, (uint8_t*)srcbuf + bufsize);
+	// データ読み取りバッファへ送る
+	std::vector<uint8_t> buffer;
+	buffer.insert(buffer.end(), (uint8_t*)srcbuf, (uint8_t*)srcbuf + fmbufsize);
+
+	// 復元実行
 	ymfm::ymfm_saved_state restorer(buffer, false);
 	chipcore.save_restore(restorer);
-	chip->m_fmrate = *((int*)((uint8_t*)srcbuf + bufsize));
-	chip->m_playrate = *((int*)((uint8_t*)srcbuf + bufsize + sizeof(int)));
+	memcpy(&chipbsd->m_data, (uint8_t*)srcbuf + fmbufsize, sizeof(chipbsd->m_data));
 
-	// ������
-	memset(chip->m_lastsample, 0, sizeof(chip->m_lastsample));
-	chip->m_fmcounter_rem = 0;
-
-	return size;
+	return dummybuffer.size();
 }
 
 #define OPL3_VOLUME_ADJUST	2
@@ -151,41 +293,57 @@ void YMF262UpdateOne(void* chipptr, INT16** buffers, int length)
 {
 	if (!chipptr) return;
 
-	chip_wrapper<ymfm::ymf262>* chip = (chip_wrapper<ymfm::ymf262>*)chipptr;
-	ymfm::ymf262& chipcore = chip->GetChip();
+	opl3bsd* chipbsd = (opl3bsd*)chipptr;
+	ymfm::ymf262& chipcore = chipbsd->m_chip->GetChip();
 
 	if (buffers == NULL) return;
 
-	const double fmlengthf = chip->m_fmcounter_rem + (double)length * chip->m_fmrate / chip->m_playrate;
+	const double fmlengthf = chipbsd->m_data.fmcounter_rem + (double)length * chipbsd->m_data.fmrate / chipbsd->m_data.playrate;
 	const int fmlength = (int)fmlengthf;
-	chip->m_fmcounter_rem = fmlengthf - fmlength;
+	chipbsd->m_data.fmcounter_rem = fmlengthf - fmlength;
 
 	if (fmlength > 0) {
-		ymfm::ymf262::output_data* output = (ymfm::ymf262::output_data*)malloc(sizeof(ymfm::ymf262::output_data) * fmlength);
+		if (fmlength > chipbsd->m_outputlen) {
+			if (chipbsd->m_output) {
+				delete[] (chipbsd->m_output);
+			}
+			chipbsd->m_outputlen = fmlength;
+			chipbsd->m_output = new ymfm::ymf262::output_data[chipbsd->m_outputlen];
+		}
+		ymfm::ymf262::output_data* output = chipbsd->m_output;
 		if (output == NULL) return;
 
-		chipcore.generate(output, fmlength);
-		for (int i = 0; i < length; i++) {
-			int srcIndex = (int)((double)i * chip->m_fmrate / chip->m_playrate);
-			buffers[0][i] = output[srcIndex].data[0] / OPL3_VOLUME_ADJUST;
-			buffers[1][i] = output[srcIndex].data[1] / OPL3_VOLUME_ADJUST;
-			buffers[2][i] = output[srcIndex].data[2] / OPL3_VOLUME_ADJUST;
-			buffers[3][i] = output[srcIndex].data[3] / OPL3_VOLUME_ADJUST;
-		}
-		chip->m_lastsample[0] = output[fmlength - 1].data[0];
-		chip->m_lastsample[1] = output[fmlength - 1].data[1];
-		chip->m_lastsample[2] = output[fmlength - 1].data[2];
-		chip->m_lastsample[3] = output[fmlength - 1].data[3];
+		int32_t hasdata = 0;
+		chipcore.generate(output, fmlength, &hasdata);
 
-		free(output);
+		if (hasdata) {
+			for (int i = 0; i < length; i++) {
+				int srcIndex = (int)((double)i * chipbsd->m_data.fmrate / chipbsd->m_data.playrate);
+				buffers[0][i] = output[srcIndex].data[0] / OPL3_VOLUME_ADJUST;
+				buffers[1][i] = output[srcIndex].data[1] / OPL3_VOLUME_ADJUST;
+				buffers[2][i] = output[srcIndex].data[2] / OPL3_VOLUME_ADJUST;
+				buffers[3][i] = output[srcIndex].data[3] / OPL3_VOLUME_ADJUST;
+			}
+			chipbsd->m_data.lastsample[0] = output[fmlength - 1].data[0];
+			chipbsd->m_data.lastsample[1] = output[fmlength - 1].data[1];
+			chipbsd->m_data.lastsample[2] = output[fmlength - 1].data[2];
+			chipbsd->m_data.lastsample[3] = output[fmlength - 1].data[3];
+		}
+		else {
+			memset(buffers[0], 0, sizeof(INT16) * length);
+			memset(buffers[1], 0, sizeof(INT16) * length);
+			memset(buffers[2], 0, sizeof(INT16) * length);
+			memset(buffers[3], 0, sizeof(INT16) * length);
+		}
 	}
 	else {
 		for (int i = 0; i < length; i++) {
-			buffers[0][i] = chip->m_lastsample[0] / OPL3_VOLUME_ADJUST;
-			buffers[1][i] = chip->m_lastsample[1] / OPL3_VOLUME_ADJUST;
-			buffers[2][i] = chip->m_lastsample[2] / OPL3_VOLUME_ADJUST;
-			buffers[3][i] = chip->m_lastsample[3] / OPL3_VOLUME_ADJUST;
+			buffers[0][i] = chipbsd->m_data.lastsample[0] / OPL3_VOLUME_ADJUST;
+			buffers[1][i] = chipbsd->m_data.lastsample[1] / OPL3_VOLUME_ADJUST;
+			buffers[2][i] = chipbsd->m_data.lastsample[2] / OPL3_VOLUME_ADJUST;
+			buffers[3][i] = chipbsd->m_data.lastsample[3] / OPL3_VOLUME_ADJUST;
 		}
 	}
 }
 
+#endif 

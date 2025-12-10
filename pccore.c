@@ -221,6 +221,7 @@ const OEMCHAR np2version[] = OEMTEXT(NP2KAI_GIT_TAG " " NP2KAI_GIT_HASH);
 #endif
 				100,
 				OEMTEXT(""),
+				0,
 #if defined(SUPPORT_DEBUGSS)
 				0,
 #endif
@@ -847,9 +848,30 @@ void pccore_reset(void) {
 	// mov cs,xx許可フラグ
 	i386cpuid.allow_movCS = np2cfg.allowMOVCS;
 
-	// FPU種類を設定
+	// FPU種類を設定 使えないなら別のタイプへ変更する
 	i386cpuid.fpu_type = np2cfg.fpu_type;
-	fpu_initialize();
+#if !defined(SUPPORT_FPU_SOFTFLOAT)
+	if (i386cpuid.fpu_type == FPU_TYPE_SOFTFLOAT) {
+		i386cpuid.fpu_type = FPU_TYPE_DOSBOX2;
+	}
+#elif !defined(SUPPORT_FPU_DOSBOX2)
+	if (i386cpuid.fpu_type == FPU_TYPE_DOSBOX2) {
+#if defined(SUPPORT_FPU_SOFTFLOAT)
+		i386cpuid.fpu_type = FPU_TYPE_SOFTFLOAT;
+#else
+		i386cpuid.fpu_type = FPU_TYPE_DOSBOX;
+#endif
+	}
+#elif !defined(SUPPORT_FPU_DOSBOX)
+	if (i386cpuid.fpu_type == FPU_TYPE_DOSBOX) {
+#if defined(SUPPORT_FPU_SOFTFLOAT)
+		i386cpuid.fpu_type = FPU_TYPE_SOFTFLOAT;
+#else
+		i386cpuid.fpu_type = FPU_TYPE_DOSBOX2;
+#endif
+	}
+#endif
+	fpu_initialize(1);	// FPU種類を設定
 #endif
 
 	pccore_set(&np2cfg);

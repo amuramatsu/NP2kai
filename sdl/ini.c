@@ -821,6 +821,7 @@ static const INITBL iniitem[] = {
 #endif
 	{OEMTEXT("CPUSPEED"), INITYPE_UINT32,	&np2cfg.emuspeed,	100},
 	{OEMTEXT("fontface"), INITYPE_STR,		np2cfg.fontface,	256},
+	{OEMTEXT("SLOWMOUS"), INITYPE_BOOL,	&np2cfg.slowmous,	0},
 
 	{OEMTEXT("keyboard"), INITYPE_KB,	&np2oscfg.KEYBOARD,	0},
 #if !defined(__LIBRETRO__)
