@@ -1913,7 +1913,7 @@ static void OnCommand(HWND hWnd, WPARAM wParam)
 			break;
 
 
-		case IDM_SLOWMOUSE;
+		case IDM_SLOWMOUSE:
 			np2cfg.slowmous = !np2cfg.slowmous;
 			update |= SYS_UPDATECFG;
 			break;
