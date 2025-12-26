@@ -16,7 +16,6 @@
 #include <sound/soundrom.h>
 #include <cbus/mpu98ii.h>
 
-
 static int opna_idx = 0;
 static int a460_soundid = 0x80;
 
@@ -727,12 +726,12 @@ void board118_reset(const NP2CFG *pConfig)
 #ifdef SUPPORT_SOUND_SB16
 #ifdef USE_MAME
 		if (g_mame_opl3[G_OPL3_INDEX]) {
-			if (samplerate != pConfig->samplingrate) {
+			if (samplerate != soundcfg.rate) {
 				YMF262Shutdown(g_mame_opl3[G_OPL3_INDEX]);
-				g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, pConfig->samplingrate);
-				samplerate = pConfig->samplingrate;
+				g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, soundcfg.rate);
+				samplerate = soundcfg.rate;
 			} else {
-				YMF262ResetChip(g_mame_opl3[G_OPL3_INDEX]);
+				YMF262ResetChip(g_mame_opl3[G_OPL3_INDEX], samplerate);
 			}
 		}
 		//ZeroMemory(&g_sb16, sizeof(g_sb16));

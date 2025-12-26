@@ -398,7 +398,7 @@ static REG8 IOINPCALL gameport_i4d2(UINT port)
 // ----
 
 #ifdef USE_MAME
-#define OPL3_SAMPLE_BUFFER	1024		
+#define OPL3_SAMPLE_BUFFER	4096
 static INT16 oplfm_s1ls[OPL3_SAMPLE_BUFFER] = { 0 };
 static INT16 oplfm_s1rs[OPL3_SAMPLE_BUFFER] = { 0 };
 static INT16 oplfm_s2ls[OPL3_SAMPLE_BUFFER] = { 0 };
@@ -452,12 +452,12 @@ void boardsb16_reset(const NP2CFG *pConfig) {
 	DSP_INFO olddsp;
 #ifdef USE_MAME
 	if (g_mame_opl3[G_OPL3_INDEX]) {
-		if (samplerate != pConfig->samplingrate) {
+		if (samplerate != soundcfg.rate) {
 			YMF262Shutdown(g_mame_opl3[G_OPL3_INDEX]);
-			g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, pConfig->samplingrate);
-			samplerate = pConfig->samplingrate;
+			g_mame_opl3[G_OPL3_INDEX] = YMF262Init(14400000, soundcfg.rate);
+			samplerate = soundcfg.rate;
 		} else {
-			YMF262ResetChip(g_mame_opl3[G_OPL3_INDEX]);
+			YMF262ResetChip(g_mame_opl3[G_OPL3_INDEX], samplerate);
 		}
 	}
 #endif

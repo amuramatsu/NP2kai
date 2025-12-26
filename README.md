@@ -1234,6 +1234,8 @@ Next boot computer, you command from 4.
 </div></details>
 
 ## Release
+- Dec 27, 2025
+  - (mod) merge NP21/W rev.98
 - Dec 11, 2025
   - (mod) merge NP21/W rev.97
 - Nov 19, 2025

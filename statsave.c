@@ -1771,6 +1771,9 @@ int statsave_load_d(void) {
 const SFENTRY	*tbl;
 const SFENTRY	*tblterm;
 	UINT		i;
+#if defined(SUPPORT_FMGEN)
+	UINT8		usefmgen = 0;	
+#endif
 
 #if defined(__LIBRETRO__)
 	sffh = statflag_open(filename, NULL, 0);
@@ -1992,12 +1995,17 @@ const SFENTRY	*tblterm;
 #endif
 	
 	// OPNAボリューム再設定
+#if defined(SUPPORT_FMGEN)
+	for (i = 0; i < OPNA_MAX; i++) {
+        usefmgen |= g_opna[i].usefmgen;
+	}
+#endif
 	if(g_nSoundID == SOUNDID_WAVESTAR){
 		opngen_setvol(np2cfg.vol_fm * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
 		psggen_setvol(np2cfg.vol_ssg * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
 		rhythm_setvol(np2cfg.vol_rhythm * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
 #if defined(SUPPORT_FMGEN)
-		if(np2cfg.usefmgen) {
+		if(usefmgen) {
 			opna_fmgen_setallvolumeFM_linear(np2cfg.vol_fm * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
 			opna_fmgen_setallvolumePSG_linear(np2cfg.vol_ssg * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
 			opna_fmgen_setallvolumeRhythmTotal_linear(np2cfg.vol_rhythm * cs4231.devvolume[0xff] / 15 * np2cfg.vol_master / 100);
@@ -2008,7 +2016,7 @@ const SFENTRY	*tblterm;
 		psggen_setvol(np2cfg.vol_ssg * np2cfg.vol_master / 100);
 		rhythm_setvol(np2cfg.vol_rhythm * np2cfg.vol_master / 100);
 #if defined(SUPPORT_FMGEN)
-		if(np2cfg.usefmgen) {
+		if(usefmgen) {
 			opna_fmgen_setallvolumeFM_linear(np2cfg.vol_fm * np2cfg.vol_master / 100);
 			opna_fmgen_setallvolumePSG_linear(np2cfg.vol_ssg * np2cfg.vol_master / 100);
 			opna_fmgen_setallvolumeRhythmTotal_linear(np2cfg.vol_rhythm * np2cfg.vol_master / 100);
