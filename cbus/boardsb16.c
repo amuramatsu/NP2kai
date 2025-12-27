@@ -54,7 +54,7 @@ static int seqpos = 0;
 
 #ifdef USE_MAME
 #ifdef USE_MAME_BSD
-#if _MSC_VER < 1900
+#if defined(USE_OLD_CXX) || (defined(_MSC_VER) && _MSC_VER < 1900)
 #include <sound/mamebsdsub/np2interop.h>
 #else
 #include <sound/mamebsd/np2interop.h>

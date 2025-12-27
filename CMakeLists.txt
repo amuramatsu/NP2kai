@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(
 	NP2kai
-	VERSION 0.86.0.22
+	VERSION 0.86.0.98
 	DESCRIPTION "NEC PC-98x1 and EPSON PC-x86 emulator"
 	HOMEPAGE_URL "http://domisan.sakura.ne.jp/article/np2kai/np2kai.html"
 	LANGUAGES C CXX
@@ -278,7 +278,7 @@ list(APPEND NP2kai_Windows_sources "windows/resources/1252/np2.rc")
 include (TestBigEndian)
 if(IS_BIG_ENDIAN)
   message(STATUS "This machine is BIG_ENDIAN")
-  list(APPEND NPkai_common_definitions "MSB_FIRST")
+  list(APPEND NP2kai_common_definitions "MSB_FIRST")
 else()
   message(STATUS "This machine is LITLE_ENDIAN")
 endif()
@@ -318,6 +318,10 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # build option
+option(USE_BEFORE_CXX_14 "Use before C++-14 compiler (like as MSVC++ 2013)" OFF)
+if(USE_BEFORE_CXX_14)
+  list(APPEND NP2kai_common_definitions "USE_OLD_CXX")
+endif()
 
 ## LICENSE
 option(USE_GPL_LICENSE "Use GPL'd sourcecode" OFF)
@@ -333,6 +337,15 @@ if(NOT USE_GPL_LICENSE)
   list(REMOVE_ITEM NP2kai_common_definitions "SUPPORT_TRIDENT_TGUI")
   list(REMOVE_ITEM NP2kai_ia32_definitions "SUPPORT_FPU_DOSBOX" "SUPPORT_FPU_DOSBOX2")
   list(APPEND NP2kai_common_definitions "USE_MAME_BSD")
+  if(USE_BEFORE_CXX14)
+	file(GLOB_RECURSE NP2kai_temp "sound/mamebsd/*.cpp")
+	list(REMOVE_ITEM NP2kai_common_sources ${NP2kai_temp})
+	file(GLOB_RECURSE NP2kai_temp "sound/mamebsdsub/*.cpp")
+	list(APPEND NP2kai_common_sources ${NP2kai_temp})
+  else()
+	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD_REQUIRED True)
+  endif()
 endif()
 if(NOT USE_FMGEN_LICENSE)
   message("REMOVE fmgen.")
