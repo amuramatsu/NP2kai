@@ -4882,7 +4882,7 @@ void pc98_cirrus_vga_load()
 	uint32_t_ intbuf;
 	//int width, height;
 	char en[3];
-	
+
 #if defined(SUPPORT_IA32_HAXM)
 	// HAXMはレジューム前にPCIメモリ割り当て解除
 	i386hax_vm_removememoryarea(vramptr, mmio_mode_region2, lastlinmmio ? cirrusvga->linear_mmio_mask : cirrusvga->real_vram_size);
@@ -5304,6 +5304,17 @@ int cirrusvga_drawGraphic(){
 	if (!cirrusvga_updated && !np2wab.paletteChanged && lastvramoffs == np2wab.vramoffs) return 0;
 	cirrusvga_updated = 0;
 
+#if defined(SUPPORT_IA32_HAXM)
+	// XXX: HAXMの仮想CPUがvramptrを書き換えることがあり、これの捕捉はできない。なのでメモリ比較で強引に検出 4MBくらいなら今時のPCならいいでしょう
+	if (memcmp(vramptr_cmp, vramptr, CIRRUS_VRAM_SIZE))
+	{
+		memcpy(vramptr_cmp, vramptr, CIRRUS_VRAM_SIZE);
+		cirrusvga_updated = 1;
+	}
+#endif
+
+// 20260127 Win2k起動不良のためコメントアウト
+//	if (!cirrusvga_updated && !np2wab.paletteChanged && lastvramoffs == np2wab.vramoffs) return 0;
 	// VRAM上での1ラインのサイズ（表示幅と等しくない場合有り）
 	line_offset = cirrusvga->cr[0x13] | ((cirrusvga->cr[0x1b] & 0x10) << 4);
 	line_offset <<= 3;

@@ -8,7 +8,7 @@
 #ifdef SUPPORT_SOUND_SB16
 
 #include "sound.h"
-#include "io/dmac.h"
+#include <io/dmac.h>
 
 // DSPリセット状態
 typedef enum {

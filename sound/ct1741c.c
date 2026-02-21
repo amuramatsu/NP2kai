@@ -6,9 +6,9 @@
 #ifdef SUPPORT_SOUND_SB16
 
 #include <compiler.h>
-#include <sound/ct1741.h>
+#include "ct1741.h"
 #include <io/iocore.h>
-#include <sound/fmboard.h>
+#include "fmboard.h"
 #include <io/dmac.h>
 #include <cpucore.h>
 

@@ -271,4 +271,3 @@ inline void Chip::SetPML(uint l)
 #endif // FM_GEN_INL_H
 
 #endif	/* SUPPORT_FMGEN */
-

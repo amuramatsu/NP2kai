@@ -421,7 +421,7 @@ static void* np2net_ThreadFuncW(void *thdata) {
 			sleep(1000);
 		}
 		np2net_updateHighSpeedMode();
-		if(!np2net_highspeedmode) 
+		if(!np2net_highspeedmode)
 			sleep(50);
 	}
 	return (void*) NULL;
@@ -447,7 +447,7 @@ static void* np2net_ThreadFuncR(void *thdata) {
 			}
 		}
 		np2net_updateHighSpeedMode();
-		if(!np2net_highspeedmode) 
+		if(!np2net_highspeedmode)
 			sleep(50);
 	}
 	return (void*) NULL;
@@ -632,7 +632,7 @@ void np2net_bind(void){
 void np2net_shutdown(void)
 {
 	np2net_hThreadexit = 1;
-#ifdef _WINDOWS
+#if defined(_WINDOWS)
 	SetEvent(np2net_thread_eventhandle);
 #endif
 	np2net_closeTAP();

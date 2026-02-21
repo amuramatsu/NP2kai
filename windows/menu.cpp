@@ -543,7 +543,7 @@ DRAW_SKIP;
 	CheckMenuItem(hMenu, IDM_FASTMEMCHK, MF_BYCOMMAND | MFCHECK(np2cfg.memcheckspeed != 1));
 #endif
 	CheckMenuItem(hMenu, IDM_ALLOWDRAGDROP, MF_BYCOMMAND | MFCHECK(np2oscfg.dragdrop));
-		
+
 #if defined(SUPPORT_DEBUGSS)
 	CheckMenuItem(hMenu, IDM_EN_DBSS, MF_BYCOMMAND | MFCHECK(np2cfg.debugss));
 #endif

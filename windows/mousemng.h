@@ -4,6 +4,7 @@ enum {
 	uPD8255A_RIGHTBIT	= 0x20
 };
 
+
 typedef struct
 {
 	UINT32	autohide;

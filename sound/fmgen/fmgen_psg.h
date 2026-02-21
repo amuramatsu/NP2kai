@@ -117,4 +117,3 @@ protected:
 #endif // PSG_H
 
 #endif	/* SUPPORT_FMGEN */
-

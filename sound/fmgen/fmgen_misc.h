@@ -72,4 +72,3 @@ T bessel0(T x)
 
 #endif	/* SUPPORT_FMGEN */
 
-

@@ -224,7 +224,6 @@ static	TCHAR		szClassName[] = _T("NP2-MainWindow");
 		OEMCHAR		npcfgfilefolder[MAX_PATH];
 		OEMCHAR		modulefile[MAX_PATH];
 
-
 static	UINT		framecnt = 0;
 static	UINT		framecntUI = 0;
 static	UINT		waitcnt = 0;

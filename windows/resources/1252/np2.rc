@@ -1081,7 +1081,7 @@ BEGIN
             MENUITEM "mechanical &GRPH",            IDM_XGRPH
             MENUITEM SEPARATOR
             MENUITEM "Send Ctrl+Alt+Del",           IDM_SENDCAD
-            MENUITEM "Pase Clipboard Text",         IDM_COPYPASTE_PASTE
+            MENUITEM "Paste Clipboard Text",		IDM_COPYPASTE_PASTE
             MENUITEM SEPARATOR
             MENUITEM "F12 = &Mouse",                IDM_F12MOUSE
             MENUITEM "F12 = Co&py",                 IDM_F12COPY
@@ -1162,7 +1162,7 @@ BEGIN
             MENUITEM "&Raw Input Mode",             IDM_MOUSERAW
             MENUITEM "&Non-capture Control",        IDM_MOUSENC
             MENUITEM "&Change Sound Volume by Wheel",   IDM_MOUSEWHEELCTL
-            MENUITEM "&Limit Max Mouse Speed",      IDM_SLOWMOUSE
+            MENUITEM "&Limit Max Mouse Speed",  IDM_SLOWMOUSE
             MENUITEM SEPARATOR
             MENUITEM "x3.0",                        IDM_MOUSE30X
             MENUITEM "x2.0",                        IDM_MOUSE20X

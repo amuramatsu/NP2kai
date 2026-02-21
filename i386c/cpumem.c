@@ -945,7 +945,7 @@ PF_UINT16 MEMCALL memp_read16_codefetch(UINT32 address) {
 		}
 		else {
 			ret = memp_read8(address + 0);
-			ret |= (UINT32)(memp_read8(address + 1) << 8);
+			ret |= (REG16)(memp_read8(address + 1) << 8);
 			return(ret);
 		}
 	}

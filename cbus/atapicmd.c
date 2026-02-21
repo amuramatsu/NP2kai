@@ -776,7 +776,7 @@ void atapi_dataread_end(IDEDRV drv) {
 		ideio.bank[0] = ideio.bank[1] | 0x80;			// ????
 		pic_setirq(IDE_IRQ);
 	}
-#if defined(_WINDOWS)
+#if defined(_WINDOWS) && !defined(__LIBRETRO__)
 	atapi_dataread_error = -1;
 #endif
 }
@@ -791,7 +791,7 @@ void atapi_dataread_errorend(IDEDRV drv) {
 	sxsi->cdflag_ecc = (sxsi->cdflag_ecc & ~CD_ECC_BITMASK) | CD_ECC_NOERROR;
 	senderror(drv);
 	TRACEOUT(("atapicmd: read error at sector %d", drv->sector));
-#if defined(_WINDOWS)
+#if defined(_WINDOWS) && !defined(__LIBRETRO__)
 	atapi_dataread_error = -1;
 #endif
 }
@@ -821,7 +821,7 @@ static void atapi_cmd_read_cd(IDEDRV drv, UINT32 lba, UINT32 nsec) {
 
 	UINT16 isCDDA = 1;
 	
-#if defined(_WINDOWS)
+#if defined(_WINDOWS) && !defined(__LIBRETRO__)
 	atapi_thread_drv = drv;
 #endif
 	sxsi = sxsi_getptr(drv->sxsidrv);

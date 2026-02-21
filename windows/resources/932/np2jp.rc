@@ -352,7 +352,7 @@ BEGIN
     PUSHBUTTON      "既定値",IDC_MPUDEF,140,58,44,14
 END
 
-IDD_SNDMIX DIALOGEX 0, 0, 184, 124
+IDD_SNDMIX DIALOGEX 0, 0, 184, 150
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ミキサー"
 FONT 9, "ＭＳ Ｐゴシック", 0, 0, 0x1
@@ -388,7 +388,7 @@ BEGIN
 	PUSHBUTTON      "既定値2",IDC_SNDMIXDEF2,160,122,40,14
 END
 
-IDD_SND14 DIALOGEX 0, 0, 184, 124
+IDD_SND14 DIALOGEX 0, 0, 184, 150
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "PC-9801-14"
 FONT 9, "ＭＳ Ｐゴシック", 0, 0, 0x1
@@ -1044,7 +1044,7 @@ BEGIN
         BEGIN
             MENUITEM "処理速度最大化", IDM_ASYNCCPU_LEVEL_MAX
             MENUITEM "タイミング重視", IDM_ASYNCCPU_LEVEL_MIN
-        END		
+        END
         MENUITEM SEPARATOR
         //MENUITEM "自動フレームスキップ(&A)",    IDM_AUTOFPS
         MENUITEM "フレームスキップ無し(&U)",    IDM_60FPS
@@ -1067,7 +1067,7 @@ BEGIN
             MENUITEM "メカニカル &GRPHキー",        IDM_XGRPH
             MENUITEM SEPARATOR
             MENUITEM "Ctrl+Alt+Del 送信",           IDM_SENDCAD
-            MENUITEM "クリップボードテキスト貼り付け", IDM_COPYPASTE_PASTE
+            MENUITEM "クリップボードテキスト貼り付け",		IDM_COPYPASTE_PASTE
             MENUITEM SEPARATOR
             MENUITEM "F12 = マウスキャプチャ(&M)",  IDM_F12MOUSE
             MENUITEM "F12 = Co&py",                 IDM_F12COPY
@@ -1148,7 +1148,7 @@ BEGIN
             MENUITEM "高解像度マウス(&R)",          IDM_MOUSERAW
             MENUITEM "キャプチャ無し操作(&N)",      IDM_MOUSENC
             MENUITEM "マウスホイールで音量設定(&C)",   IDM_MOUSEWHEELCTL
-            MENUITEM "マウス最大速度制限(&S)",      IDM_SLOWMOUSE
+            MENUITEM "マウス最大速度制限(&S)",     IDM_SLOWMOUSE
             MENUITEM SEPARATOR
             MENUITEM "x3.0",                        IDM_MOUSE30X
             MENUITEM "x2.0",                        IDM_MOUSE20X

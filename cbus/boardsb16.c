@@ -398,7 +398,7 @@ static REG8 IOINPCALL gameport_i4d2(UINT port)
 // ----
 
 #ifdef USE_MAME
-#define OPL3_SAMPLE_BUFFER	4096
+#define OPL3_SAMPLE_BUFFER	4096	
 static INT16 oplfm_s1ls[OPL3_SAMPLE_BUFFER] = { 0 };
 static INT16 oplfm_s1rs[OPL3_SAMPLE_BUFFER] = { 0 };
 static INT16 oplfm_s2ls[OPL3_SAMPLE_BUFFER] = { 0 };

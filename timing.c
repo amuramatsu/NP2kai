@@ -35,10 +35,6 @@ void timing_setcount(UINT value) {
 	timing.cnt = value;
 }
 
-#ifdef SUPPORT_WAB
-void wabrly_callback(UINT nowtime);
-#endif
-
 void timing_setspeed(UINT32 value)
 {
 	timimg_speed = value;
@@ -62,9 +58,6 @@ UINT timing_getcount(void) {
 	if (span) {
 		timing.tick = ticknow;
 		fddmtr_callback(ticknow);
-#ifdef SUPPORT_WAB
-		wabrly_callback(ticknow);
-#endif
 
 		if (span >= 1000) {
 			span = 1000;

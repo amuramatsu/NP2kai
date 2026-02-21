@@ -520,4 +520,3 @@ inline void FM::OPNBase::SetVolumePSG(int db)
 #endif // FM_OPNA_H
 
 #endif	/* SUPPORT_FMGEN */
-

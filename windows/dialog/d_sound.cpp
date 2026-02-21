@@ -157,6 +157,9 @@ void SndOptMixerPage::OnOK()
 	if(g_nSoundID == SOUNDID_WAVESTAR){
 		volex = cs4231.devvolume[0xff];
 	}
+	if (g_nSoundID == SOUNDID_WAVESTAR) {
+		volex = cs4231.devvolume[0xff];
+	}
 	const UINT8 cFM = static_cast<UINT8>(m_fm.GetPos());
 	if (np2cfg.vol_fm != cFM || bMasterChange)
 	{
@@ -1168,7 +1171,7 @@ BOOL SndOpt118Page::OnCommand(WPARAM wParam, LPARAM lParam)
 	switch (LOWORD(wParam))
 	{
 		case IDC_SND118IO:
-			m_snd118io = m_cmbio.GetCurItemData(0xd2);
+			m_snd118io = m_cmbio.GetCurItemData(0x0188);
 			m_jumper.Invalidate();
 			return TRUE;
 			
@@ -1183,7 +1186,7 @@ BOOL SndOpt118Page::OnCommand(WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDC_SND118INTF:
-			m_snd118irqf = m_cmbirqf.GetCurItemData(5);
+			m_snd118irqf = m_cmbirqf.GetCurItemData(12);
 			m_jumper.Invalidate();
 			return TRUE;
 
@@ -1203,10 +1206,10 @@ BOOL SndOpt118Page::OnCommand(WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDC_SND118DEF:
-			m_snd118io = 0xd2;
+			m_snd118io = 0x0188;
 			m_snd118id = 0x80;
 			m_snd118dma = 3;
-			m_snd118irqf = 5;
+			m_snd118irqf = 12;
 			m_snd118irqp = 12;
 			m_snd118irqm = 0xff;
 			m_snd118rom = 0;
@@ -1548,7 +1551,7 @@ BOOL SndOptSB16Page::OnCommand(WPARAM wParam, LPARAM lParam)
 	switch (LOWORD(wParam))
 	{
 		case IDC_SND118IO:
-			m_snd118io = m_cmbio.GetCurItemData(0x0188);
+			m_snd118io = m_cmbio.GetCurItemData(0xd2);
 			return TRUE;
 
 		case IDC_SND118DMA:
@@ -1556,7 +1559,7 @@ BOOL SndOptSB16Page::OnCommand(WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case IDC_SND118INTF:
-			m_snd118irqf = m_cmbirqf.GetCurItemData(12);
+			m_snd118irqf = m_cmbirqf.GetCurItemData(5);
 			return TRUE;
 
 		case IDC_SND118DEF:
@@ -2063,7 +2066,7 @@ void SndOptPadPage::OnOK()
 			}
 		}
 	}
-
+	
 	const UINT8 cJoyID = (UINT8)m_cmbid.GetCurItemData(np2oscfg.JOYPAD1ID);
 	if(cJoyID != np2oscfg.JOYPAD1ID)
 	{

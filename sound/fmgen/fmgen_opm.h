@@ -204,4 +204,3 @@ namespace FM
 #endif // FM_OPM_H
 
 #endif	/* SUPPORT_FMGEN */
-

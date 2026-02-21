@@ -6,8 +6,10 @@
 #include <compiler.h>
 #include <sound/pcm86.h>
 
-#if 0
+#if 1
 #undef	TRACEOUT
+#define	TRACEOUT(s)	(void)(s)
+#else
 static void trace_fmt_ex(const char* fmt, ...)
 {
 	char stmp[2048];
@@ -19,9 +21,6 @@ static void trace_fmt_ex(const char* fmt, ...)
 	OutputDebugStringA(stmp);
 }
 #define	TRACEOUT(s)	trace_fmt_ex s
-#else
-#undef	TRACEOUT
-#define	TRACEOUT(s)	(void)(s)
 #endif	/* 1 */
 
 #define PCM86GET8(p, a)													\

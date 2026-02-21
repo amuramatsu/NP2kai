@@ -368,7 +368,7 @@ static void sys_cmd(MENUID id) {
 			update |= SYS_UPDATECFG;
 			break;
 #endif
-#if SDL_MAJOR_VERSION != 1
+#if USE_SDL_VERSION >= 2
 		case MID_FULLSCREEN:
 			changescreen(scrnmode | SCRNMODE_FULLSCREEN);
 			break;

@@ -302,7 +302,8 @@ void keystat_down(const UINT8 *key, REG8 keys, REG8 ref) {
 			if (keyctrl.kbdtype < 2) // KEYBOARD MODE SHIFT SEPARATE DISABLE
 #endif
 			{
-				if (keycode == 0x7d) {
+				if (keycode == 0x7d) 
+				{
 					keycode = 0x70;
 				}
 			}
@@ -310,7 +311,8 @@ void keystat_down(const UINT8 *key, REG8 keys, REG8 ref) {
 			if (keyctrl.kbdtype < 3) // KEYBOARD MODE WINKEYS DISABLE
 #endif
 			{
-				if (keycode >= 0x75) {
+				if (keycode >= 0x75) 
+				{
 					continue;
 				}
 			}
@@ -363,7 +365,8 @@ void keystat_up(const UINT8 *key, REG8 keys, REG8 ref) {
 			if (keyctrl.kbdtype < 2) // KEYBOARD MODE SHIFT SEPARATE DISABLE
 #endif
 			{
-				if (keycode == 0x7d) {
+				if (keycode == 0x7d)
+				{
 					keycode = 0x70;
 				}
 			}

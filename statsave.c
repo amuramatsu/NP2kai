@@ -1173,8 +1173,8 @@ static int flagload_fm(STFLAGH sfh, const SFENTRY *tbl)
 						if(g_mame_opl3[i]){
 							YMF262FlagLoad(g_mame_opl3[i], buffer, bufsize);
 						}
-						free(buffer);
 					}
+					free(buffer);
 				}
 			}
 #endif
@@ -1720,15 +1720,15 @@ const SFENTRY	*tblterm;
 
 #if defined(SUPPORT_HOSTDRV)
 				case STATFLAG_HDRV:
-#endif
 					ret |= flagcheck_veronly(&sffh->sfh, tbl);
 					break;
+#endif
 
 #if defined(SUPPORT_HOSTDRVNT)
 				case STATFLAG_HDRVNT:
-#endif
 					ret |= flagcheck_veronly(&sffh->sfh, tbl);
 					break;
+#endif
 
 				case STATFLAG_FDD:
 					ret |= flagcheck_fdd(&sffh->sfh, tbl);
@@ -1772,7 +1772,7 @@ const SFENTRY	*tbl;
 const SFENTRY	*tblterm;
 	UINT		i;
 #if defined(SUPPORT_FMGEN)
-	UINT8		usefmgen = 0;	
+	UINT8		usefmgen = 0;
 #endif
 
 #if defined(__LIBRETRO__)
@@ -1915,7 +1915,7 @@ const SFENTRY	*tblterm;
 
 	// ステートセーブ互換性維持用
 	if(pccore.maxmultiple == 0) pccore.maxmultiple = pccore.multiple;
-	
+
 #if defined(CPUCORE_IA32)
 	// FPUロード
 	fpu_statesave_load();
@@ -1997,7 +1997,7 @@ const SFENTRY	*tblterm;
 	// OPNAボリューム再設定
 #if defined(SUPPORT_FMGEN)
 	for (i = 0; i < OPNA_MAX; i++) {
-        usefmgen |= g_opna[i].usefmgen;
+		usefmgen |= g_opna[i].usefmgen;
 	}
 #endif
 	if(g_nSoundID == SOUNDID_WAVESTAR){
@@ -2066,6 +2066,11 @@ const SFENTRY	*tblterm;
 
 	// カーソル表示状態復元
 	mousemng_updateautohidecursor();
+	
+#if !defined(NP2_SDL) && !defined(__LIBRETRO__) && !defined(NP2_X)
+	// カーソル表示状態復元
+	mousemng_updateautohidecursor();
+#endif
 	
 	return(ret);
 }

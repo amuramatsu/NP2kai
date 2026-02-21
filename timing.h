@@ -19,4 +19,3 @@ void timing_setspeed(UINT32 speed);
 #ifdef __cplusplus
 }
 #endif
-

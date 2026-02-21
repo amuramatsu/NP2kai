@@ -5,9 +5,9 @@
 
 #ifdef USE_MAME_BSD
 
-#include "compiler.h"
-#include "pccore.h"
-#include "cpucore.h"
+#include <compiler.h>
+#include <pccore.h>
+#include <cpucore.h>
 #include "ymfm_opl.h"
 #include "np2interop.h"
 #include <sound/sound.h>

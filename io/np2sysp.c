@@ -35,8 +35,8 @@
 #include	<network/lgy98dev.h>
 #endif
 #if defined(SUPPORT_IA32_HAXM)
-#include	"i386hax/haxfunc.h"
-#include	"i386hax/haxcore.h"
+#include	<i386hax/haxfunc.h>
+#include	<i386hax/haxcore.h>
 #endif
 #include	"dosio.h"
 #include	"mousemng.h"
@@ -922,4 +922,3 @@ void np2sysp_bind(void) {
 #ifdef _MSC_VER
 #pragma code_seg()
 #endif
-

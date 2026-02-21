@@ -118,7 +118,7 @@ struct tagNP2Config
 	
 #if defined(SUPPORT_ASYNC_CPU)
 	UINT8	asynccpu; // 非同期CPUモード有効
-	UINT8	asynclvl; // 非同期CPUモード調整レベル（0:制御最弱～100:アグレッシブ）
+	UINT8	asynclvl; // 非同期CPUモード調整レベル（0:制御最弱〜100:アグレッシブ）
 #endif
 	UINT8	consttsc; // RDTSCをAsyncクロック変更によらず一定間隔にする
 #if defined(SUPPORT_IDEIO)
@@ -317,7 +317,7 @@ struct tagNP2Config
 	UINT8	cddtskip; // CD-ROM オーディオ再生時にデータトラックをスキップ
 
 #if defined(SUPPORT_GAMEPORT)
-	UINT8	gameport; // 118音源のゲームポートを使用する
+	UINT8	gameport; // SB16や118音源のゲームポートを使用する
 	UINT8	analogjoy; // ゲームポートをアナログジョイスティックにする
 #endif
 	UINT8	allowMOVCS; // mov cs,xx命令の実行を許可する（8086）
@@ -326,6 +326,7 @@ struct tagNP2Config
 	UINT8	nbeepofs; // BEEPの出力オフセットを消す
 
 	SINT64	cal_vofs; // 仮想カレンダ時刻オフセット(秒)
+
 #if defined(SUPPORT_NP2SCSI)
 	UINT8	usenp2stor; // np2 SCSIを使用する
 #endif
@@ -334,7 +335,8 @@ struct tagNP2Config
 
 	OEMCHAR	fontface[256];
 
-	UINT8   slowmous; // 4ビット切り捨ての低速マウスを使う
+	UINT8	slowmous; // 4ビット切り捨ての低速マウスを使う
+
 #if defined(SUPPORT_DEBUGSS)
 	UINT8	debugss;
 #endif

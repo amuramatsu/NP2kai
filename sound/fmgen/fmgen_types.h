@@ -1,5 +1,6 @@
 #pragma once
 #if defined(SUPPORT_FMGEN)
+
 #include <compiler.h>
 
 #if !defined(win32_types_h)
@@ -30,4 +31,3 @@ typedef signed int int32;
 #endif // win32_types_h
 
 #endif	/* SUPPORT_FMGEN */
-

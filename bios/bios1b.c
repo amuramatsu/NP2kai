@@ -838,7 +838,7 @@ static REG16 boot_cd(REG8 drv) {
 	}
 	if (buf[sizeof(buf) - 2] != 0x55 || buf[sizeof(buf) - 1] != 0xAA)
 	{
-		// ƒu[ƒ^ƒuƒ‹‚Å‚Í‚È‚¢
+		// ãƒ–ãƒ¼ã‚¿ãƒ–ãƒ«ã§ã¯ãªã„
 		return(0);
 	}
 	CopyMemory(mem + 0x1fc00, buf, sizeof(buf));
@@ -905,7 +905,7 @@ REG16 bootstrapload(void) {
 		for (i=0; (i<4) && (!bootseg); i++) {
 			if (sxsi_getptr(sxsi_unittbl[i])->devtype == SXSIDEV_CDROM && (sxsi_getptr(sxsi_unittbl[i])->flag & SXSIFLAG_READY)){
 				bootseg = boot_cd((REG8)(0x80 + i));
-				// MEMW_DISK_EQUIP‚Éƒu[ƒg‘ÎÛ‚ÌCD-ROM‚ğŠÜ‚ß‚é
+				// MEMW_DISK_EQUIPã«ãƒ–ãƒ¼ãƒˆå¯¾è±¡ã®CD-ROMã‚’å«ã‚ã‚‹
 				if(bootseg) {
 					UINT16	diskequip;
 					diskequip = GETBIOSMEM16(MEMW_DISK_EQUIP);

@@ -63,14 +63,14 @@ static void convertSecondsToDateTime(SINT64 total_seconds, _SYSTIME *dt)
 	SINT64 total_days = total_seconds / 86400;
 	SINT64 remaining_seconds = total_seconds % 86400;
 
-	// ???E???E?b?̌v?Z
+	// 時・分・秒の計算
 	dt->hour = remaining_seconds / 3600;
 	remaining_seconds %= 3600;
 
 	dt->minute = remaining_seconds / 60;
 	dt->second = remaining_seconds % 60;
 
-	// ?N?̌v?Z
+	// 年の計算
 	dt->year = 0;
 	while (1)
 	{
@@ -86,7 +86,7 @@ static void convertSecondsToDateTime(SINT64 total_seconds, _SYSTIME *dt)
 		}
 	}
 
-	// ???̌v?Z
+	// 月の計算
 	dt->month = 1;
 	while (1)
 	{
@@ -102,7 +102,7 @@ static void convertSecondsToDateTime(SINT64 total_seconds, _SYSTIME *dt)
 		}
 	}
 
-	// ???̌v?Z?i1???n?܂??ɒ????j
+	// 日の計算（1日始まりに直す）
 	dt->day = (int)total_days + 1;
 }
 
@@ -193,7 +193,7 @@ static void addtimediff(_SYSTIME *timebase, const SINT64 totalseconds) {
 void calendar_initialize(void) {
 
 	timemng_gettime(&cal.dt);
-	addtimediff(&cal.dt, np2cfg.cal_vofs); // ???z?J?????_?I?t?Z?b?g?K?p
+	addtimediff(&cal.dt, np2cfg.cal_vofs); // 仮想カレンダオフセット適用
 	cal.steps = 0;
 	cal.realchg = 1;
 }
@@ -220,7 +220,7 @@ void calendar_set(const UINT8 *bcd) {
 	if (!np2cfg.calendar)
 	{
 		timemng_gettime(&realc);
-		np2cfg.cal_vofs = calctimediff(&cal.dt, &realc); // ???z?J?????_?I?t?Z?b?g?L??
+		np2cfg.cal_vofs = calctimediff(&cal.dt, &realc); // 仮想カレンダオフセット記憶
 	}
 }
 
@@ -262,4 +262,3 @@ void calendar_getdt(_SYSTIME* dt) {
 		*dt = cal.realc;
 	}
 }
-

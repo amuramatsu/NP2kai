@@ -566,4 +566,3 @@ void OPM::DataLoad(struct OPMData* data) {
 }	// namespace FM
 
 #endif	/* SUPPORT_FMGEN */
-

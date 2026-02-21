@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------
 /i386c/ia32/instructions/fpu/fpemul_softfloat.c
+/i386c/ia32/instructions/fpu/fpemul_softfloat3.c
 
 Copyright (c) 2012 NONAKA Kimihiro
 Copyright (c) 2018-2025 SimK

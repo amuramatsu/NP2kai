@@ -378,4 +378,3 @@ void SOUNDCALL cs4231_getpcm(CS4231 cs, SINT32 *pcm, UINT count) {
 #endif
 	}
 }
-

@@ -1048,14 +1048,11 @@ BEGIN
         MENUITEM "&No wait",                    IDM_NOWAIT
         MENUITEM "&CPU clock stabilizer",       IDM_CPUSTABILIZER
         MENUITEM "Dyn&amic CPU clock adjustment",	IDM_ASYNCCPU
-        //POPUP "Dynamic CPU clock &target"
-        //BEGIN
-        //    MENUITEM "100%", IDM_ASYNCCPU_MAX
-        //    MENUITEM "70%", IDM_ASYNCCPU_70
-        //    MENUITEM "50%", IDM_ASYNCCPU_50
-        //    MENUITEM "30%", IDM_ASYNCCPU_30
-        //    MENUITEM "20%", IDM_ASYNCCPU_20
-        //END
+        POPUP "Dynamic CPU clock &priority"
+        BEGIN
+            MENUITEM "Performance", IDM_ASYNCCPU_LEVEL_MAX
+            MENUITEM "Timing stability", IDM_ASYNCCPU_LEVEL_MIN
+        END
         MENUITEM SEPARATOR
         //MENUITEM "&Auto frame",                 IDM_AUTOFPS
         MENUITEM "F&ull frame",                 IDM_60FPS
@@ -1204,7 +1201,7 @@ BEGIN
         // MENUITEM "Fix &MMTimer",                IDM_TIMERFIX
         // MENUITEM "&Skip over 16MB memcheck",    IDM_SKIP16MEMCHK
         MENUITEM "Fast m&emcheck",              IDM_FASTMEMCHK
-        MENUITEM "Allow &drag and drop",        IDM_ALLOwDRAGDROP
+        MENUITEM "Allow &drag and drop",        IDM_ALLOWDRAGDROP
         MENUITEM SEPARATOR
         MENUITEM "&Help...",                    IDM_HELP
         MENUITEM "&About...",                   IDM_ABOUT

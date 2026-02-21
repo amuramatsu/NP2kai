@@ -12,8 +12,8 @@
 #include	<cbus/scsicmd.h>
 #include	"scsibios.res"
 #if defined(SUPPORT_IA32_HAXM)
-#include	"i386hax/haxfunc.h"
-#include	"i386hax/haxcore.h"
+#include	<i386hax/haxfunc.h>
+#include	<i386hax/haxcore.h>
 #endif
 #include <fdd/sxsi.h>
 
@@ -681,7 +681,7 @@ static void IOOUTCALL np2stor_o7ea(UINT port, REG8 dat)
 static void IOOUTCALL np2stor_o7eb(UINT port, REG8 dat)
 {
 	// データ格納先の仮想メモリアドレスをI/Oポート7EAhへ書き込み、
-    // 7EBhに0x98→0x01の順で書き込むと猫本体が処理を実行する。
+	// 7EBhに0x98→0x01の順で書き込むと猫本体が処理を実行する。
 	if (dat == NP2STOR_CMD_ACTIVATE)
 	{
 		np2stor.ioenable = 1;

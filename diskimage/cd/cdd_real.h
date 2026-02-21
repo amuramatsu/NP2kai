@@ -7,7 +7,7 @@ extern "C" {
 #if 0
 #include	<api/ntddcdrm.h>
 #else
-	// DDK�p�ӂ��ʓ|�Ȃ̂ő��
+	// DDK用意が面倒なので代替
 #define IOCTL_CDROM_GET_DRIVE_GEOMETRY  CTL_CODE(FILE_DEVICE_CD_ROM, 0x0013, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_CDROM_READ_TOC            CTL_CODE(FILE_DEVICE_CD_ROM, 0x0000, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_CDROM_RAW_READ            CTL_CODE(FILE_DEVICE_CD_ROM, 0x000F, METHOD_OUT_DIRECT,  FILE_READ_ACCESS)
@@ -48,4 +48,4 @@ BRESULT openrealcdd(SXSIDEV sxsi, const OEMCHAR *fname);
 }
 #endif
 
-#endif
+#endif

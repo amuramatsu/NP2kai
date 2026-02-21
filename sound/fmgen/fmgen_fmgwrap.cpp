@@ -133,4 +133,3 @@ void	OPM_DataSave(void* OPM, void* opmdata) { ((FM::OPM*)OPM)->DataSave((FM::OPM
 void	OPM_DataLoad(void* OPM, void* opmdata) { ((FM::OPM*)OPM)->DataLoad((FM::OPMData*)opmdata); }
 
 #endif	/* SUPPORT_FMGEN */
-

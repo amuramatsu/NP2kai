@@ -149,4 +149,3 @@ void	OPM_DataLoad(void* OPM, void* opmdata);
 
 #endif	/* SUPPORT_FMGEN */
 
-

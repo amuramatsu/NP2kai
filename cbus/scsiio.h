@@ -271,9 +271,9 @@ typedef struct _NP2_READ_CAPACITY_DATA
 
 typedef struct
 {
-	UINT32 version; // ƒo[ƒWƒ‡ƒ“ ¡‚Ì‚Æ‚±‚ë1‚Ì‚Ý
-	UINT32 cmd; // ƒRƒ}ƒ“ƒh NP2STOR_INVOKECMD_xxx
-	UINT32 srbAddr; // SCSI_REQUEST_BLOCK‚Ö‚Ì‰¼‘zƒƒ‚ƒŠƒAƒhƒŒƒX
+	UINT32 version; // \83o\81[\83W\83\87\83\93 \8D\A1\82Ì‚Æ‚\B1\82\EB1\82Ì‚\DD
+	UINT32 cmd; // \83R\83}\83\93\83h NP2STOR_INVOKECMD_xxx
+	UINT32 srbAddr; // SCSI_REQUEST_BLOCK\82Ö‚Ì‰\BC\91z\83\81\83\82\83\8A\83A\83h\83\8C\83X
 } NP2STOR_INVOKEINFO;
 
 typedef struct _NP2_SCSI_REQUEST_BLOCK
@@ -395,7 +395,7 @@ typedef struct _NP2_MODE_RIGID_GEOMETRY_PAGE
 	UINT8 PageCode : 6; // 0x04
 	UINT8 Reserved : 1;
 	UINT8 PageSavable : 1;
-	UINT8 PageLength; // sizeof(NP2_MODE_READ_RECOVERY_PAGE) - 2 = 18 <-- NEC‚Í22‚Å‚Í‚È‚­18
+	UINT8 PageLength; // sizeof(NP2_MODE_READ_RECOVERY_PAGE) - 2 = 18 <-- NEC\82\CD22\82Å‚Í‚È‚\AD18
 	UINT8 NumberOfCylinders[3];
 	UINT8 NumberOfHeads;
 	UINT8 StartWritePrecom[3];

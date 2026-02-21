@@ -2094,5 +2094,4 @@ void OPNB::Mix(Sample* buffer, int nsamples)
 
 }	// namespace FM
 
-#endif /* SUPPORT_FMGEN */
-
+#endif	/* SUPPORT_FMGEN */

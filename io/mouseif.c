@@ -235,15 +235,15 @@ static REG8 IOINPCALL mouseif_i7fd9(UINT port) {
 		}
 		if (mouseif_limitcounter > 0) {
 			if (np2cfg.slowmous) {
-				if(x < -16) 
-					x = -15;
-				if(x > +15) 
+				if (x < -16)
+					x = -16;
+				if (x > +15)
 					x = +15;
 			}
 			else {
-				if(x < -128) 
+				if (x < -128)
 					x = -128;
-				if(x > +127) 
+				if (x > +127)
 					x = +127;
 			}
 			mouseif_limitcounter--;

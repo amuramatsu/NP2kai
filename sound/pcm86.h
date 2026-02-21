@@ -141,10 +141,14 @@ void pcm86cs_leave_criticalsection();
 
 void pcm86_cb(NEVENTITEM item);
 
-void pcm86gen_initialize(UINT rate);
-void pcm86gen_setvol(UINT vol);
+void pcm86cs_initialize();
+void pcm86cs_shutdown();
+void pcm86cs_enter_criticalsection();
+void pcm86cs_leave_criticalsection();
 
 void pcm86_reset(void);
+void pcm86gen_initialize(UINT rate);
+void pcm86gen_setvol(UINT vol);
 void pcm86gen_update(void);
 void pcm86_setpcmrate(REG8 val);
 void pcm86_setnextintr(void);

@@ -32,8 +32,8 @@
 #include <ia32/instructions/fpu/fp.h>
 #include "ia32/instructions/fpu/fpumem.h"
 
-#if defined(USE_FPU) && !defined(SUPPORT_FPU_DOSBOX) && !defined(SUPPORT_FPU_DOSBOX2) && !defined(SUPPORT_FPU_SOFTFLOAT)
-#error No FPU detected. Please define SUPPORT_FPU_DOSBOX, SUPPORT_FPU_DOSBOX2 or SUPPORT_FPU_SOFTFLOAT.
+#if defined(USE_FPU) && !defined(SUPPORT_FPU_DOSBOX) && !defined(SUPPORT_FPU_DOSBOX2) && !defined(SUPPORT_FPU_SOFTFLOAT) && !defined(SUPPORT_FPU_SOFTFLOAT3)
+#error No FPU detected. Please define SUPPORT_FPU_DOSBOX, SUPPORT_FPU_DOSBOX2, SUPPORT_FPU_SOFTFLOAT or SUPPORT_FPU_SOFTFLOAT3.
 #endif
 
 void CPUCALL
@@ -70,7 +70,7 @@ fpu_initialize(int initreg)
 			if (initreg) DB2_FPU_FINIT();
 			break;
 #endif
-#if defined(SUPPORT_FPU_SOFTFLOAT)
+#if defined(SUPPORT_FPU_SOFTFLOAT) || defined(SUPPORT_FPU_SOFTFLOAT3)
 		case FPU_TYPE_SOFTFLOAT:
 			insttable_2byte[0][0xae] = insttable_2byte[1][0xae] = SF_FPU_FXSAVERSTOR;
 			insttable_1byte[0][0xd8] = insttable_1byte[1][0xd8] = SF_ESC0;
@@ -85,7 +85,7 @@ fpu_initialize(int initreg)
 			break;
 #endif
 		default:
-#if defined(SUPPORT_FPU_SOFTFLOAT)
+#if defined(SUPPORT_FPU_SOFTFLOAT) || defined(SUPPORT_FPU_SOFTFLOAT3)
 			insttable_2byte[0][0xae] = insttable_2byte[1][0xae] = SF_FPU_FXSAVERSTOR;
 			insttable_1byte[0][0xd8] = insttable_1byte[1][0xd8] = SF_ESC0;
 			insttable_1byte[0][0xd9] = insttable_1byte[1][0xd9] = SF_ESC1;
@@ -155,7 +155,7 @@ fpu_statesave_load(void)
 	int i;
 
 	// FPU互換性維持用
-#if !defined(SUPPORT_FPU_SOFTFLOAT)
+#if !defined(SUPPORT_FPU_SOFTFLOAT) && !defined(SUPPORT_FPU_SOFTFLOAT3)
 	if (i386cpuid.fpu_type == FPU_TYPE_SOFTFLOAT) {
 		// XXX: floatx80 -> doubleはsoftfloatなしでは処理できないので無視
 		i386cpuid.fpu_type = FPU_TYPE_DOSBOX2;
@@ -164,6 +164,12 @@ fpu_statesave_load(void)
 	if (i386cpuid.fpu_type == FPU_TYPE_DOSBOX2 || i386cpuid.fpu_type == FPU_TYPE_DOSBOX) {
 #if !defined(SUPPORT_FPU_DOSBOX2) && !defined(SUPPORT_FPU_DOSBOX)
 #if defined(SUPPORT_FPU_SOFTFLOAT)
+		// double -> floatx80
+		for (i = 0; i < 8; i++) {
+			FPU_STAT.reg[i].d = c_double_to_floatx80(FPU_STAT.reg[i].d64);
+		}
+		i386cpuid.fpu_type = FPU_TYPE_SOFTFLOAT;
+#elif defined(SUPPORT_FPU_SOFTFLOAT3)
 		// double -> floatx80
 		for (i = 0; i < 8; i++) {
 			sw_float64_t f = *(sw_float64_t*)(&(FPU_STAT.reg[i].d64));
@@ -185,7 +191,26 @@ fpu_statesave_load(void)
 
 	// フラグの復元
 	if (i386cpuid.fpu_type == FPU_TYPE_SOFTFLOAT) {
-#if defined(SUPPORT_FPU_SOFTFLOAT)
+#if defined(SUPPORT_FPU_SOFTFLOAT) 
+		float_exception_flags = (FPU_STATUSWORD & 0x3f);
+		switch (FPU_STAT.round) {
+		case ROUND_Nearest:
+			float_rounding_mode = float_round_nearest_even;
+			break;
+		case ROUND_Down:
+			float_rounding_mode = float_round_down;
+			break;
+		case ROUND_Up:
+			float_rounding_mode = float_round_up;
+			break;
+		case ROUND_Chop:
+			float_rounding_mode = float_round_to_zero;
+			break;
+		default:
+			break;
+		}
+#endif
+#if defined(SUPPORT_FPU_SOFTFLOAT3)
 		const UINT16 statusword = FPU_STATUSWORD;
 		UINT8 result = 0;
 		if (statusword & (1 << 0)) result |= softfloat_flag_invalid;

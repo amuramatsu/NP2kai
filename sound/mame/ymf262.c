@@ -53,7 +53,7 @@ differences between OPL2 and OPL3 shown in datasheets:
 #define PI 3.14159265358979323846
 #endif
 
-// XXX: statsave connect保存用
+// XXX: statsave connect�ۑ��p
 static INT32 connectBuf[18*2] = {0};
 
 
@@ -2509,7 +2509,7 @@ void YMF262Shutdown(void *chip)
 	OPL3Destroy((OPL3*)chip);
 }
 void YMF262ResetChip(void *chip, int samplerate)
-{
+
 	OPL3ResetChip((OPL3*)chip);
 }
 
@@ -2555,14 +2555,14 @@ int YMF262FlagSave(void *chip, void *dstbuf)
 	OPL3* opl3dst = (OPL3*)dstbuf;
 	if(dstbuf!=NULL){
 		*opl3dst = *opl3;
-		// XXX: イベントハンドラ系（？）はセーブしない
+		// XXX: �C�x���g�n���h���n�i�H�j�̓Z�[�u���Ȃ�
 		opl3dst->TimerHandler = NULL;
 		opl3dst->TimerParam = NULL;
 		opl3dst->IRQHandler = NULL;
 		opl3dst->IRQParam = NULL;
 		opl3dst->UpdateHandler = NULL;
 		opl3dst->UpdateParam = NULL;
-		// XXX: connectってなんでポインタになってるんでしょう？めんどくさい･･･
+		// XXX: connect���ĂȂ�Ń|�C���^�ɂȂ��Ă��ł��傤�H�߂�ǂ��������
 		{
 			int ch, slot;
 			INT32 *opl3connect = (INT32 *)(&(opl3dst[1]));

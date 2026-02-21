@@ -710,7 +710,7 @@ paging(UINT32 laddr, int ucrw)
 	UINT bit;
 	UINT err;
 
-#if !defined(SUPPORT_IA32_HAXM) // HAXM?̓G?~?????[?V????TLB???g???Ȃ?
+#if !defined(SUPPORT_IA32_HAXM) // HAXMはエミュレーションTLBを使わない
 	ep = tlb_lookup(laddr, ucrw);
 	if (ep != NULL)
 		return ep->paddr + (laddr & CPU_PAGE_MASK);
@@ -730,7 +730,7 @@ paging(UINT32 laddr, int ucrw)
 		cpu_memorywrite_d_paging(pde_addr, pde);
 	}
 
-#if defined(SUPPORT_IA32_HAXM) // HAXM??4MB?y?[?W?̂??Ƃ?????
+#if defined(SUPPORT_IA32_HAXM) // HAXMは4MBページのことがある
 	if ((CPU_CR4 & CPU_CR4_PSE) && (pde & CPU_PDE_PAGE_SIZE)) {
 		/* 4MB page size */
 		paddr = (pde & CPU_PDE_4M_BASEADDR_MASK) | (laddr & 0x003fffff);

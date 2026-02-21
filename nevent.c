@@ -307,11 +307,11 @@ void nevent_set(NEVENTID id, SINT32 eventclock, NEVENTCB proc, NEVENTPOSITION ab
 	UINT eventId;
 	UINT i;
 	
-//	TRACEOUT(("event %d - %xclocks", id, eventclock));
-
 #if defined(SUPPORT_MULTITHREAD)
 	nevent_enter_criticalsection();
 #endif
+//	TRACEOUT(("event %d - %xclocks", id, eventclock));
+
 	clk = CPU_BASECLOCK - CPU_REMCLOCK;
 	item = &g_nevent.item[id];
 	item->proc = proc;

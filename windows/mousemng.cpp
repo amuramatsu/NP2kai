@@ -40,8 +40,8 @@ static  int mouseDiv = 1; // マウススピード倍率（分母）
 static  int mousebufX = 0; // マウス移動バッファ(X)
 static  int mousebufY = 0; // マウス移動バッファ(Y)
 
-static  int mouseposX = 0; // マウス絶対位置(X) 0～65535
-static  int mouseposY = 0; // マウス絶対位置 0～65535
+static  int mouseposX = 0; // マウス絶対位置(X) 0〜65535
+static  int mouseposY = 0; // マウス絶対位置 0〜65535
 
 // RAWマウス入力対応 np21w ver0.86 rev13
 static  LPDIRECTINPUT8 dinput = NULL; 

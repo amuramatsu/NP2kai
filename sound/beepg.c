@@ -5,8 +5,6 @@
 #include	<pccore.h>
 
 
-extern	BEEPCFG		beepcfg;
-
 static int beepOffsetCounter = 0;
 static SINT32 beepOffsetSum = 0;
 static SINT32 beepOffset = 0;
@@ -23,6 +21,8 @@ static void resetBeepOffsetData() {
 	beepOffsetSum = 0;
 	beepOffset = 0;
 }
+
+extern	BEEPCFG		beepcfg;
 
 static void oneshot(BEEP bp, SINT32 *pcm, UINT count) {
 	

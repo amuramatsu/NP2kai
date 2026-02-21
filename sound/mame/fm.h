@@ -85,13 +85,13 @@ typedef signed int		INT32;   /* signed 32bit   */
 #if defined(_MSC_VER)
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4245)
-#define INLINE __inline static
+#define INLINE __inline
 #elif defined(__BORLANDC__)
-#define INLINE __inline static
+#define INLINE __inline
 #elif defined(__GNUC__)
-#define INLINE __inline__ __attribute__((always_inline)) static
+#define INLINE __inline__ __attribute__((always_inline))
 #else
-#define INLINE static
+#define INLINE
 #endif
 #endif
 

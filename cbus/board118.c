@@ -115,7 +115,7 @@ static void IOOUTCALL ymf_o18a(UINT port, REG8 dat)
 	}
 
 	if (g_opna[opna_idx].s.addrl == 0x27) {
-		/* g_mame_opl3[G_OPL3_INDEX]-LにCSMモードは無い */
+		/* OPL3-LにCSMモードは無い */
 		dat &= ~0x80;
 		g_opna[opna_idx].opngen.opnch[2].extop = dat & 0xc0;
 	}

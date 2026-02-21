@@ -515,6 +515,10 @@ ini_write(const OEMCHAR *path, const OEMCHAR *title, const INITBL *tbl, UINT cou
 				OEMSNPRINTF(work, sizeof(work), str_d, *((SINT32 *)p->value));
 				break;
 
+			case INITYPE_SINT64:
+				OEMSNPRINTF(work, sizeof(work), str_d, *((SINT64 *)p->value));
+				break;
+
 			case INITYPE_UINT8:
 				OEMSNPRINTF(work, sizeof(work), str_u, *((UINT8 *)p->value));
 				break;
@@ -527,6 +531,10 @@ ini_write(const OEMCHAR *path, const OEMCHAR *title, const INITBL *tbl, UINT cou
 				OEMSNPRINTF(work, sizeof(work), str_u, *((UINT32 *)p->value));
 				break;
 
+			case INITYPE_UINT64:
+				OEMSNPRINTF(work, sizeof(work), str_u, *((UINT64 *)p->value));
+				break;
+
 			case INITYPE_HEX8:
 				OEMSNPRINTF(work, sizeof(work), str_x, *((UINT8 *)p->value));
 				break;
@@ -537,6 +545,10 @@ ini_write(const OEMCHAR *path, const OEMCHAR *title, const INITBL *tbl, UINT cou
 
 			case INITYPE_HEX32:
 				OEMSNPRINTF(work, sizeof(work), str_x, *((UINT32 *)p->value));
+				break;
+
+			case INITYPE_HEX64:
+				OEMSNPRINTF(work, sizeof(work), str_x, *((UINT64 *)p->value));
 				break;
 
 			case INITYPE_KB:
@@ -780,7 +792,7 @@ static const INITBL iniitem[] = {
 
 	{OEMTEXT("MEMCHKMX"), INITYPE_UINT8,	&np2cfg.memchkmx,	0},
 	{OEMTEXT("SBEEPLEN"), INITYPE_UINT8,	&np2cfg.sbeeplen,	0},
-	{OEMTEXT("SBEEPLEN"), INITYPE_BOOL,	&np2cfg.sbeepadj,	0},
+	{OEMTEXT("SBEEPADJ"), INITYPE_BOOL,	&np2cfg.sbeepadj,	0},
 	
 	{OEMTEXT("cpu_vend"), INITYPE_STR,	np2cfg.cpu_vendor_o,	15},
 	{OEMTEXT("cpu_fami"), INITYPE_UINT32,	&np2cfg.cpu_family,	0},
@@ -814,14 +826,16 @@ static const INITBL iniitem[] = {
 	{OEMTEXT("ANLG_JOY"), INITYPE_BOOL,	&np2cfg.analogjoy,	0},
 #endif
 	{OEMTEXT("USEMOVCS"), INIRO_BOOL,	&np2cfg.allowMOVCS,	0},
-	{OEMTEXT("NBEEPOFS"), INITYPE_BOOL,	&np2cfg.nbeepofs,	0},
+	{OEMTEXT("USETHOOK"), INIRO_BOOL,	&np2cfg.usetexthook,	0},
+	{OEMTEXT("RASCSI92"), INIRO_BOOL,	&np2cfg.rascsi92,	0},
+	{OEMTEXT("NBEEPOFS"), INIRO_BOOL,	&np2cfg.nbeepofs,	0},
 	{OEMTEXT("CAL_VOFS"), INITYPE_SINT64,	&np2cfg.cal_vofs,	0},
 #if defined(SUPPORT_NP2SCSI)
 	{OEMTEXT("USENP2ST"), INIRO_BOOL,	&np2cfg.usenp2stor,	0},
 #endif
-	{OEMTEXT("CPUSPEED"), INITYPE_UINT32,	&np2cfg.emuspeed,	100},
-	{OEMTEXT("fontface"), INITYPE_STR,		np2cfg.fontface,	256},
-	{OEMTEXT("SLOWMOUS"), INITYPE_BOOL,	&np2cfg.slowmous,	0},
+	{OEMTEXT("CPUSPEED"), INITYPE_UINT32,	&np2cfg.emuspeed,	0},
+	{OEMTEXT("fontface"), INIRO_STR,		np2cfg.fontface, 255},
+	{OEMTEXT("SLOWMOUS"), INIRO_BOOL,	&np2cfg.slowmous,	0},
 
 	{OEMTEXT("keyboard"), INITYPE_KB,	&np2oscfg.KEYBOARD,	0},
 #if !defined(__LIBRETRO__)
@@ -985,7 +999,7 @@ void initload(void) {
 	OEMCHAR	path[MAX_PATH];
 
 	milstr_ncpy(path, file_getcd(inifile), sizeof(path));
-	fprintf(stderr, OEMTEXT("Loading %s from %s"), inifile, path);
+	fprintf(stderr, OEMTEXT("Loading %s from %s\n"), inifile, path);
 //	TRACEOUT(OEMTEXT("Loading %s from %s", inifile, path));
 	ini_read(path, ini_title, iniitem, INIITEMS);
 }
@@ -995,7 +1009,7 @@ void initsave(void) {
 	OEMCHAR	path[MAX_PATH];
 
 	milstr_ncpy(path, file_getcd(inifile), sizeof(path));
-	fprintf(stderr, OEMTEXT("Saving %s to %s"), inifile, path);
+	fprintf(stderr, OEMTEXT("Saving %s to %s\n"), inifile, path);
 	ini_write(path, ini_title, iniitem, INIITEMS);
 }
 

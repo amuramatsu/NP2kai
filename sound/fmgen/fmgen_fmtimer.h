@@ -70,4 +70,3 @@ inline void Timer::Reset()
 #endif // FM_TIMER_H
 
 #endif	/* SUPPORT_FMGEN */
-

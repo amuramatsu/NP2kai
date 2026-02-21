@@ -211,10 +211,7 @@ const OEMCHAR np2version[] = OEMTEXT(NP2KAI_GIT_TAG " " NP2KAI_GIT_HASH);
 #if defined(SUPPORT_GAMEPORT)
 				0, 0,
 #endif
-				0,
-				0,
-				0,
-				0,
+				0, 0, 0, 0,
 				0,
 #if defined(SUPPORT_NP2SCSI)
 				1,
@@ -850,13 +847,13 @@ void pccore_reset(void) {
 
 	// FPU種類を設定 使えないなら別のタイプへ変更する
 	i386cpuid.fpu_type = np2cfg.fpu_type;
-#if !defined(SUPPORT_FPU_SOFTFLOAT)
+#if !defined(SUPPORT_FPU_SOFTFLOAT) && !defined(SUPPORT_FPU_SOFTFLOAT3)
 	if (i386cpuid.fpu_type == FPU_TYPE_SOFTFLOAT) {
 		i386cpuid.fpu_type = FPU_TYPE_DOSBOX2;
 	}
 #elif !defined(SUPPORT_FPU_DOSBOX2)
 	if (i386cpuid.fpu_type == FPU_TYPE_DOSBOX2) {
-#if defined(SUPPORT_FPU_SOFTFLOAT)
+#if defined(SUPPORT_FPU_SOFTFLOAT) || defined(SUPPORT_FPU_SOFTFLOAT3)
 		i386cpuid.fpu_type = FPU_TYPE_SOFTFLOAT;
 #else
 		i386cpuid.fpu_type = FPU_TYPE_DOSBOX;
@@ -864,7 +861,7 @@ void pccore_reset(void) {
 	}
 #elif !defined(SUPPORT_FPU_DOSBOX)
 	if (i386cpuid.fpu_type == FPU_TYPE_DOSBOX) {
-#if defined(SUPPORT_FPU_SOFTFLOAT)
+#if defined(SUPPORT_FPU_SOFTFLOAT) || defined(SUPPORT_FPU_SOFTFLOAT3)
 		i386cpuid.fpu_type = FPU_TYPE_SOFTFLOAT;
 #else
 		i386cpuid.fpu_type = FPU_TYPE_DOSBOX2;
@@ -1000,10 +997,10 @@ void pccore_reset(void) {
 #elif defined(NP2_SDL)
 	{
 		UINT64 c;
-#if SDL_MAJOR_VERSION == 1
-		c = SDL_GetTicks();
-#else
+#if USE_SDL_VERSION >= 2
 		c = SDL_GetPerformanceCounter();
+#else
+		c = SDL_GetTicks();
 #endif
 		COPY64(&asynccpu_lastclock, &c)
 		COPY64(&asynccpu_clockcount, &c)
@@ -1329,7 +1326,7 @@ static void pccore_asynccpu()
 						if (timimg > 2 * shdrawskip)
 						{
 							// そのまま
- 						}
+						}
 						else if (timimg > 15 * shdrawskip / 10)
 						{
 							changeValue = (changeValue + 1) / 2; // 1/2
@@ -1340,7 +1337,6 @@ static void pccore_asynccpu()
 						}
 						else
 						{
-							pccore.multiple -= 1;
 							changeValue = (changeValue + 9) / 10; // 1/10
 						}
 						if (pccore.multiple > changeValue) {
@@ -1348,7 +1344,7 @@ static void pccore_asynccpu()
 						}
 						else {
 							pccore.multiple = 1;
- 						}
+						}
 						pccore.realclock = pccore.baseclock * pccore.multiple;
 						pcm86_changeclock(oldmultiple);
 						nevent_changeclock(oldmultiple, pccore.multiple);
@@ -1363,7 +1359,6 @@ static void pccore_asynccpu()
 						mouseif_changeclock();
 						gdc_updateclock();
 					}
-
 					latecount = 0;
 				}
 				asynccpu_lateflag = 1;
@@ -1499,7 +1494,7 @@ void pccore_exec(BOOL draw) {
 			// マウスリセット
 			mousemng_reset();
 
-			#if defined(SUPPORT_IA32_HAXM)
+#if defined(SUPPORT_IA32_HAXM)
 			if (!np2hax.emumode && np2hax.enable) {
 				i386hax_resetVMCPU();
 				i386haxfunc_vcpu_setREGs(&np2haxstat.state);

@@ -16,24 +16,24 @@
 #include "dialog/winfiledlg.h"
 
 /**
- * „Éï„Ç©„É≥„ÉàÈÅ∏Êäû
- * @param[in] hWnd Ë¶™„Ç¶„Ç£„É≥„Éâ„Ç¶
+ * ÉtÉHÉìÉgëIë
+ * @param[in] hWnd êeÉEÉBÉìÉhÉE
  */
 void dialog_font(HWND hWnd)
 {
-	TCHAR szPath[MAX_PATH];
-	TCHAR szName[MAX_PATH];
 	std::tstring rExt(LoadTString(IDS_FONTEXT));
 	std::tstring rFilter(LoadTString(IDS_FONTFILTER));
 	std::tstring rTitle(LoadTString(IDS_FONTTITLE));
 
-	OPENFILENAMEW ofnw;
-	if (WinFileDialogW(hWnd, &ofnw, WINFILEDIALOGW_MODE_GET1, szPath, szName, rExt.c_str(), rTitle.c_str(), rFilter.c_str(), 3))
+	CFileDlg dlg(TRUE, rExt.c_str(), np2cfg.fontfile, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, rFilter.c_str(), hWnd);
+	dlg.m_ofn.lpstrTitle = rTitle.c_str();
+	dlg.m_ofn.nFilterIndex = 3;
+	if (!dlg.DoModal())
 	{
 		return;
 	}
 
-	LPCTSTR lpFilename = szPath;
+	LPCTSTR lpFilename = dlg.GetPathName();
 	if (font_load(lpFilename, FALSE, np2cfg.fontface))
 	{
 		gdcs.textdisp |= GDCSCRN_ALLDRAW2;

@@ -1073,7 +1073,7 @@ static void rename_file(INTRST intrst)
 			}
 
 			TRACEOUT(("renamed: %s -> %s", szPath, hdp.szPath));
-			if (file_rename(szPath, hdp.szPath))
+			if (file_rename(szPath, hdp.szPath) != 0)
 			{
 				nResult = ERR_ACCESSDENIED;
 				break;
@@ -1477,7 +1477,6 @@ static void find_next(INTRST intrst) {
 	store_sda_currcds(&sc);
 	succeed(intrst);
 }
-
 #if 1
 /* 1E */
 static void do_redir(INTRST intrst) {
@@ -2093,4 +2092,3 @@ int hostdrv_sfload(STFLAGH sfh, const SFENTRY *tbl) {
 #pragma code_seg()
 
 #endif
-

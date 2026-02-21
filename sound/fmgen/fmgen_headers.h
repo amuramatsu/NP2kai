@@ -28,4 +28,3 @@ extern "C" {
 #endif	// WIN_HEADERS_H
 
 #endif	/* SUPPORT_FMGEN */
-

@@ -5,9 +5,9 @@
 
 #ifdef USE_MAME_BSD
 
-#include "compiler.h"
-#include "pccore.h"
-#include "cpucore.h"
+#include <compiler.h>
+#include <pccore.h>
+#include <cpucore.h>
 #include "ymfm_opl.h"
 #include "np2interop.h"
 #include <sound/sound.h>
@@ -17,7 +17,9 @@
  // 旧np21wとのステートセーブ互換を維持する　旧→新のみ互換
 #include "np2compatible.h"
 
-NOINLINE
+#if defined(_WINDOWS)
+__declspec(noinline)
+#endif
 void* YMF262Init(int clock, int rate)
 {
 	opl3bsd* chipbsd = new opl3bsd();
@@ -36,7 +38,9 @@ void* YMF262Init(int clock, int rate)
 	return chipbsd;
 }
 
-NOINLINE
+#if defined(_WINDOWS)
+__declspec(noinline)
+#endif
 void YMF262Shutdown(void* chipptr)
 {
 	if (!chipptr) return;
@@ -45,7 +49,9 @@ void YMF262Shutdown(void* chipptr)
 
 	delete chipbsd;
 }
-NOINLINE
+#if defined(_WINDOWS)
+__declspec(noinline)
+#endif
 void YMF262ResetChip(void* chipptr, int samplerate)
 {
 	if (!chipptr) return;

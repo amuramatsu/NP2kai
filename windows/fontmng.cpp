@@ -2,7 +2,6 @@
 #include	<fontmng.h>
 #include	<codecnv/codecnv.h>
 
-
 typedef struct {
 	int			fontsize;
 	UINT		fonttype;
@@ -476,7 +475,6 @@ FNTDAT fontmng_get(void *hdl, const OEMCHAR *string) {
 
 	FNTMNG	fhdl;
 	FNTDAT	fdat;
-
 	if ((hdl == NULL) || (string == NULL)) {
 		goto ftmggt_err;
 	}

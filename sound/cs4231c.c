@@ -17,7 +17,7 @@
 	CS4231CFG	cs4231cfg;
 
 	int cs4231_bufdelaycounter = 0;
-
+	
 	static int playcountsmp_Ictl = CS4231_BUFREADSMP; // 積分制御で無理やり一定サンプルずつ読むようにする･･･
 	
 // 1サンプルあたりのバイト数（モノラル, ステレオの順）
@@ -181,7 +181,7 @@ void cs4231_dma(NEVENTITEM item) {
 				r = dmac_getdata_(dmach, cs4231.buffer, pos, size); // DMA読み取り実行
 				cs4231.bufwpos = (cs4231.bufwpos + r) & CS4231_BUFMASK; // バッファ書き込み位置を更新
 				cs4231.bufdatas += r; // バッファ内の有効なデータ数を更新 = (bufwpos-bufpos)&CS4231_BUFMASK
- 			}
+			}
 #if defined(SUPPORT_MULTITHREAD)
 			cs4231cs_leave_criticalsection();
 #endif
