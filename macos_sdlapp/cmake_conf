@@ -5,7 +5,3 @@ cmake .. \
   -D USE_NATIVEFILEDIALOG=ON \
   -D USE_ASYNCCPU=ON \
   -D CMAKE_CXX_FLAGS=-DSDL_DISABLE_ANALYZE_MACROS
-
-#  -D SDL2_INCLUDE_DIR=/Library/Frameworks/SDL2.framework/Headers \
-#  -D SDL2_MIXER_INCLUDE_DIR=/Library/Frameworks/SDL2_mixer.framework/Headers \
-#  -D SDL2_TTF_INCLUDE_DIR=/Library/Frameworks/SDL2_ttf.framework/Headers \

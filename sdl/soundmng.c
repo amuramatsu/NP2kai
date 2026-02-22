@@ -982,13 +982,7 @@ saturation_s16mmx(SINT16 *dst, const SINT32 *src, UINT size)
 
 #if defined(SUPPORT_SDL_AUDIO)
 
-#if USE_SDL_VERSION >= 3
-#include <SDL3/SDL.h>
-#elif USE_SDL_VERSION == 2
-#include <SDL2/SDL.h>
-#elif USE_SDL_VERSION == 1
-#include <SDL/SDL.h>
-#endif
+#include <SDL.h>
 
 #if USE_SDL_VERSION >= 3
 static void sdlaudio_callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);

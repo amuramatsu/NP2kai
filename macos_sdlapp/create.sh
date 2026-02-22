@@ -10,22 +10,22 @@ if [ -z "$BUILDDIR" ] || [ ! -d "$BUILDDIR" ] ; then
     exit 1
 fi
 
-if [ -f "$BUILDDIR/sdlnp2kai" ]; then
+if [ -f "$BUILDDIR/sdlnp2kai$POSTFIX" ]; then
     mkdir -p "$APPDIR/Neko Project II kai.app/Contents/MacOS/"
     cp "$BUILDDIR/sdlnp2kai$POSTFIX" "$APPDIR/Neko Project II kai.app/Contents/MacOS/"
     cd "$APPDIR/Neko Project II kai.app/Contents/MacOS/"
     ln -sf "sdlnp2kai$POSTFIX" "Neko Project II kai"
     cd "$CURDIR"
 else
-    echo "sdlnp2kai is not found"
+    echo "sdlnp2kai$POSTFIX is not found"
 fi
 
-if [ -f "$BUILDDIR/sdlnp21kai" ]; then
+if [ -f "$BUILDDIR/sdlnp21kai$POSTFIX" ]; then
     mkdir -p "$APPDIR/Neko Project 21 kai.app/Contents/MacOS/"
     cp "$BUILDDIR/sdlnp21kai$POSTFIX" "$APPDIR/Neko Project 21 kai.app/Contents/MacOS/"
     cd "$APPDIR/Neko Project 21 kai.app/Contents/MacOS/"
     ln -sf "sdlnp21kai$POSTFIX" "Neko Project 21 kai"
     cd "$CURDIR"
 else
-    echo "sdlnp21kai is not found"
+    echo "sdlnp21kai$POSTFIX is not found"
 fi

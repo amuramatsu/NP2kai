@@ -11,13 +11,7 @@
 #define OSLANG_UTF8 1
 #include "compiler_base.h"
 
-#if USE_SDL_VERSION >= 3
-#include	<SDL3/SDL.h>
-#elif USE_SDL_VERSION == 2
-#include	<SDL2/SDL.h>
-#elif USE_SDL_VERSION == 1
-#include	<SDL/SDL.h>
-#endif
+#include	<SDL.h>
 
 #define	msgbox(title, msg)
 

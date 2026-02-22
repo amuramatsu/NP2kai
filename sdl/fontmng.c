@@ -14,13 +14,7 @@
 
 #if defined(SUPPORT_SDL_TTF)		/* use TTF */
 
-#if USE_SDL_VERSION >= 3
-#include	<SDL3_ttf/SDL_ttf.h>
-#elif USE_SDL_VERSION == 2
-#include	<SDL2_ttf/SDL_ttf.h>
-#elif USE_SDL_VERSION == 1
-#include	<SDL_ttf/SDL_ttf.h>
-#endif
+#include	<SDL_ttf.h>
 
 #define FONTMNG_CACHE		64						/*!< Cache count */
 
