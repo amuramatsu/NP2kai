@@ -8,6 +8,7 @@
 #include "gtk2/xnp2.h"
 #include "gtk2/gtk_menu.h"
 
+#ifdef SUPPORT_IDEIO
 
 static const char *drivetype_str[] = {
 	"None", "HDD", "CD-ROM"
@@ -361,3 +362,5 @@ create_ide_dialog(void)
 
 	gtk_widget_show_all(ideconfig_dialog);
 }
+
+#endif /* SUPPORT_IDEIO */
