@@ -7,8 +7,7 @@ NP2kai is a PC-9801 series emulator<br>
 
 ## Modifications from AZO234's original
 
-* Sync to NP21/W update rapidly (now synced with NP21/W rev.95)
-* Use softfloat 3e and some FPU code is improved
+* Sync to NP21/W update rapidly (now synced with NP21/W rev.98)
 * Bugfixes for SDL port and X11 port
 * Some feature is added for macOS SDL port
   * App wrapper
@@ -1241,7 +1240,6 @@ Next boot computer, you command from 4.
 </div></details>
 
 ## Release
-<<<<<<< HEAD
 - Jan 27, 2026
   - merge NP21/W rev.93-98
 - Nov 16, 2025
@@ -1267,7 +1265,6 @@ Next boot computer, you command from 4.
   - (mod) fix SDL font rendering on UN*X/mac
   - (mod) fix X11 font rendering
   - (mod) small fix for SDL port
-  - (mod) fix softfloat 3e exception handling
   - (mod) build errors on windows are fixed
 - Jly 31, 2022
   - merge NP21/W rev.85,86
