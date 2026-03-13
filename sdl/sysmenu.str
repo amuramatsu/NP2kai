@@ -419,7 +419,7 @@ static const MSYSITEM s_frame[] = {
 };
 
 static const MSYSITEM s_screen[] = {
-#if USE_SDL_VERSION >= 2
+#if USE_SDL >= 2
 		{str_window,		NULL,		MID_WINDOW,		0},
 		{str_fullscrn,		NULL,		MID_FULLSCREEN,		0},
 		{str_sizex1,		NULL,		MID_SIZEx1,			0},
@@ -433,7 +433,7 @@ static const MSYSITEM s_screen[] = {
 		{str_sizex2,		NULL,		MID_SIZEx2,			MENU_GRAY},
 #endif
 		{NULL,				NULL,		MID_STATIC,			MENU_SEPARATOR},
-#if SDL_MAJOR_VERSION == 1
+#if USE_SDL == 1
 		{str_normal,		NULL,		MID_ROLNORMAL,		MENU_GRAY},
 		{str_leftrol,		NULL,		MID_ROLLEFT,		MENU_GRAY},
 		{str_rightrol,		NULL,		MID_ROLRIGHT,		MENU_GRAY},

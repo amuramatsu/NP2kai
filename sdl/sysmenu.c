@@ -65,10 +65,10 @@ static void sys_cmd(MENUID id) {
 	update = 0;
 	switch(id) {
 		case MID_RESET:
-#if defined(__LIBRETRO__)
-			reset_lrkey();
-#elif defined(NP2_SDL)
+#if defined(NP2_SDL)
 			sdlkbd_reset();
+#else
+			reset_lrkey();
 #endif
 			pccore_cfgupdate();
 			if(nevent_iswork(NEVENT_CDWAIT)){
@@ -368,7 +368,7 @@ static void sys_cmd(MENUID id) {
 			update |= SYS_UPDATECFG;
 			break;
 #endif
-#if USE_SDL_VERSION >= 2
+#if USE_SDL >= 2
 		case MID_FULLSCREEN:
 			changescreen(scrnmode | SCRNMODE_FULLSCREEN);
 			break;

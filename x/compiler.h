@@ -29,8 +29,6 @@
 #define OSLANG_UTF8 1
 #include "compiler_base.h"
 
-#include	<SDL.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

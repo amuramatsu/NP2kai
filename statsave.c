@@ -79,8 +79,12 @@ static OEMCHAR m_strStateFilename[MAX_PATH];
 
 #ifdef USE_MAME
 #ifdef USE_MAME_BSD
+#if defined(_MSC_VER)
 #if _MSC_VER < 1900
 #include <sound/mamebsdsub/np2interop.h>
+#else
+#include <sound/mamebsd/np2interop.h>
+#endif
 #else
 #include <sound/mamebsd/np2interop.h>
 #endif
@@ -93,10 +97,8 @@ extern int sxsi_unittbl[];
 
 #if defined(MACOS)
 #define	CRCONST		str_cr
-#elif defined(_WIN32) || defined(NP2_X) || defined(NP2_SDL) || defined(__LIBRETRO__)
-#define	CRCONST		str_lf
 #else
-#define	CRCONST		str_crlf
+#define	CRCONST		str_lf
 #endif
 
 typedef struct {
@@ -2067,7 +2069,7 @@ const SFENTRY	*tblterm;
 	// カーソル表示状態復元
 	mousemng_updateautohidecursor();
 	
-#if !defined(NP2_SDL) && !defined(__LIBRETRO__) && !defined(NP2_X)
+#if defined(NP2_WIN)
 	// カーソル表示状態復元
 	mousemng_updateautohidecursor();
 #endif

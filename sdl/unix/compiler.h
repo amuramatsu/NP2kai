@@ -13,8 +13,6 @@
 
 #include	<pthread.h>
 
-#include	<SDL.h>
-
 #define	msgbox(title, msg)
 
 #define	__ASSERT(s)
