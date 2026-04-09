@@ -592,8 +592,8 @@ soundmng_pcmplay(UINT num, BOOL loop)
 		}
 		return SUCCESS;
 	}
-	return FAILURE;
 #endif
+	return FAILURE;
 }
 
 void
